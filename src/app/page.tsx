@@ -8,6 +8,7 @@ import { Label } from "../app/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../app/components/ui/select";
 import { BookOpen, User, Hash, Calendar, Building, Type, DollarSign, Globe, MessageSquare, LogOut } from "lucide-react";
 import { useAuth } from "./components/auth-context";
+import BookModal from "./components/book-add-edit";
 
 
 
@@ -99,7 +100,7 @@ export default function Home() {
 
       if (isEditing && formData._id) {
         // Update existing book
-        response = await fetch(`http://localhost:8000/api/books/${formData._id}`, {
+        response = await fetch(`http://localhost:5050/api/books/${formData._id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -108,7 +109,7 @@ export default function Home() {
         });
       } else {
         // Add new book
-        response = await fetch('http://localhost:8000/api/books', {
+        response = await fetch('http://localhost:5050/api/books', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -137,7 +138,7 @@ export default function Home() {
     if (!confirm("Are you sure you want to delete this book?")) return;
 
     try {
-      const response = await fetch(`http://localhost:8000/api/books/${id}`, {
+      const response = await fetch(`http://localhost:5050/api/books/${id}`, {
         method: 'DELETE',
       });
 
@@ -366,222 +367,14 @@ export default function Home() {
           )}
 
           {/* Modal for Add/Edit */}
-          <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-            <DialogContent className="max-w-xl sm:max-w-2xl max-h-[85vh] overflow-y-auto bg-gradient-to-b from-white to-gray-50 rounded-2xl shadow-2xl p-8">
-              <DialogHeader className="mb-6">
-                <DialogTitle className="text-2xl font-bold text-gray-800 flex items-center">
-                  <BookOpen className="w-6 h-6 mr-2 text-blue-600" />
-                  {isEditing ? "Edit Book" : "Add New Book"}
-                </DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-6 animate-in fade-in duration-300">
-                {/* Book Details Section */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                  <h3 className="text-lg font-semibold text-gray-700 mb-4">Book Details</h3>
-                  <div className="space-y-4">
-                    <div className="relative">
-                      <Label htmlFor="title" className="text-gray-600">Title</Label>
-                      <div className="mt-1 relative">
-                        <BookOpen className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                        <Input
-                          id="title"
-                          value={formData?.title || ""}
-                          onChange={(e) => setFormData({ ...formData!, title: e.target.value })}
-                          className="pl-10 focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-                          placeholder="Enter book title"
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div className="relative">
-                      <Label htmlFor="author" className="text-gray-600">Author</Label>
-                      <div className="mt-1 relative">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                        <Input
-                          id="author"
-                          value={formData?.author || ""}
-                          onChange={(e) => setFormData({ ...formData!, author: e.target.value })}
-                          className="pl-10 focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-                          placeholder="Enter author name"
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div className="relative">
-                      <Label htmlFor="isbn" className="text-gray-600">ISBN</Label>
-                      <div className="mt-1 relative">
-                        <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                        <Input
-                          id="isbn"
-                          value={formData?.isbn || ""}
-                          onChange={(e) => setFormData({ ...formData!, isbn: e.target.value })}
-                          className="pl-10 focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-                          placeholder="Enter ISBN (optional)"
-                        />
-                      </div>
-                    </div>
-                    <div className="relative">
-                      <Label htmlFor="year" className="text-gray-600">Year</Label>
-                      <div className="mt-1 relative">
-                        <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                        <Input
-                          id="year"
-                          type="number"
-                          value={formData?.year || ""}
-                          onChange={(e) => setFormData({ ...formData!, year: parseInt(e.target.value) || 0 })}
-                          className="pl-10 focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-                          placeholder="Enter publication year"
-                          required
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Publisher & Format Section */}
-                {/* Publisher & Format Section */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                  <h3 className="text-lg font-semibold text-gray-700 mb-4">Publisher & Format</h3>
-                  <div className="space-y-4">
-                    <div className="relative">
-                      <Label htmlFor="publisher_name" className="text-gray-600">Publisher</Label>
-                      <div className="mt-1 relative">
-                        <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                        <Input
-                          id="publisher_name"
-                          value={formData?.publisher_name || ""}
-                          onChange={(e) => setFormData({ ...formData!, publisher_name: e.target.value })}
-                          className="pl-10 focus:ring-2 focus:ring-blue-500 transition-all duration-200 bg-white text-gray-900"
-                          placeholder="Enter publisher name"
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="binding_type" className="text-gray-600">Binding Type</Label>
-                      <Select
-                        value={formData?.binding_type || ""}  // Ensure string
-                        onValueChange={(value) => setFormData({ ...formData!, binding_type: value })}
-                      >
-                        <SelectTrigger className="mt-1 bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-blue-500 transition-all duration-200">
-                          <SelectValue placeholder="Select binding type" />
-                        </SelectTrigger>
-                        <SelectContent position="item-aligned" className="z-[9999] bg-white text-gray-900">  {/* High z, light bg */}
-                          <SelectItem value="Hardcover">Hardcover</SelectItem>
-                          <SelectItem value="Paperback">Paperback</SelectItem>
-                          <SelectItem value="Ebook">Ebook</SelectItem>
-                          <SelectItem value="Audiobook">Audiobook</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="classification" className="text-gray-600">Classification</Label>
-                      <Select
-                        value={formData?.classification || ""}
-                        onValueChange={(value) => setFormData({ ...formData!, classification: value })}
-                      >
-                        <SelectTrigger className="mt-1 bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-blue-500 transition-all duration-200">
-                          <SelectValue placeholder="Select classification" />
-                        </SelectTrigger>
-                        <SelectContent position="item-aligned" className="z-[9999] bg-white text-gray-900">
-                          <SelectItem value="Fantasy">Fantasy</SelectItem>
-                          <SelectItem value="Classic Literature">Classic Literature</SelectItem>
-                          <SelectItem value="Dystopian Fiction">Dystopian Fiction</SelectItem>
-                          <SelectItem value="Science Fiction">Science Fiction</SelectItem>
-                          <SelectItem value="Mystery">Mystery</SelectItem>
-                          <SelectItem value="Romance">Romance</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Pricing & Source Section */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                  <h3 className="text-lg font-semibold text-gray-700 mb-4">Pricing & Source</h3>
-                  <div className="space-y-4">
-                    <div className="relative">
-                      <Label htmlFor="price" className="text-gray-600">Price</Label>
-                      <div className="mt-1 relative">
-                        <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                        <Input
-                          id="price"
-                          type="number"
-                          step="0.01"
-                          value={formData?.price || ""}
-                          onChange={(e) => {
-                            const value = parseFloat(e.target.value) || 0;
-                            const doubledValue = Math.max(0, value);
-                            setFormData({ ...formData!, price: doubledValue });
-                          }}
-                          className="pl-10 focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-                          placeholder="Enter price"
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div className="relative">
-                      <Label htmlFor="currency" className="text-gray-600">Currency</Label>
-                      <div className="mt-1 relative">
-                        <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                        <Input
-                          id="currency"
-                          value={formData?.currency || "USD"}
-                          onChange={(e) => setFormData({ ...formData!, currency: e.target.value })}
-                          className="pl-10 focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-                          placeholder="Enter currency (e.g., USD)"
-                        />
-                      </div>
-                    </div>
-                    <div className="relative">
-                      <Label htmlFor="source" className="text-gray-600">Source</Label>
-                      <div className="mt-1 relative">
-                        <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                        <Input
-                          id="source"
-                          value={formData?.source || ""}
-                          onChange={(e) => setFormData({ ...formData!, source: e.target.value })}
-                          className="pl-10 focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-                          placeholder="Where was the book acquired?"
-                        />
-                      </div>
-                    </div>
-                    <div className="relative">
-                      <Label htmlFor="remarks" className="text-gray-600">Remarks</Label>
-                      <div className="mt-1 relative">
-                        <MessageSquare className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                        <Input
-                          id="remarks"
-                          value={formData?.remarks || ""}
-                          onChange={(e) => setFormData({ ...formData!, remarks: e.target.value })}
-                          className="pl-10 focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-                          placeholder="Additional notes about the book"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex justify-end space-x-3 pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsModalOpen(false)}
-                    className="bg-white hover:bg-gray-100 text-gray-700 border-gray-300 transition-all duration-200"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-md transition-all duration-200"
-                  >
-                    {isEditing ? "Update Book" : "Add Book"}
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
+          <BookModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            onSubmit={handleSubmit}
+            formData={formData}
+            setFormData={setFormData}
+            isEditing={isEditing}
+          />
         </div>
       </div>
     </div>

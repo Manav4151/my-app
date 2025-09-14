@@ -40,7 +40,6 @@ export function LoginForm() {
       toast.success("Sign in successful");
       router.push("/");
     } else {
-      toast.info(result.error, "test login");
       console.log(result.error, "test login");
       toast.error(result.error || "Login failed");
     }
