@@ -1,26 +1,69 @@
 "use client";
 
 import React from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/app/components/ui/dialog";
-import { Button } from "@/app/components/ui/button";
-import { Input } from "@/app/components/ui/input";
-import { Label } from "@/app/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
-import { Textarea } from "@/app/components/ui/textarea";
-import {
-    BookOpen,
-    User,
-    Hash,
-    Calendar,
-    Building,
-    DollarSign,
-    Globe,
-    MessageSquare,
-    X,
-    Save,
-    Plus,
-    Sparkles
-} from "lucide-react";
+import { X, Book, Save, Plus } from "lucide-react";
+import { Button } from "./ui/button";
+
+// --- Self-Contained UI Components ---
+
+const Dialog = ({ open, onOpenChange, children }: { open: boolean; onOpenChange: (open: boolean) => void; children: React.ReactNode }) => {
+    if (!open) return null;
+    return (
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+            onClick={() => onOpenChange(false)}
+        >
+            {children}
+        </div>
+    );
+};
+
+const DialogContent = ({ className, children }: { className?: string; children: React.ReactNode }) => (
+    <div onClick={(e) => e.stopPropagation()} className={`relative bg-slate-50 rounded-2xl shadow-2xl w-full ${className}`}>
+        {children}
+    </div>
+);
+
+
+
+const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(({ className, ...props }, ref) => (
+    <input
+        ref={ref}
+        className={`flex h-12 w-full rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+        {...props}
+    />
+));
+Input.displayName = "Input";
+
+
+const Label = React.forwardRef<HTMLLabelElement, React.LabelHTMLAttributes<HTMLLabelElement>>(({ className, ...props }, ref) => (
+    <label ref={ref} className={`text-sm font-medium text-slate-700 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 block mb-2 ${className}`} {...props} />
+));
+Label.displayName = "Label";
+
+
+const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttributes<HTMLTextAreaElement>>(({ className, ...props }, ref) => (
+    <textarea
+        ref={ref}
+        className={`flex w-full rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+        {...props}
+    />
+));
+Textarea.displayName = "Textarea";
+
+const Select = React.forwardRef<HTMLSelectElement, React.SelectHTMLAttributes<HTMLSelectElement>>(({ className, children, ...props }, ref) => (
+    <select
+        ref={ref}
+        className={`flex h-12 w-full items-center justify-between rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+        {...props}
+    >
+        {children}
+    </select>
+));
+Select.displayName = "Select";
+
+
+// --- Main Component Logic ---
 
 interface Book {
     _id?: string;
@@ -54,340 +97,151 @@ interface BookModalProps {
     isEditing: boolean;
 }
 
-const BookModal: React.FC<BookModalProps> = ({
-    isOpen,
-    onClose,
-    onSubmit,
-    formData,
-    setFormData,
-    isEditing
-}) => {
+const BookModal: React.FC<BookModalProps> = ({ isOpen, onClose, onSubmit, formData, setFormData, isEditing }) => {
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden bg-gradient-to-br from-white via-amber-50/30 to-orange-50/40 rounded-3xl shadow-2xl border-0 p-0">
-                {/* Header with Gradient Background */}
-                <div className="relative bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 px-8 py-6 rounded-t-3xl">
-                    <div className="flex items-center justify-between">
-                        <DialogTitle className="text-2xl font-bold text-white flex items-center gap-3">
-                            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                                {isEditing ? <Save className="w-5 h-5 text-white" /> : <Plus className="w-5 h-5 text-white" />}
-                            </div>
-                            {isEditing ? "Edit Book" : "Add New Book"}
-                        </DialogTitle>
-                        <Button
-                            onClick={onClose}
-                            variant="ghost"
-                            size="sm"
-                            className="text-white hover:bg-white/20 rounded-xl h-10 w-10 p-0"
-                        >
-                            <X className="h-5 w-5" />
-                        </Button>
+            <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+                {/* Header */}
+                <header className="flex items-center justify-between p-6 border-b border-slate-200 flex-shrink-0">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-sky-100 text-sky-600 rounded-full flex items-center justify-center">
+                            <Book className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold text-slate-800">{isEditing ? "Edit Book Details" : "Add a New Book"}</h2>
+                            <p className="text-sm text-slate-500">Fill in the fields below to {isEditing ? "update the" : "add a"} book.</p>
+                        </div>
                     </div>
-                    <p className="text-amber-100 mt-2 text-sm">
-                        {isEditing ? "Update the book details below" : "Fill in the details to add a new book to your library"}
-                    </p>
-                    {/* Decorative elements */}
-                    <div className="absolute top-4 right-20 opacity-20">
-                        <Sparkles className="w-6 h-6 text-white" />
-                    </div>
-                    <div className="absolute bottom-4 left-20 opacity-20">
-                        <BookOpen className="w-8 h-8 text-white" />
-                    </div>
-                </div>
+                    <Button onClick={onClose} className="bg-transparent hover:bg-slate-200 text-slate-500 !p-0 w-9 h-9">
+                        <X className="h-5 w-5" />
+                    </Button>
+                </header>
 
-                {/* Form Content */}
-                <div className="px-8 py-6 max-h-[calc(90vh-120px)] overflow-y-auto">
-                    <form onSubmit={onSubmit} className="space-y-8">
-                        {/* Book Information Section */}
-                        <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-amber-100/50">
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="w-8 h-8 bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg flex items-center justify-center">
-                                    <BookOpen className="w-4 h-4 text-white" />
-                                </div>
-                                <h3 className="text-xl font-bold text-gray-800">Book Information</h3>
-                            </div>
-
+                {/* Form Body */}
+                <div className="p-8 overflow-y-auto flex-grow">
+                    <form id="book-form" onSubmit={onSubmit} className="space-y-8">
+                        {/* Section 1: Book Information */}
+                        <section>
+                            <h3 className="text-lg font-semibold text-slate-800 mb-6 border-b pb-3">Book Information</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* Title */}
-                                <div className="md:col-span-2">
-                                    <Label htmlFor="title" className="text-gray-700 font-semibold flex items-center gap-2 mb-2">
-                                        <BookOpen className="w-4 h-4 text-amber-500" />
-                                        Title *
-                                    </Label>
-                                    <Input
-                                        id="title"
-                                        value={formData?.title || ""}
-                                        onChange={(e) => setFormData({ ...formData!, title: e.target.value })}
-                                        className="h-12 bg-white/80 border-amber-200 focus:border-amber-400 focus:ring-amber-300 rounded-xl text-gray-900 placeholder:text-gray-500"
-                                        placeholder="Enter the book title"
-                                        required
-                                    />
-                                </div>
-
-                                {/* Author */}
                                 <div>
-                                    <Label htmlFor="author" className="text-gray-700 font-semibold flex items-center gap-2 mb-2">
-                                        <User className="w-4 h-4 text-amber-500" />
-                                        Author *
-                                    </Label>
+                                    <Label htmlFor="book_id">Book ID *</Label>
                                     <Input
-                                        id="author"
-                                        value={formData?.author || ""}
-                                        onChange={(e) => setFormData({ ...formData!, author: e.target.value })}
-                                        className="h-12 bg-white/80 border-amber-200 focus:border-amber-400 focus:ring-amber-300 rounded-xl text-gray-900"
-                                        placeholder="Author name"
-                                        required
-                                    />
-                                </div>
-
-                                {/* ISBN */}
-                                <div>
-                                    <Label htmlFor="isbn" className="text-gray-700 font-semibold flex items-center gap-2 mb-2">
-                                        <Hash className="w-4 h-4 text-amber-500" />
-                                        ISBN
-                                    </Label>
-                                    <Input
-                                        id="isbn"
-                                        value={formData?.isbn || ""}
-                                        onChange={(e) => setFormData({ ...formData!, isbn: e.target.value })}
-                                        className="h-12 bg-white/80 border-amber-200 focus:border-amber-400 focus:ring-amber-300 rounded-xl text-gray-900"
-                                        placeholder="978-0-123456-78-9"
-                                    />
-                                </div>
-
-                                {/* Year */}
-                                <div>
-                                    <Label htmlFor="year" className="text-gray-700 font-semibold flex items-center gap-2 mb-2">
-                                        <Calendar className="w-4 h-4 text-amber-500" />
-                                        Publication Year *
-                                    </Label>
-                                    <Input
-                                        id="year"
+                                        id="book_id"
                                         type="number"
-                                        value={formData?.year || ""}
-                                        onChange={(e) => setFormData({ ...formData!, year: parseInt(e.target.value) || 0 })}
-                                        className="h-12 bg-white/80 border-amber-200 focus:border-amber-400 focus:ring-amber-300 rounded-xl text-gray-900"
-                                        placeholder="2024"
-                                        min="1000"
-                                        max="2100"
+                                        placeholder="e.g., 1001"
+                                        value={formData?.book_id ?? ""}
+                                        onChange={(e) => setFormData({ ...formData!, book_id: parseInt(e.target.value) || 0 })}
+                                        min="1"
                                         required
                                     />
                                 </div>
-
-                                {/* Edition */}
-                                <div>
-                                    <Label htmlFor="edition" className="text-gray-700 font-semibold flex items-center gap-2 mb-2">
-                                        <BookOpen className="w-4 h-4 text-amber-500" />
-                                        Edition
-                                    </Label>
-                                    <Input
-                                        id="edition"
-                                        value={formData?.edition || ""}
-                                        onChange={(e) => setFormData({ ...formData!, edition: e.target.value })}
-                                        className="h-12 bg-white/80 border-amber-200 focus:border-amber-400 focus:ring-amber-300 rounded-xl text-gray-900"
-                                        placeholder="1st Edition, 2nd Edition, etc."
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Publisher & Format Section */}
-                        <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-orange-100/50">
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
-                                    <Building className="w-4 h-4 text-white" />
-                                </div>
-                                <h3 className="text-xl font-bold text-gray-800">Publisher & Format</h3>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* Publisher */}
-                                <div>
-                                    <Label htmlFor="publisher_name" className="text-gray-700 font-semibold flex items-center gap-2 mb-2">
-                                        <Building className="w-4 h-4 text-orange-500" />
-                                        Publisher *
-                                    </Label>
-                                    <Input
-                                        id="publisher_name"
-                                        value={formData?.publisher_name || ""}
-                                        onChange={(e) => setFormData({ ...formData!, publisher_name: e.target.value })}
-                                        className="h-12 bg-white/80 border-orange-200 focus:border-orange-400 focus:ring-orange-300 rounded-xl text-gray-900"
-                                        placeholder="Publisher name"
-                                        required
-                                    />
-                                </div>
-
-                                {/* Binding Type */}
-                                <div>
-                                    <Label htmlFor="binding_type" className="text-gray-700 font-semibold flex items-center gap-2 mb-2">
-                                        <BookOpen className="w-4 h-4 text-orange-500" />
-                                        Binding Type *
-                                    </Label>
-                                    <Select
-                                        value={formData?.binding_type || ""}
-                                        onValueChange={(value) => setFormData({ ...formData!, binding_type: value })}
-                                    >
-                                        <SelectTrigger className="h-12 bg-white/80 border-orange-200 focus:border-orange-400 focus:ring-orange-300 rounded-xl text-gray-900">
-                                            <SelectValue placeholder="Select binding type" />
-                                        </SelectTrigger>
-                                        <SelectContent className="bg-white rounded-xl border-orange-200 shadow-xl">
-                                            <SelectItem value="Hardcover" className="hover:bg-orange-50">Hardcover</SelectItem>
-                                            <SelectItem value="Paperback" className="hover:bg-orange-50">Paperback</SelectItem>
-                                            <SelectItem value="Ebook" className="hover:bg-orange-50">Ebook</SelectItem>
-                                            <SelectItem value="Audiobook" className="hover:bg-orange-50">Audiobook</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                {/* Classification */}
                                 <div className="md:col-span-2">
-                                    <Label htmlFor="classification" className="text-gray-700 font-semibold flex items-center gap-2 mb-2">
-                                        <Hash className="w-4 h-4 text-orange-500" />
-                                        Classification *
-                                    </Label>
-                                    <Select
-                                        value={formData?.classification || ""}
-                                        onValueChange={(value) => setFormData({ ...formData!, classification: value })}
-                                    >
-                                        <SelectTrigger className="h-12 bg-white/80 border-orange-200 focus:border-orange-400 focus:ring-orange-300 rounded-xl text-gray-900">
-                                            <SelectValue placeholder="Select book classification" />
-                                        </SelectTrigger>
-                                        <SelectContent className="bg-white rounded-xl border-orange-200 shadow-xl">
-                                            <SelectItem value="Fantasy" className="hover:bg-orange-50">Fantasy</SelectItem>
-                                            <SelectItem value="Classic Literature" className="hover:bg-orange-50">Classic Literature</SelectItem>
-                                            <SelectItem value="Dystopian Fiction" className="hover:bg-orange-50">Dystopian Fiction</SelectItem>
-                                            <SelectItem value="Science Fiction" className="hover:bg-orange-50">Science Fiction</SelectItem>
-                                            <SelectItem value="Mystery" className="hover:bg-orange-50">Mystery</SelectItem>
-                                            <SelectItem value="Romance" className="hover:bg-orange-50">Romance</SelectItem>
-                                            <SelectItem value="Non-Fiction" className="hover:bg-orange-50">Non-Fiction</SelectItem>
-                                            <SelectItem value="Biography" className="hover:bg-orange-50">Biography</SelectItem>
-                                            <SelectItem value="History" className="hover:bg-orange-50">History</SelectItem>
-                                            <SelectItem value="Self-Help" className="hover:bg-orange-50">Self-Help</SelectItem>
-                                        </SelectContent>
+                                    <Label htmlFor="title">Title *</Label>
+                                    <Input id="title" placeholder="e.g., The Great Gatsby" value={formData?.title || ""} onChange={(e) => setFormData({ ...formData!, title: e.target.value })} required />
+                                </div>
+                                <div>
+                                    <Label htmlFor="author">Author *</Label>
+                                    <Input id="author" placeholder="e.g., F. Scott Fitzgerald" value={formData?.author || ""} onChange={(e) => setFormData({ ...formData!, author: e.target.value })} required />
+                                </div>
+                                <div>
+                                    <Label htmlFor="year">Publication Year *</Label>
+                                    <Input id="year" type="number" placeholder="e.g., 1925" value={formData?.year || ""} onChange={(e) => setFormData({ ...formData!, year: parseInt(e.target.value) || 0 })} min="1000" max={new Date().getFullYear() + 1} required />
+                                </div>
+                                <div>
+                                    <Label htmlFor="edition">Edition</Label>
+                                    <Input id="edition" placeholder="e.g., First Edition" value={formData?.edition || ""} onChange={(e) => setFormData({ ...formData!, edition: e.target.value })} />
+                                </div>
+                                <div>
+                                    <Label htmlFor="isbn">ISBN</Label>
+                                    <Input id="isbn" placeholder="e.g., 978-0743273565" value={formData?.isbn || ""} onChange={(e) => setFormData({ ...formData!, isbn: e.target.value })} />
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Section 2: Publisher & Format */}
+                        <section>
+                            <h3 className="text-lg font-semibold text-slate-800 mb-6 border-b pb-3">Publisher & Format</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <Label htmlFor="publisher_name">Publisher *</Label>
+                                    <Input id="publisher_name" placeholder="e.g., Charles Scribner's Sons" value={formData?.publisher_name || ""} onChange={(e) => setFormData({ ...formData!, publisher_name: e.target.value })} required />
+                                </div>
+                                <div>
+                                    <Label htmlFor="binding_type">Binding Type *</Label>
+                                    <Select id="binding_type" value={formData?.binding_type || ""} onChange={(e) => setFormData({ ...formData!, binding_type: e.target.value })} required>
+                                        <option value="" disabled>Select a binding type</option>
+                                        <option value="Hardcover">Hardcover</option>
+                                        <option value="Paperback">Paperback</option>
+                                        
+                                    </Select>
+                                </div>
+                                <div className="md:col-span-2">
+                                    <Label htmlFor="classification">Classification *</Label>
+                                    <Select id="classification" value={formData?.classification || ""} onChange={(e) => setFormData({ ...formData!, classification: e.target.value })} required>
+                                        <option value="" disabled>Select a classification</option>
+                                        <option value="Fantasy">Fantasy</option>
+                                        <option value="Classic Literature">Classic Literature</option>
+                                        <option value="Dystopian Fiction">Dystopian Fiction</option>
+                                        <option value="Science Fiction">Science Fiction</option>
+                                        <option value="Mystery">Mystery</option>
+                                        <option value="Romance">Romance</option>
+                                        <option value="Non-Fiction">Non-Fiction</option>
+                                        <option value="Biography">Biography</option>
+                                        <option value="History">History</option>
+                                        <option value="Self-Help">Self-Help</option>
                                     </Select>
                                 </div>
                             </div>
-                        </div>
+                        </section>
 
-                        {/* Pricing & Source Section */}
-                        <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-red-100/50">
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-pink-500 rounded-lg flex items-center justify-center">
-                                    <DollarSign className="w-4 h-4 text-white" />
-                                </div>
-                                <h3 className="text-xl font-bold text-gray-800">Pricing & Source</h3>
-                            </div>
-
+                        {/* Section 3: Acquisition */}
+                        <section>
+                            <h3 className="text-lg font-semibold text-slate-800 mb-6 border-b pb-3">Acquisition Details</h3>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                {/* Price */}
                                 <div>
-                                    <Label htmlFor="price" className="text-gray-700 font-semibold flex items-center gap-2 mb-2">
-                                        <DollarSign className="w-4 h-4 text-red-500" />
-                                        Price *
-                                    </Label>
-                                    <Input
-                                        id="price"
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        value={formData?.price || ""}
-                                        onChange={(e) => {
-                                            const value = parseFloat(e.target.value) || 0;
-                                            setFormData({ ...formData!, price: Math.max(0, value) });
-                                        }}
-                                        className="h-12 bg-white/80 border-red-200 focus:border-red-400 focus:ring-red-300 rounded-xl text-gray-900"
-                                        placeholder="0.00"
-                                        required
-                                    />
+                                    <Label htmlFor="price">Price *</Label>
+                                    <Input id="price" type="number" step="0.01" min="0" placeholder="0.00" value={formData?.price || ""} onChange={(e) => setFormData({ ...formData!, price: parseFloat(e.target.value) || 0 })} required />
                                 </div>
-
-                                {/* Currency */}
                                 <div>
-                                    <Label htmlFor="currency" className="text-gray-700 font-semibold flex items-center gap-2 mb-2">
-                                        <Globe className="w-4 h-4 text-red-500" />
-                                        Currency
-                                    </Label>
-                                    <Select
-                                        value={formData?.currency || "USD"}
-                                        onValueChange={(value) => setFormData({ ...formData!, currency: value })}
-                                    >
-                                        <SelectTrigger className="h-12 bg-white/80 border-red-200 focus:border-red-400 focus:ring-red-300 rounded-xl text-gray-900">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent className="bg-white rounded-xl border-red-200 shadow-xl">
-                                            <SelectItem value="USD" className="hover:bg-red-50">USD ($)</SelectItem>
-                                            <SelectItem value="EUR" className="hover:bg-red-50">EUR (€)</SelectItem>
-                                            <SelectItem value="GBP" className="hover:bg-red-50">GBP (£)</SelectItem>
-                                            <SelectItem value="INR" className="hover:bg-red-50">INR (₹)</SelectItem>
-                                        </SelectContent>
+                                    <Label htmlFor="currency">Currency</Label>
+                                    <Select id="currency" value={formData?.currency || "USD"} onChange={(e) => setFormData({ ...formData!, currency: e.target.value })}>
+                                        <option value="USD">USD ($)</option>
+                                        <option value="EUR">EUR (€)</option>
+                                        <option value="GBP">GBP (£)</option>
+                                        <option value="INR">INR (₹)</option>
                                     </Select>
                                 </div>
-
-                                {/* Source */}
                                 <div>
-                                    <Label htmlFor="source" className="text-gray-700 font-semibold flex items-center gap-2 mb-2">
-                                        <Globe className="w-4 h-4 text-red-500" />
-                                        Source *
-                                    </Label>
-                                    <Input
-                                        id="source"
-                                        value={formData?.source || ""}
-                                        onChange={(e) => setFormData({ ...formData!, source: e.target.value })}
-                                        className="h-12 bg-white/80 border-red-200 focus:border-red-400 focus:ring-red-300 rounded-xl text-gray-900"
-                                        placeholder="Where was it acquired?"
-                                        required
-                                    />
+                                    <Label htmlFor="source">Source *</Label>
+                                    <Input id="source" placeholder="e.g., Local Bookstore" value={formData?.source || ""} onChange={(e) => setFormData({ ...formData!, source: e.target.value })} required />
                                 </div>
-
-                                {/* Remarks */}
                                 <div className="md:col-span-3">
-                                    <Label htmlFor="remarks" className="text-gray-700 font-semibold flex items-center gap-2 mb-2">
-                                        <MessageSquare className="w-4 h-4 text-red-500" />
-                                        Remarks
-                                    </Label>
-                                    <Textarea
-                                        id="remarks"
-                                        value={formData?.remarks || ""}
-                                        onChange={(e) => setFormData({ ...formData!, remarks: e.target.value })}
-                                        className="min-h-[100px] bg-white/80 border-red-200 focus:border-red-400 focus:ring-red-300 rounded-xl text-gray-900 resize-none"
-                                        placeholder="Additional notes about this book (condition, special features, etc.)"
-                                    />
+                                    <Label htmlFor="remarks">Remarks</Label>
+                                    <Textarea id="remarks" placeholder="Condition, special features, etc." value={formData?.remarks || ""} onChange={(e) => setFormData({ ...formData!, remarks: e.target.value })} className="min-h-[100px] resize-y" />
                                 </div>
                             </div>
-                        </div>
+                        </section>
 
-                        {/* Action Buttons */}
-                        <div className="flex justify-end gap-4 pt-4 pb-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={onClose}
-                                className="h-12 px-8 bg-white/80 hover:bg-white border-gray-300 text-gray-700 rounded-xl font-semibold transition-all duration-200 hover:scale-[1.02]"
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                type="submit"
-                                className="h-12 px-8 bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-600 hover:via-orange-600 hover:to-red-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] flex items-center gap-2"
-                            >
-                                {isEditing ? (
-                                    <>
-                                        <Save className="w-4 h-4" />
-                                        Update Book
-                                    </>
-                                ) : (
-                                    <>
-                                        <Plus className="w-4 h-4" />
-                                        Add Book
-                                    </>
-                                )}
-                            </Button>
-                        </div>
+                        {/* This div is used to push the footer down in the form grid, but will not be rendered if not needed */}
+                        <div className="hidden"></div>
                     </form>
                 </div>
+
+                {/* Footer */}
+                <footer className="flex justify-end gap-4 p-6 border-t border-slate-200 bg-white/50 flex-shrink-0">
+                    <Button type="button" onClick={onClose} className="bg-transparent hover:bg-slate-100 text-slate-800 border border-slate-300 text-lg rounded-xl hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]">
+                        Cancel
+                    </Button>
+                    <Button type="submit" form="book-form" className=" bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]">
+                        {isEditing ? <Save className="w-4 h-4 mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
+                        Submit
+                    </Button>
+                </footer>
             </DialogContent>
         </Dialog>
     );
 };
 
 export default BookModal;
+

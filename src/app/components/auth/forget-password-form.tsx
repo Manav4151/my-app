@@ -16,10 +16,10 @@ import {
   FormMessage,
 } from "@/app/components/ui/form";
 import { toast } from "sonner";
-import { Loader2, Mail, Lock } from "lucide-react";
+import { Loader2, Mail } from "lucide-react";
 import { forgetPasswordSchema } from "@/lib/zod-schema";
 import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
+import { requestPasswordReset } from "@/lib/auth-client";
 
 export function ForgetPasswordForm() {
   const [isLoading, setIsLoading] = React.useState(false);
@@ -31,21 +31,20 @@ export function ForgetPasswordForm() {
     },
   });
   async function onSubmit(values: z.infer<typeof forgetPasswordSchema>) {
-    setIsLoading(true);
-    authClient
-      .forgetPassword({
+    try {
+      setIsLoading(true);
+      await requestPasswordReset({
         email: values.email,
         redirectTo: `${process.env.NEXT_PUBLIC_FRONTEND_URL}/reset-password`,
-      })
-      .then(() => {
-        setIsLoading(false);
-        toast.success("Password reset link sent if email exists.");
-        router.push("/login");
-      })
-      .catch((error) => {
-        setIsLoading(false);
-        toast.error(error.error.message || error.error.statusText);
       });
+      toast.success("Password reset link sent if email exists.");
+      router.push("/login");
+    } catch (error) {
+      const message = (error as { error?: { message?: string } })?.error?.message || "Failed to request password reset";
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -88,7 +87,7 @@ export function ForgetPasswordForm() {
             )}
           />
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button type="submit" className="w-full h-12 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]" disabled={isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

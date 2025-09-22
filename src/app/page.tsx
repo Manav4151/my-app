@@ -1,199 +1,272 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../app/components/ui/dialog";
-import { Button } from "../app/components/ui/button";
-import { Input } from "../app/components/ui/input";
-import { Label } from "../app/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../app/components/ui/select";
-import { BookOpen, User, Hash, Calendar, Building, Type, DollarSign, Globe, MessageSquare, LogOut } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "./components/ui/button";
+import { Input } from "./components/ui/input";
+import { Label } from "./components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./components/ui/select";
+import { BookOpen, LogOut, Plus, Trash2, X } from "lucide-react";
 import { useAuth } from "./components/auth-context";
-import BookModal from "./components/book-add-edit";
-
-
+import { toast } from "sonner";
+import { json } from "zod";
 
 // Define the data type based on API response
 interface Book {
   _id: string;
-  book_id: number;
-  isbn: string;
   title: string;
   author: string;
-  edition?: string | null;
   year: number;
-  publisher_id: string;
   publisher_name: string;
+  isbn?: string;
   binding_type: string;
   classification: string;
-  remarks?: string;
-  source: string;
-  price: number;
-  currency: string;
-  createdAt?: string;
-  updatedAt?: string;
-  __v?: number;
-  nonisbn?: string | null;
-  other_code?: string | null;
+  price?: number | null;
+  pricing?: Array<{
+    _id: string;
+    rate: number;
+    discount: number;
+    source: string;
+    currency: string;
+    last_updated: string;
+  }>;
 }
 
 interface ApiResponse {
-  total: number;
-  page: number;
-  pages: number;
+  success: boolean;
   books: Book[];
+  pagination: {
+    totalBooks: number;
+    currentPage: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+    showing: {
+      from: number;
+      to: number;
+      total: number;
+    };
+  };
 }
 
-// Fetch data from the actual API
-const fetchData = async (page: number = 1, limit: number = 20): Promise<ApiResponse> => {
-  const response = await fetch(`http://localhost:5050/api/books?page=${page}&limit=${limit}`);
+type Filters = {
+  title?: string;
+  author?: string;
+  isbn?: string;
+  year?: string;
+  classification?: string;
+  publisher_name?: string;
+};
+
+// Fetch data from the API
+const fetchData = async (page: number = 1, limit: number = 10, filters: Filters = {}): Promise<ApiResponse> => {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  if (filters.title) params.set('title', filters.title);
+  if (filters.author) params.set('author', filters.author);
+  if (filters.isbn) params.set('isbn', filters.isbn);
+  if (filters.year) params.set('year', filters.year);
+  if (filters.classification) params.set('classification', filters.classification);
+  if (filters.publisher_name) params.set('publisher_name', filters.publisher_name);
+
+  const response = await fetch(`http://localhost:5050/api/books?${params.toString()}`);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch books: ${response.status} ${response.statusText}`);
   }
 
-  return response.json();
+  const data = await response.json();
+
+  if (!data.success) {
+    throw new Error(data.message || 'Failed to fetch books');
+  }
+
+  return data;
 };
 
+// --- NEW --- Function to delete books
+const deleteBooks = async (bookIds: string[]): Promise<{ success: boolean; message?: string }> => {
+  console.log("Deleting books with IDs:", bookIds);
+
+  try {
+    const response = await fetch('http://localhost:5050/api/books/bulk', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      // Correctly format the body by stringifying the object
+      body: JSON.stringify({ "bookIds": bookIds })
+    });
+    console.log("Response", response);
+    if (!response.ok) {
+      // Try to get a more specific error message from the API response body
+      const errorData = await response.json().catch(() => ({
+        message: `API error: ${response.status} ${response.statusText}`
+      }));
+      throw new Error(errorData.message);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Failed to delete books:", error);
+    // Re-throw a user-friendly error
+    throw new Error(error instanceof Error ? error.message : "An unknown network error occurred.");
+  }
+
+
+  // Simulate deleting from our mock data source
+  // allMockBooks = allMockBooks.filter(book => !bookIds.includes(book._id));
+
+  // Simulating a successful API call for demonstration purposes
+  // return new Promise((resolve) => {
+  //   setTimeout(() => {
+  //     resolve({ success: true, message: "Books deleted successfully" });
+  //   }, 500);
+  // });
+};
 export default function Home() {
-  const { session, isAuthenticated, logout, pending } = useAuth();
+  const { session, logout, pending } = useAuth();
+  const router = useRouter();
   const [data, setData] = useState<ApiResponse | null>(null);
   const [page, setPage] = useState(1);
-  const [limit] = useState(20);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState<Partial<Book> | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [limit] = useState(10);
+  const [pendingFilters, setPendingFilters] = useState<Filters>({});
+  const [appliedFilters, setAppliedFilters] = useState<Filters>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isClient, setIsClient] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedBooks, setSelectedBooks] = useState<string[]>([]);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const headerCheckboxRef = useRef<HTMLInputElement>(null);
 
-  // Client-side initialization to prevent hydration mismatch
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
-  // Fetch data on page change
+  // Fetch data on page or appliedFilters change
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetchData(page, limit);
+        const response = await fetchData(page, limit, appliedFilters);
         setData(response);
       } catch (error) {
         console.error("Error fetching data:", error);
         setError(error instanceof Error ? error.message : "Failed to fetch books");
+        toast.error("Failed to load books");
       } finally {
         setLoading(false);
       }
     };
     loadData();
-  }, [page, limit]);
+  }, [page, limit, appliedFilters]);
 
-  // Handle add/edit form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData) return;
+  useEffect(() => {
+    if (selectionMode && headerCheckboxRef.current && data?.books) {
+      const numSelected = selectedBooks.length;
+      const numBooksOnPage = data.books.length;
+      headerCheckboxRef.current.checked = numSelected === numBooksOnPage && numBooksOnPage > 0;
+      headerCheckboxRef.current.indeterminate = numSelected > 0 && numSelected < numBooksOnPage;
+    }
+  }, [selectedBooks, data?.books, selectionMode]);
 
+  // Place this alongside your other functions like applyFilters, clearFilters, etc.
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const body = JSON.stringify(formData);
-      let response;
-
-      if (isEditing && formData._id) {
-        // Update existing book
-        response = await fetch(`http://localhost:5050/api/books/${formData._id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: body,
-        });
-      } else {
-        // Add new book
-        response = await fetch('http://localhost:5050/api/books', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: body,
-        });
-      }
-
-      if (!response.ok) {
-        throw new Error(`Failed to ${isEditing ? 'update' : 'create'} book: ${response.status} ${response.statusText}`);
-      }
-
-      // Refresh data after successful operation
-      const refreshedData = await fetchData(page, limit);
-      setData(refreshedData);
-      setIsModalOpen(false);
-      setFormData(null);
+      const response = await fetchData(page, limit, appliedFilters);
+      setData(response);
     } catch (error) {
-      console.error("Error saving data:", error);
-      alert(error instanceof Error ? error.message : "Failed to save book");
+      console.error("Error fetching data:", error);
+      setError(error instanceof Error ? error.message : "Failed to fetch books");
+      toast.error("Failed to load books");
+    } finally {
+      setLoading(false);
+    }
+  }, [page, limit, appliedFilters]); // <-- Add dependencies here
+  // Apply filters
+  const applyFilters = () => {
+    setPage(1);
+    setAppliedFilters({ ...pendingFilters });
+  };
+
+  // Clear filters
+  const clearFilters = () => {
+    setPendingFilters({});
+    setAppliedFilters({});
+    setPage(1);
+  };
+  const handleSelectBook = (bookId: string) => {
+    setSelectedBooks(prev =>
+      prev.includes(bookId)
+        ? prev.filter(id => id !== bookId)
+        : [...prev, bookId]
+    );
+  };
+  // --- NEW --- Cancel selection mode
+  const handleCancelSelection = () => {
+    setSelectionMode(false);
+    setSelectedBooks([]);
+  };
+
+  // Handle selecting all books on the current page
+  const handleSelectAll = () => {
+    if (data?.books && selectedBooks.length === data.books.length) {
+      setSelectedBooks([]);
+    } else {
+      setSelectedBooks(data?.books.map(book => book._id) || []);
     }
   };
+  // Handle deleting selected books
+  const handleDeleteSelected = async () => {
+    if (selectedBooks.length === 0) {
+      toast.warning("No books selected to delete.");
+      return;
+    }
 
-  // Handle delete
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this book?")) return;
+    if (window.confirm(`Are you sure you want to delete ${selectedBooks.length} book(s)?`)) {
+      try {
+        setLoading(true);
+        const result = await deleteBooks(selectedBooks);
+        if (result.success) {
+          toast.success(result.message || "Books deleted successfully!");
+          setSelectedBooks([]);
+          setSelectionMode(false); // --- NEW --- Exit selection mode after deletion
+          if (data && data.books.length === selectedBooks.length && page > 1) {
+            setPage(page - 1);
+          } else {
+            loadData();
 
-    try {
-      const response = await fetch(`http://localhost:5050/api/books/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to delete book: ${response.status} ${response.statusText}`);
+          }
+        } else {
+          throw new Error(result.message || "Failed to delete books");
+        }
+      } catch (err) {
+        console.error("Deletion error:", err);
+        toast.error(err instanceof Error ? err.message : "An unknown error occurred.");
+      } finally {
+        setLoading(false);
       }
-
-      // Refresh data after successful deletion
-      const refreshedData = await fetchData(page, limit);
-      setData(refreshedData);
-    } catch (error) {
-      console.error("Error deleting data:", error);
-      alert(error instanceof Error ? error.message : "Failed to delete book");
     }
   };
-
-  // Open modal for adding
-  const openAddModal = () => {
-    setFormData({
-      title: "",
-      author: "",
-      isbn: "",
-      year: new Date().getFullYear(),
-      publisher_name: "",
-      binding_type: "",
-      classification: "",
-      source: "",
-      price: 0,
-      currency: "USD"
-    });
-    setIsEditing(false);
-    setIsModalOpen(true);
-  };
-
-  // Open modal for editing
-  const openEditModal = (book: Book) => {
-    setFormData(book);
-    setIsEditing(true);
-    setIsModalOpen(true);
+  // Handle view pricing - navigate to book detail page
+  const handleViewPricing = (bookId: string) => {
+    router.push(`/book/${bookId}`);
   };
 
   // Pagination controls
   const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= (data?.pages || 1)) {
+    if (newPage >= 1 && newPage <= (data?.pagination.totalPages || 1)) {
       setPage(newPage);
     }
   };
 
   // Render loading state
-  if (loading || !isClient || pending) {
+  if (loading || pending) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white shadow rounded-lg p-6">
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 flex items-center justify-center">
+        <div className="bg-white shadow-lg rounded-2xl p-8">
+          <div className="flex justify-center items-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
           </div>
         </div>
       </div>
@@ -202,12 +275,14 @@ export default function Home() {
 
   if (error) {
     return (
-      <div className="bg-white shadow rounded-lg p-6">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">Error: {error}</p>
-          <Button onClick={() => window.location.reload()} className="bg-blue-600 hover:bg-blue-700">
-            Retry
-          </Button>
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 flex items-center justify-center">
+        <div className="bg-white shadow-lg rounded-2xl p-8 max-w-md">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">Error: {error}</p>
+            <Button onClick={() => window.location.reload()} className="bg-amber-600 hover:bg-amber-700">
+              Retry
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -215,166 +290,289 @@ export default function Home() {
 
   if (!data) {
     return (
-      <div className="bg-white shadow rounded-lg p-6">
-        <p className="text-gray-500">No data available</p>
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 flex items-center justify-center">
+        <div className="bg-white shadow-lg rounded-2xl p-8">
+          <p className="text-gray-500">No data available</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50">
-      {/* Book-Themed Header */}
-      <div className="relative bg-gradient-to-br from-amber-600 via-orange-600 to-red-600 shadow-lg rounded-b-3xl pb-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 flex flex-col md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-4 mb-4 md:mb-0">
-            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center shadow-lg">
-              <BookOpen className="w-9 h-9 text-white" />
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b border-amber-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center">
+                <BookOpen className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Book Inventory</h1>
+                <p className="text-sm text-gray-600">Manage your digital library</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-white tracking-tight drop-shadow-lg">Book Inventory</h1>
-              <p className="text-amber-100 text-sm mt-1">Manage your digital library with ease</p>
-            </div>
+            {session && (
+              <div className="flex items-center gap-4">
+                <span className="text-gray-700 font-medium">Welcome, {session.user.name}</span>
+                <Button
+                  onClick={() => router.push('/insert')}
+                  className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Insert Book
+                </Button>
+                <Button
+                  onClick={logout}
+                  variant="outline"
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </Button>
+              </div>
+            )}
           </div>
-          {session && (
-            <div className="flex items-center gap-4 bg-white/10 rounded-xl px-6 py-3 shadow-md">
-              <span className="text-white text-lg font-semibold">Welcome, {session.user.name}</span>
-              <Button
-                onClick={logout}
-                variant="outline"
-                size="sm"
-                className="flex items-center space-x-2 bg-white/20 border-white/30 text-white hover:bg-white/30 hover:text-amber-100 transition-colors"
-              >
-                <LogOut className="h-5 w-5" />
-                <span>Logout</span>
-              </Button>
-            </div>
-          )}
-        </div>
-        {/* Decorative background pattern */}
-        <div className="absolute inset-0 opacity-10 pointer-events-none">
-          <div className="absolute top-10 left-10 w-32 h-32 border-2 border-white rounded-lg transform rotate-12"></div>
-          <div className="absolute top-32 right-16 w-24 h-24 border-2 border-white rounded-lg transform -rotate-12"></div>
-          <div className="absolute bottom-20 left-20 w-20 h-20 border-2 border-white rounded-lg transform rotate-45"></div>
-          <div className="absolute bottom-32 right-10 w-28 h-28 border-2 border-white rounded-lg transform -rotate-45"></div>
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="bg-white/90 shadow-xl rounded-3xl p-8 border border-amber-100">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
-            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <BookOpen className="w-7 h-7 text-amber-500" />
-              Book List
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6">
+            <div className="text-center">
+              <p className="text-sm text-gray-600 mb-2">Total Books</p>
+              <p className="text-3xl font-bold text-amber-600">{data.pagination.totalBooks}</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6">
+            <div className="text-center">
+              <p className="text-sm text-gray-600 mb-2">Current Page</p>
+              <p className="text-3xl font-bold text-orange-600">{data.pagination.currentPage} / {data.pagination.totalPages}</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6">
+            <div className="text-center">
+              <p className="text-sm text-gray-600 mb-2">Showing</p>
+              <p className="text-3xl font-bold text-green-600">{data.pagination.showing.from}-{data.pagination.showing.to}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Filters
             </h2>
             <Button
-              onClick={openAddModal}
-              className="h-12 px-6 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
+              onClick={() => setShowFilters(!showFilters)}
+              variant="outline"
+              size="sm"
             >
-              + Add Book
+              {showFilters ? 'Hide' : 'Show'} Filters
             </Button>
           </div>
 
-          {/* Table */}
-          <div className="overflow-x-auto rounded-2xl border border-amber-100 bg-white">
-            <table className="min-w-full divide-y divide-amber-100 rounded-2xl overflow-hidden">
-              <thead className="bg-amber-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-amber-700 uppercase tracking-wider">Book ID</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-amber-700 uppercase tracking-wider">Title</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-amber-700 uppercase tracking-wider">Author</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-amber-700 uppercase tracking-wider">Year</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-amber-700 uppercase tracking-wider">Publisher</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-amber-700 uppercase tracking-wider">Classification</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-amber-700 uppercase tracking-wider">Price</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-amber-700 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-amber-50">
-                {data.books.map((book) => (
-                  <tr key={book._id} className="hover:bg-amber-50 transition-colors duration-200">
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">{book.book_id}</td>
-                    <td className="px-4 py-4 text-sm text-gray-900 max-w-xs truncate" title={book.title}>
-                      {book.title}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{book.author}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{book.year}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{book.publisher_name}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">
-                        {book.classification}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-green-600">
-                      ${book.price.toFixed(2)}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openEditModal(book)}
-                          className="h-8 rounded-lg border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-900"
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDelete(book._id)}
-                          className="h-8 rounded-lg bg-red-100 text-red-700 hover:bg-red-200"
-                        >
-                          Delete
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          {data.pages > 1 && (
-            <div className="mt-6 flex justify-between items-center">
-              <p className="text-sm text-gray-700">
-                Showing {(page - 1) * limit + 1} to {Math.min(page * limit, data.total)} of {data.total} books
-              </p>
-              <div className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  disabled={page === 1}
-                  onClick={() => handlePageChange(page - 1)}
-                  size="sm"
-                  className="hover:bg-blue-50"
-                >
-                  Previous
+          {showFilters && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="filter-title" className="text-gray-700 font-medium">Title</Label>
+                  <Input
+                    id="filter-title"
+                    placeholder="Search by title..."
+                    value={pendingFilters.title || ''}
+                    onChange={(e) => setPendingFilters((f) => ({ ...f, title: e.target.value }))}
+                    className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="filter-author" className="text-gray-700 font-medium">Author</Label>
+                  <Input
+                    id="filter-author"
+                    placeholder="Search by author..."
+                    value={pendingFilters.author || ''}
+                    onChange={(e) => setPendingFilters((f) => ({ ...f, author: e.target.value }))}
+                    className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="filter-year" className="text-gray-700 font-medium">Year</Label>
+                  <Input
+                    id="filter-year"
+                    placeholder="Search by year"
+                    value={pendingFilters.year || ''}
+                    onChange={(e) => setPendingFilters((f) => ({ ...f, year: e.target.value }))}
+                    className="mt-1 h-12 w-40 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="filter-classification" className="text-gray-700 font-medium">Classification</Label>
+                  <Select
+                    value={pendingFilters.classification || ''}
+                    onValueChange={(v) => setPendingFilters((f) => ({ ...f, classification: v === 'all' ? undefined : v }))}
+                  >
+                    <SelectTrigger className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl text-gray-900">
+                      <SelectValue placeholder="Select classification" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border-2 border-gray-200 rounded-xl shadow-lg">
+                      <SelectItem value="all" className="text-gray-900 hover:bg-amber-50">All</SelectItem>
+                      <SelectItem value="Fantasy" className="text-gray-900 hover:bg-amber-50">Fantasy</SelectItem>
+                      <SelectItem value="Classic Literature" className="text-gray-900 hover:bg-amber-50">Classic Literature</SelectItem>
+                      <SelectItem value="Science Fiction" className="text-gray-900 hover:bg-amber-50">Science Fiction</SelectItem>
+                      <SelectItem value="Mystery" className="text-gray-900 hover:bg-amber-50">Mystery</SelectItem>
+                      <SelectItem value="Non-Fiction" className="text-gray-900 hover:bg-amber-50">Non-Fiction</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <Button onClick={applyFilters} className="bg-amber-600 hover:bg-amber-700">
+                  Apply Filters
                 </Button>
-                <span className="flex items-center px-3 py-2 text-sm text-gray-700">
-                  Page {page} of {data.pages}
-                </span>
-                <Button
-                  variant="outline"
-                  disabled={page === data.pages}
-                  onClick={() => handlePageChange(page + 1)}
-                  size="sm"
-                  className="hover:bg-blue-50"
-                >
-                  Next
+                <Button onClick={clearFilters} variant="outline">
+                  Clear
                 </Button>
               </div>
             </div>
           )}
+        </div>
 
-          {/* Modal for Add/Edit */}
-          <BookModal
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            onSubmit={handleSubmit}
-            formData={formData}
-            setFormData={setFormData}
-            isEditing={isEditing}
-          />
+        {/* Contextual Action Bar for Deleting */}
+        {selectionMode && selectedBooks.length > 0 && (
+          <div className="bg-amber-100/60 border border-amber-200 rounded-2xl p-4 flex items-center justify-between mb-8 transition-all duration-300 ease-in-out">
+            <p className="text-amber-800 font-semibold">{selectedBooks.length} book(s) selected</p>
+            <Button onClick={handleDeleteSelected} variant="destructive" className="bg-red-600 hover:bg-red-700">
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete Selected
+            </Button>
+          </div>
+        )}
+        {/* Books Table */}
+        <div className="bg-white rounded-2xl shadow-sm border border-amber-100 overflow-hidden">
+          <div className="px-6 py-4 border-b border-amber-100 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">Books</h2>
+            {/* --- NEW --- Toggle Selection Mode Button --- */}
+            {data.books.length > 0 && (
+              selectionMode ? (
+                <Button variant="ghost" size="sm" onClick={handleCancelSelection} className="text-gray-600 hover:bg-gray-100">
+                  <X className="w-4 h-4 mr-2" />
+                  Cancel
+                </Button>
+              ) : (
+                <Button variant="outline" size="sm" onClick={() => setSelectionMode(true)}>
+                  Select
+                </Button>
+              )
+            )}
+          </div>
+
+          {data.books.length === 0 ? (
+            <div className="p-12 text-center">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No books found</h3>
+              <p className="text-gray-600 mb-4">Try adjusting your filters or add a new book.</p>
+              <Button onClick={() => router.push('/insert')} className="bg-amber-600 hover:bg-amber-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Insert Book
+              </Button>
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-amber-100">
+                  <thead className="bg-amber-50">
+                    <tr>
+                      {selectionMode && (
+                        <th className="px-6 py-3 text-left">
+                          <Input
+                            type="checkbox"
+                            ref={headerCheckboxRef}
+                            onChange={handleSelectAll}
+                            className="h-4 w-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                          />
+                        </th>
+                      )}
+                      <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Title</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Author</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Year</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Publisher</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Price</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-amber-100">
+                    {data.books.map((book) => (
+                      <tr key={book._id} className="hover:bg-amber-50 transition-colors">
+                        {selectionMode && (
+                          <td className="px-6 py-4">
+                            <Input
+                              type="checkbox"
+                              checked={selectedBooks.includes(book._id)}
+                              onChange={() => handleSelectBook(book._id)}
+                              className="h-4 w-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                            />
+                          </td>
+                        )}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">{book.title}</div>
+                          <div className="text-sm text-gray-500">{book.classification}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.author}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.year}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.publisher_name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
+                          {book.price && typeof book.price === 'number' ? `$${book.price.toFixed(2)}` : 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <Button
+                            onClick={() => handleViewPricing(book._id)}
+                            variant="outline"
+                            size="sm"
+                            className="border-amber-200 text-amber-700 hover:bg-amber-50"
+                          >
+                            View Details
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              {data.pagination.totalPages > 1 && (
+                <div className="px-6 py-4 border-t border-amber-100 flex items-center justify-between">
+                  <p className="text-sm text-gray-700">
+                    Showing {data.pagination.showing.from} to {data.pagination.showing.to} of {data.pagination.showing.total} books
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={!data.pagination.hasPrevPage}
+                      onClick={() => handlePageChange(page - 1)}
+                    >
+                      Previous
+                    </Button>
+                    <span className="flex items-center px-3 py-2 text-sm text-gray-700">
+                      Page {data.pagination.currentPage} of {data.pagination.totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={!data.pagination.hasNextPage}
+                      onClick={() => handlePageChange(page + 1)}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>
