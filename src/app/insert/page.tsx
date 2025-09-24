@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -45,9 +45,13 @@ interface CheckResponse {
 
 export default function InsertBookPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [step, setStep] = useState<"form" | "check" | "result">("form");
     const [loading, setLoading] = useState(false);
     const [checkResponse, setCheckResponse] = useState<CheckResponse | null>(null);
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [editBookId, setEditBookId] = useState<string | null>(null);
+    const [initialLoading, setInitialLoading] = useState(false);
 
     const [bookData, setBookData] = useState<BookData>({
         title: "",
@@ -68,32 +72,114 @@ export default function InsertBookPage() {
         currency: "USD",
     });
 
+    // Handle URL parameters and fetch existing book data for edit mode
+    useEffect(() => {
+        const editParam = searchParams.get('edit');
+        const bookIdParam = searchParams.get('bookId');
+        
+        if (editParam || bookIdParam) {
+            const bookId = editParam || bookIdParam;
+            if (bookId) {
+                setIsEditMode(true);
+                setEditBookId(bookId);
+                fetchExistingBookData(bookId);
+            }
+        }
+    }, [searchParams]);
+
+    const fetchExistingBookData = async (bookId: string) => {
+        try {
+            setInitialLoading(true);
+            const response = await fetch(`http://localhost:8000/api/books/${bookId}/pricing`);
+            
+            if (!response.ok) {
+                throw new Error(`Failed to fetch book data: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            
+            if (result.success && result.book) {
+                // Populate book data
+                setBookData({
+                    title: result.book.title || "",
+                    author: result.book.author || "",
+                    year: result.book.year || new Date().getFullYear(),
+                    publisher_name: result.book.publisher_name || "",
+                    isbn: result.book.isbn || "",
+                    edition: result.book.edition || "",
+                    binding_type: result.book.binding_type || "",
+                    classification: result.book.classification || "",
+                    remarks: result.book.remarks || "",
+                });
+                
+                // If there's pricing data, populate the first pricing entry
+                if (result.pricing && result.pricing.length > 0) {
+                    const firstPricing = result.pricing[0];
+                    setPricingData({
+                        source: firstPricing.source || "",
+                        rate: firstPricing.rate || 0,
+                        discount: firstPricing.discount || 0,
+                        currency: firstPricing.currency || "USD",
+                    });
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching existing book data:", error);
+            toast.error("Failed to load book data for editing");
+        } finally {
+            setInitialLoading(false);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
         try {
-            const response = await fetch("http://localhost:5050/api/books/check", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    bookData,
-                    pricingData,
-                }),
-            });
+            if (isEditMode && editBookId) {
+                // Direct update for edit mode
+                const response = await fetch(`http://localhost:8000/api/books/${editBookId}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        bookData,
+                        pricingData,
+                    }),
+                });
 
-            if (!response.ok) {
-                throw new Error(`Failed to check book: ${response.status}`);
+                if (!response.ok) {
+                    throw new Error(`Failed to update book: ${response.status}`);
+                }
+
+                const result = await response.json();
+                toast.success("Book updated successfully!");
+                router.push(`/book/${editBookId}`);
+            } else {
+                // Check for duplicates in create mode
+                const response = await fetch("http://localhost:8000/api/books/check", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        bookData,
+                        pricingData,
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to check book: ${response.status}`);
+                }
+
+                const result = await response.json();
+                setCheckResponse(result);
+                setStep("check");
             }
-
-            const result = await response.json();
-            setCheckResponse(result);
-            setStep("check");
         } catch (error) {
-            console.error("Error checking book:", error);
-            toast.error("Failed to check book status");
+            console.error("Error processing book:", error);
+            toast.error(isEditMode ? "Failed to update book" : "Failed to check book status");
         } finally {
             setLoading(false);
         }
@@ -113,7 +199,7 @@ export default function InsertBookPage() {
                 pricingId: checkResponse.pricingId,
             };
 
-            const response = await fetch("http://localhost:5050/api/books", {
+            const response = await fetch("http://localhost:8000/api/books", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -136,27 +222,46 @@ export default function InsertBookPage() {
         }
     };
 
-    const renderForm = () => (
-        <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50">
+    const renderForm = () => {
+        if (initialLoading) {
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 flex items-center justify-center">
+                    <div className="bg-white shadow-lg rounded-2xl p-8">
+                        <div className="flex justify-center items-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
+                            <span className="ml-3 text-gray-600">Loading book data...</span>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8">
                     <Button
-                        onClick={() => router.push("/")}
+                        onClick={() => router.push(isEditMode && editBookId ? `/book/${editBookId}` : "/")}
                         variant="outline"
                         className="mb-6 border-gray-300 text-gray-700 hover:bg-gray-50"
                     >
                         <ArrowLeft className="w-4 h-4 mr-2" />
-                        Back to Home
+                        {isEditMode ? "Back to Book Details" : "Back to Home"}
                     </Button>
 
                     <div className="text-center">
                         <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
                             <BookOpen className="w-8 h-8 text-white" />
                         </div>
-                        <h1 className="text-3xl font-bold text-gray-900 mb-2">Insert New Book</h1>
+                        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                            {isEditMode ? "Edit Book Details" : "Insert New Book"}
+                        </h1>
                         <p className="text-gray-600 text-lg">
-                            Fill in the book details and pricing information below
+                            {isEditMode 
+                                ? "Update the book details and pricing information below"
+                                : "Fill in the book details and pricing information below"
+                            }
                         </p>
                     </div>
                 </div>
@@ -391,7 +496,7 @@ export default function InsertBookPage() {
                             <Button
                                 type="button"
                                 variant="outline"
-                                onClick={() => router.push("/")}
+                                onClick={() => router.push(isEditMode && editBookId ? `/book/${editBookId}` : "/")}
                                 className="border-gray-300 text-gray-700 hover:bg-gray-50"
                             >
                                 Cancel
@@ -404,12 +509,12 @@ export default function InsertBookPage() {
                                 {loading ? (
                                     <>
                                         <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                        Checking...
+                                        {isEditMode ? "Updating..." : "Checking..."}
                                     </>
                                 ) : (
                                     <>
                                         <CheckCircle className="w-5 h-5 mr-2" />
-                                        Check Book Status
+                                        {isEditMode ? "Update Book" : "Check Book Status"}
                                     </>
                                 )}
                             </Button>
@@ -418,7 +523,8 @@ export default function InsertBookPage() {
                 </div>
             </div>
         </div>
-    );
+        );
+    };
 
     const renderCheckResult = () => {
         if (!checkResponse) return null;

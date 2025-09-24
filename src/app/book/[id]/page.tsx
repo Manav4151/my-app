@@ -83,7 +83,7 @@ export default function BookDetailPage() {
             setLoading(true);
             setError(null);
 
-            const response = await fetch(`http://localhost:5050/api/books/${bookId}/pricing`);
+            const response = await fetch(`http://localhost:8000/api/books/${bookId}/pricing`);
 
             if (!response.ok) {
                 const errorText = await response.text();

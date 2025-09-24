@@ -68,7 +68,7 @@ const fetchData = async (page: number = 1, limit: number = 10, filters: Filters 
   if (filters.classification) params.set('classification', filters.classification);
   if (filters.publisher_name) params.set('publisher_name', filters.publisher_name);
 
-  const response = await fetch(`http://localhost:5050/api/books?${params.toString()}`);
+  const response = await fetch(`http://localhost:8000/api/books?${params.toString()}`);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch books: ${response.status} ${response.statusText}`);
@@ -88,7 +88,7 @@ const deleteBooks = async (bookIds: string[]): Promise<{ success: boolean; messa
   console.log("Deleting books with IDs:", bookIds);
 
   try {
-    const response = await fetch('http://localhost:5050/api/books/bulk', {
+    const response = await fetch('http://localhost:8000/api/books/bulk', {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
