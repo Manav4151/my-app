@@ -3,13 +3,70 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
-import { Textarea } from "../components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { Button } from "@/app/components/ui/button";
+import { Input } from "@/app/components/ui/input";
+import { Label } from "@/app/components/ui/label";
+import { Textarea } from "@/app/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
 import { BookOpen, ArrowLeft, CheckCircle, AlertTriangle, Info, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+
+// ISBN validation functions
+const validateISBN10 = (isbn: string): boolean => {
+    // Remove hyphens and spaces
+    const cleanISBN = isbn.replace(/[-\s]/g, '');
+    
+    // Check if it's exactly 10 characters
+    if (cleanISBN.length !== 10) return false;
+    
+    // Check if all characters except the last are digits
+    if (!/^\d{9}[\dX]$/.test(cleanISBN)) return false;
+    
+    // Calculate checksum
+    let sum = 0;
+    for (let i = 0; i < 9; i++) {
+        sum += parseInt(cleanISBN[i]) * (10 - i);
+    }
+    
+    // Handle the check digit
+    const checkDigit = cleanISBN[9] === 'X' ? 10 : parseInt(cleanISBN[9]);
+    sum += checkDigit;
+    
+    return sum % 11 === 0;
+};
+
+const validateISBN13 = (isbn: string): boolean => {
+    // Remove hyphens and spaces
+    const cleanISBN = isbn.replace(/[-\s]/g, '');
+    
+    // Check if it's exactly 13 characters and all digits
+    if (cleanISBN.length !== 13 || !/^\d{13}$/.test(cleanISBN)) return false;
+    
+    // Calculate checksum
+    let sum = 0;
+    for (let i = 0; i < 12; i++) {
+        const digit = parseInt(cleanISBN[i]);
+        sum += digit * (i % 2 === 0 ? 1 : 3);
+    }
+    
+    const checkDigit = (10 - (sum % 10)) % 10;
+    return checkDigit === parseInt(cleanISBN[12]);
+};
+
+const validateISBN = (isbn: string): boolean => {
+    if (!isbn || isbn.trim() === '') return false;
+    
+    const cleanISBN = isbn.replace(/[-\s]/g, '');
+    
+    // Check if it's ISBN-10 or ISBN-13
+    if (cleanISBN.length === 10) {
+        return validateISBN10(isbn);
+    } else if (cleanISBN.length === 13) {
+        return validateISBN13(isbn);
+    }
+    
+    return false;
+};
 
 // Types based on the controller
 interface BookData {
@@ -18,6 +75,7 @@ interface BookData {
     year: number;
     publisher_name: string;
     isbn?: string;
+    other_code?: string;
     edition?: string;
     binding_type: string;
     classification: string;
@@ -42,7 +100,7 @@ interface CheckResponse {
     bookId?: string;
     pricingId?: string;
 }
-
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 export default function InsertBookPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -52,6 +110,8 @@ export default function InsertBookPage() {
     const [isEditMode, setIsEditMode] = useState(false);
     const [editBookId, setEditBookId] = useState<string | null>(null);
     const [initialLoading, setInitialLoading] = useState(false);
+    const [isNonISBN, setIsNonISBN] = useState(false);
+    const [isbnError, setIsbnError] = useState("");
 
     const [bookData, setBookData] = useState<BookData>({
         title: "",
@@ -59,6 +119,7 @@ export default function InsertBookPage() {
         year: new Date().getFullYear(),
         publisher_name: "",
         isbn: "",
+        other_code: "",
         edition: "",
         binding_type: "",
         classification: "",
@@ -90,7 +151,7 @@ export default function InsertBookPage() {
     const fetchExistingBookData = async (bookId: string) => {
         try {
             setInitialLoading(true);
-            const response = await fetch(`http://localhost:8000/api/books/${bookId}/pricing`);
+            const response = await fetch(`${API_URL}/api/books/${bookId}/pricing`);
             
             if (!response.ok) {
                 throw new Error(`Failed to fetch book data: ${response.status}`);
@@ -106,11 +167,15 @@ export default function InsertBookPage() {
                     year: result.book.year || new Date().getFullYear(),
                     publisher_name: result.book.publisher_name || "",
                     isbn: result.book.isbn || "",
+                    other_code: result.book.other_code || "",
                     edition: result.book.edition || "",
                     binding_type: result.book.binding_type || "",
                     classification: result.book.classification || "",
                     remarks: result.book.remarks || "",
                 });
+
+                // Set non-ISBN checkbox based on whether other_code exists
+                setIsNonISBN(!!result.book.other_code && !result.book.isbn);
                 
                 // If there's pricing data, populate the first pricing entry
                 if (result.pricing && result.pricing.length > 0) {
@@ -131,14 +196,70 @@ export default function InsertBookPage() {
         }
     };
 
+    // Handle ISBN validation
+    const handleISBNChange = (value: string) => {
+        setBookData({ ...bookData, isbn: value });
+        if (value && !validateISBN(value)) {
+            setIsbnError("Please enter a valid ISBN (10 or 13 digits)");
+        } else {
+            setIsbnError("");
+        }
+    };
+
+    // Handle other code change
+    const handleOtherCodeChange = (value: string) => {
+        setBookData({ ...bookData, other_code: value });
+    };
+
+    // Handle checkbox toggle
+    const handleNonISBNToggle = (checked: boolean) => {
+        setIsNonISBN(checked);
+        if (checked) {
+            // Clear ISBN when switching to other code
+            setBookData({ ...bookData, isbn: "", other_code: "" });
+            setIsbnError("");
+        } else {
+            // Clear other code when switching to ISBN
+            setBookData({ ...bookData, other_code: "", isbn: "" });
+        }
+    };
+
+    // Validate form before submission
+    const validateForm = (): boolean => {
+        if (!isNonISBN) {
+            // If not non-ISBN, ISBN is required and must be valid
+            if (!bookData.isbn || bookData.isbn.trim() === '') {
+                setIsbnError("ISBN is required");
+                return false;
+            }
+            if (!validateISBN(bookData.isbn)) {
+                setIsbnError("Please enter a valid ISBN (10 or 13 digits)");
+                return false;
+            }
+        } else {
+            // If non-ISBN, other_code is required
+            if (!bookData.other_code || bookData.other_code.trim() === '') {
+                toast.error("Other code is required for non-ISBN books");
+                return false;
+            }
+        }
+        return true;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        // Validate form
+        if (!validateForm()) {
+            return;
+        }
+
         setLoading(true);
 
         try {
             if (isEditMode && editBookId) {
                 // Direct update for edit mode
-                const response = await fetch(`http://localhost:8000/api/books/${editBookId}`, {
+                const response = await fetch(`${API_URL}/api/books/${editBookId}`, {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
@@ -155,10 +276,10 @@ export default function InsertBookPage() {
 
                 const result = await response.json();
                 toast.success("Book updated successfully!");
-                router.push(`/book/${editBookId}`);
+                router.push(`/books/${editBookId}`);
             } else {
                 // Check for duplicates in create mode
-                const response = await fetch("http://localhost:8000/api/books/check", {
+                const response = await fetch(`${API_URL}/api/books/check`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -199,7 +320,7 @@ export default function InsertBookPage() {
                 pricingId: checkResponse.pricingId,
             };
 
-            const response = await fetch("http://localhost:8000/api/books", {
+            const response = await fetch(`${API_URL}/api/books`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -213,7 +334,7 @@ export default function InsertBookPage() {
 
             const result = await response.json();
             toast.success("Book operation completed successfully!");
-            router.push("/");
+            router.push("/books");
         } catch (error) {
             console.error("Error performing action:", error);
             toast.error(`Failed to ${action.toLowerCase()}`);
@@ -242,7 +363,7 @@ export default function InsertBookPage() {
                 {/* Header */}
                 <div className="mb-8">
                     <Button
-                        onClick={() => router.push(isEditMode && editBookId ? `/book/${editBookId}` : "/")}
+                        onClick={() => router.push(isEditMode && editBookId ? `/books/${editBookId}` : "/books")}
                         variant="outline"
                         className="mb-6 border-gray-300 text-gray-700 hover:bg-gray-50"
                     >
@@ -330,16 +451,51 @@ export default function InsertBookPage() {
                                     />
                                 </div>
                                 <div>
-                                    <Label htmlFor="isbn" className="text-gray-700 font-medium">ISBN</Label>
-                                    <Input
-                                        id="isbn"
-                                        value={bookData.isbn}
-                                        onChange={(e) =>
-                                            setBookData({ ...bookData, isbn: e.target.value })
-                                        }
-                                        placeholder="e.g., 978-0743273565"
-                                        className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
-                                    />
+                                    <div className="flex items-center space-x-2 mb-2">
+                                        <input
+                                            type="checkbox"
+                                            id="non-isbn"
+                                            checked={isNonISBN}
+                                            onChange={(e) => handleNonISBNToggle(e.target.checked)}
+                                            className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500 focus:ring-2"
+                                        />
+                                        <Label htmlFor="non-isbn" className="text-gray-700 font-medium">
+                                            This book doesn't have an ISBN
+                                        </Label>
+                                    </div>
+                                    
+                                    {!isNonISBN ? (
+                                        <div>
+                                            <Label htmlFor="isbn" className="text-gray-700 font-medium">
+                                                ISBN *
+                                            </Label>
+                                            <Input
+                                                id="isbn"
+                                                value={bookData.isbn}
+                                                onChange={(e) => handleISBNChange(e.target.value)}
+                                                placeholder="e.g., 978-0743273565 or 0743273567"
+                                                className={`mt-1 h-12 bg-white border-2 focus:border-amber-500 focus:ring-amber-500 rounded-xl ${
+                                                    isbnError ? 'border-red-300' : 'border-gray-200'
+                                                }`}
+                                            />
+                                            {isbnError && (
+                                                <p className="mt-1 text-sm text-red-600">{isbnError}</p>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            <Label htmlFor="other_code" className="text-gray-700 font-medium">
+                                                Other Code *
+                                            </Label>
+                                            <Input
+                                                id="other_code"
+                                                value={bookData.other_code}
+                                                onChange={(e) => handleOtherCodeChange(e.target.value)}
+                                                placeholder="e.g., Internal code, SKU, or other identifier"
+                                                className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                                 <div>
                                     <Label htmlFor="edition" className="text-gray-700 font-medium">Edition</Label>
@@ -496,7 +652,7 @@ export default function InsertBookPage() {
                             <Button
                                 type="button"
                                 variant="outline"
-                                onClick={() => router.push(isEditMode && editBookId ? `/book/${editBookId}` : "/")}
+                                onClick={() => router.push(isEditMode && editBookId ? `/books/${editBookId}` : "/books")}
                                 className="border-gray-300 text-gray-700 hover:bg-gray-50"
                             >
                                 Cancel
@@ -757,7 +913,7 @@ export default function InsertBookPage() {
                                             <div className="text-center py-4">
                                                 <p className="text-gray-600">Book and pricing are already up-to-date.</p>
                                                 <Button
-                                                    onClick={() => router.push("/")}
+                                                    onClick={() => router.push("/books")}
                                                     className="mt-4 bg-amber-600 hover:bg-amber-700"
                                                 >
                                                     Return to Home
