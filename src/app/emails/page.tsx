@@ -79,7 +79,7 @@ export default function EmailsPage() {
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-3">Email System Coming Soon</h3>
             <p className="text-gray-600 mb-6 max-w-md mx-auto">
-              We're working on a comprehensive email management system that will allow you to:
+              We&apos;re working on a comprehensive email management system that will allow you to:
             </p>
             
             <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-8">
@@ -104,7 +104,7 @@ export default function EmailsPage() {
               <h4 className="text-lg font-semibold mb-2">Stay Tuned!</h4>
               <p className="opacity-90">
                 The email management system will be available in the next update. 
-                We're building something amazing for you!
+                We&apos;re building something amazing for you!
               </p>
             </div>
           </div>

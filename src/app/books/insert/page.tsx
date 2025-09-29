@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
@@ -101,7 +101,7 @@ interface CheckResponse {
     pricingId?: string;
 }
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-export default function InsertBookPage() {
+function InsertBookPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [step, setStep] = useState<"form" | "check" | "result">("form");
@@ -460,7 +460,7 @@ export default function InsertBookPage() {
                                             className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500 focus:ring-2"
                                         />
                                         <Label htmlFor="non-isbn" className="text-gray-700 font-medium">
-                                            This book doesn't have an ISBN
+                                            This book doesn&apos;t have an ISBN
                                         </Label>
                                     </div>
                                     
@@ -935,5 +935,19 @@ export default function InsertBookPage() {
             {step === "form" && renderForm()}
             {step === "check" && renderCheckResult()}
         </>
+    );
+}
+
+export default function InsertBookPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 flex items-center justify-center">
+            <div className="bg-white shadow-lg rounded-2xl p-8">
+                <div className="flex justify-center items-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
+                </div>
+            </div>
+        </div>}>
+            <InsertBookPageContent />
+        </Suspense>
     );
 }

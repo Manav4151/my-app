@@ -6,10 +6,10 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { BookOpen, LogOut, Plus, Trash2, X } from "lucide-react";
+import { Plus, Trash2, X } from "lucide-react";
 import { useAuth } from "../components/auth-context";
 import { toast } from "sonner";
-import { json } from "zod";
+import ExcelImport from "../components/excel-import";
 
 // Define the data type based on API response
 interface Book {
@@ -124,7 +124,7 @@ const deleteBooks = async (bookIds: string[]): Promise<{ success: boolean; messa
   // });
 };
 export default function Home() {
-  const { session, logout, pending } = useAuth();
+  const { session, pending } = useAuth();
   const router = useRouter();
   const [data, setData] = useState<ApiResponse | null>(null);
   const [page, setPage] = useState(1);
@@ -170,11 +170,13 @@ export default function Home() {
   // Place this alongside your other functions like applyFilters, clearFilters, etc.
 
   const loadData = useCallback(async () => {
+    console.log('🔄 Refreshing books data...');
     setLoading(true);
     setError(null);
     try {
       const response = await fetchData(page, limit, appliedFilters);
       setData(response);
+      console.log('✅ Books data refreshed successfully:', response.pagination.totalBooks, 'total books');
     } catch (error) {
       console.error("Error fetching data:", error);
       setError(error instanceof Error ? error.message : "Failed to fetch books");
@@ -310,13 +312,16 @@ export default function Home() {
               <p className="text-gray-600">Manage your digital library and book collection</p>
             </div>
             {session && (
-              <Button
-                onClick={() => router.push('/books/insert')}
-                className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Insert Book
-              </Button>
+              <div className="flex gap-3">
+                <ExcelImport onImportComplete={loadData} />
+                <Button
+                  onClick={() => router.push('/books/insert')}
+                  className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Insert Book
+                </Button>
+              </div>
             )}
           </div>
         </div>

@@ -79,7 +79,7 @@ export default function QuotationPage() {
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-3">Quotation System Coming Soon</h3>
             <p className="text-gray-600 mb-6 max-w-md mx-auto">
-              We're developing a powerful quotation management system that will help you:
+              We&apos;re developing a powerful quotation management system that will help you:
             </p>
             
             <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-8">

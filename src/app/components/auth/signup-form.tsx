@@ -43,6 +43,7 @@ export function SignUpForm() {
                 email: values.email,
                 password: values.password,
                 name: values.name,
+                languages: [],
             },
             {
                 onSuccess: async () => {
