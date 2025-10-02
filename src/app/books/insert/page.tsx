@@ -100,7 +100,7 @@ interface CheckResponse {
     bookId?: string;
     pricingId?: string;
 }
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
 function InsertBookPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();

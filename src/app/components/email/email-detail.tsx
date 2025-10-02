@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Mail, Paperclip, Download, ArrowLeft, User, Calendar, FileText } from "lucide-react";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
-
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
 interface EmailDetail {
   uid: string;
   from: string;
@@ -39,7 +39,7 @@ export default function EmailDetail({ emailUid, onBack }: EmailDetailProps) {
   const fetchEmailDetail = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:8000/api/emails/${emailUid}`);
+      const response = await fetch(`${API_URL}/api/emails/${emailUid}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch email details');
@@ -57,7 +57,7 @@ export default function EmailDetail({ emailUid, onBack }: EmailDetailProps) {
 
   const downloadAttachment = async (filename: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/emails/${emailUid}/attachments/${filename}`);
+      const response = await fetch(`${API_URL}/api/emails/${emailUid}/attachments/${filename}`);
       
       if (!response.ok) {
         throw new Error('Failed to download attachment');

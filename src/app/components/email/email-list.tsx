@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Mail, Paperclip, Clock } from "lucide-react";
 import { Button } from "../ui/button";
-
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";   
 interface Email {
   uid: number;
   from: string;
@@ -28,7 +28,7 @@ export default function EmailList({ onEmailSelect, selectedEmailUid }: EmailList
   const fetchEmails = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8000/api/emails');
+      const response = await fetch(`${API_URL}/api/emails`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch emails');

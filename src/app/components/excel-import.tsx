@@ -62,7 +62,7 @@ interface ImportResult {
 interface ExcelImportProps {
   onImportComplete?: () => void;
 }
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
 
 export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
   const [isOpen, setIsOpen] = useState(false);

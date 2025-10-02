@@ -67,7 +67,7 @@ export default function BookDetailPage() {
     const router = useRouter();
     const params = useParams();
     const bookId = params.id as string;
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
     const [bookData, setBookData] = useState<BookDetailResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);

@@ -6,7 +6,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { Label } from "../ui/label";
-
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
 interface ComposeEmailProps {
   onClose: () => void;
   onEmailSent?: () => void;
@@ -64,7 +64,7 @@ export default function ComposeEmail({ onClose, onEmailSent }: ComposeEmailProps
         formDataToSend.append('attachment', attachment);
       }
 
-      const response = await fetch('http://localhost:8000/api/emails/send', {
+      const response = await fetch(`${API_URL}/api/emails/send`, {
         method: 'POST',
         body: formDataToSend,
       });

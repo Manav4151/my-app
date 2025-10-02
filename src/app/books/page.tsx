@@ -10,7 +10,9 @@ import { Plus, Trash2, X } from "lucide-react";
 import { useAuth } from "../components/auth-context";
 import { toast } from "sonner";
 import ExcelImport from "../components/excel-import";
-
+import { env } from "process";
+const API_URL = env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
+console.log("API_URL", API_URL);
 // Define the data type based on API response
 interface Book {
   _id: string;
@@ -68,7 +70,7 @@ const fetchData = async (page: number = 1, limit: number = 10, filters: Filters 
   if (filters.classification) params.set('classification', filters.classification);
   if (filters.publisher_name) params.set('publisher_name', filters.publisher_name);
 
-  const response = await fetch(`http://localhost:8000/api/books?${params.toString()}`);
+  const response = await fetch(`${API_URL}/api/books?${params.toString()}`);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch books: ${response.status} ${response.statusText}`);
@@ -88,7 +90,7 @@ const deleteBooks = async (bookIds: string[]): Promise<{ success: boolean; messa
   console.log("Deleting books with IDs:", bookIds);
 
   try {
-    const response = await fetch('http://localhost:8000/api/books/bulk', {
+    const response = await fetch(`${API_URL}/api/books/bulk`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
