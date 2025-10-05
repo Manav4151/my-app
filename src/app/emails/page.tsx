@@ -1,25 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Send, RefreshCw, Inbox, Star, FileText, Send as SendIcon } from "lucide-react";
+import { Send, RefreshCw, Inbox } from "lucide-react";
 import { Button } from "../components/ui/button";
 import EmailList from "../components/email/email-list";
-import EmailDetail from "../components/email/email-detail";
 import ComposeEmail from "../components/email/compose-email";
 
 export default function EmailsPage() {
-  const [selectedEmailUid, setSelectedEmailUid] = useState<number | null>(null);
   const [showCompose, setShowCompose] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [activeTab, setActiveTab] = useState("inbox");
-
-  const handleEmailSelect = (email: any) => {
-    setSelectedEmailUid(email.uid);
-  };
-
-  const handleBackToList = () => {
-    setSelectedEmailUid(null);
-  };
 
   const handleComposeClose = () => {
     setShowCompose(false);
@@ -54,11 +44,10 @@ export default function EmailsPage() {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                      activeTab === tab.id
-                        ? "border-amber-300 text-amber-700"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                    }`}
+                    className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
+                      ? "border-amber-300 text-amber-700"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      }`}
                   >
                     <Icon className="w-4 h-4" />
                     <span>{tab.label}</span>
@@ -93,24 +82,14 @@ export default function EmailsPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        {!selectedEmailUid ? (
-          <div key={refreshTrigger}>
-            <EmailList 
-              onEmailSelect={handleEmailSelect} 
-              selectedEmailUid={selectedEmailUid || undefined}
-            />
-          </div>
-        ) : (
-          <EmailDetail 
-            emailUid={selectedEmailUid} 
-            onBack={handleBackToList}
-          />
-        )}
+        <div key={refreshTrigger}>
+          <EmailList />
+        </div>
       </div>
 
       {/* Compose Email Modal */}
       {showCompose && (
-        <ComposeEmail 
+        <ComposeEmail
           onClose={handleComposeClose}
           onEmailSent={handleEmailSent}
         />
