@@ -16,13 +16,14 @@ import {
   FormMessage,
 } from "@/app/components/ui/form";
 import { toast } from "sonner";
-import { Loader2, Mail, Lock, BookOpen } from "lucide-react";
+import { Loader2, Mail, Lock, BookOpen, Eye, EyeOff } from "lucide-react";
 import { loginSchema } from "@/lib/zod-schema";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/components/auth-context";
 
 export function LoginForm() {
   const [isLoading, setIsLoading] = React.useState(false);
+  const [showPassword, setShowPassword] = React.useState(false);
   const router = useRouter();
   const { login } = useAuth(); // <-- use login from context
   const form = useForm<z.infer<typeof loginSchema>>({
@@ -106,12 +107,23 @@ export function LoginForm() {
                   <div className="relative group">
                     <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-amber-500 transition-colors" />
                     <Input
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       autoComplete="current-password"
                       placeholder="Enter your password"
-                      className="pl-12 h-12 bg-gray-50 border-2 border-gray-200 text-gray-900 placeholder:text-gray-500 focus:border-amber-500 focus:ring-amber-500 focus:bg-white transition-all duration-200 rounded-xl"
+                      className="pl-12 pr-12 h-12 bg-gray-50 border-2 border-gray-200 text-gray-900 placeholder:text-gray-500 focus:border-amber-500 focus:ring-amber-500 focus:bg-white transition-all duration-200 rounded-xl"
                       {...field}
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-amber-500 transition-colors focus:outline-none"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-5 w-5" />
+                      ) : (
+                        <Eye className="h-5 w-5" />
+                      )}
+                    </button>
                   </div>
                 </FormControl>
                 <FormMessage className="text-red-600 text-sm" />

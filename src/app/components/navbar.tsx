@@ -12,6 +12,16 @@ export default function Navbar() {
   const pathname = usePathname();
   const { session, logout } = useAuth();
 
+  // Hide navbar on auth pages
+  const isAuthPage = pathname.startsWith('/login') || 
+                    pathname.startsWith('/signup') || 
+                    pathname.startsWith('/forget-password') || 
+                    pathname.startsWith('/reset-password');
+
+  if (isAuthPage) {
+    return null;
+  }
+
   const navigation = [
     { name: "Home", href: "/", icon: Home },
     { name: "Books", href: "/books", icon: BookOpen },

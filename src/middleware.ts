@@ -20,11 +20,9 @@ export function middleware(request: NextRequest) {
 
   const protectedRoutes = [
     "/",
-    "/profile",
-    "/settings",
-    "/projects",
-    "/tasks",
-    "/teams",
+    "/books",
+    "/emails",
+    "/quotation",
   ];
   const isProtected = protectedRoutes.some((route) =>
     pathname.startsWith(route)

@@ -10,8 +10,8 @@ import { Plus, Trash2, X } from "lucide-react";
 import { useAuth } from "../components/auth-context";
 import { toast } from "sonner";
 import ExcelImport from "../components/excel-import";
-import { env } from "process";
-const API_URL = env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
 console.log("API_URL", API_URL);
 // Define the data type based on API response
 interface Book {

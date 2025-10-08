@@ -12,10 +12,7 @@ import { BookOpen, ArrowLeft, CheckCircle, AlertTriangle, Info, Loader2 } from "
 import { toast } from "sonner";
 
 // ISBN validation functions
-const validateISBN10 = (isbn: string): boolean => {
-    // Remove hyphens and spaces
-    const cleanISBN = isbn.replace(/[-\s]/g, '');
-    
+const validateISBN10 = (cleanISBN: string): boolean => {
     // Check if it's exactly 10 characters
     if (cleanISBN.length !== 10) return false;
     
@@ -35,10 +32,7 @@ const validateISBN10 = (isbn: string): boolean => {
     return sum % 11 === 0;
 };
 
-const validateISBN13 = (isbn: string): boolean => {
-    // Remove hyphens and spaces
-    const cleanISBN = isbn.replace(/[-\s]/g, '');
-    
+const validateISBN13 = (cleanISBN: string): boolean => {
     // Check if it's exactly 13 characters and all digits
     if (cleanISBN.length !== 13 || !/^\d{13}$/.test(cleanISBN)) return false;
     
@@ -60,12 +54,18 @@ const validateISBN = (isbn: string): boolean => {
     
     // Check if it's ISBN-10 or ISBN-13
     if (cleanISBN.length === 10) {
-        return validateISBN10(isbn);
+        return validateISBN10(cleanISBN);
     } else if (cleanISBN.length === 13) {
-        return validateISBN13(isbn);
+        return validateISBN13(cleanISBN);
     }
     
     return false;
+};
+
+// Helper function to normalize ISBN for comparison (removes formatting)
+const normalizeISBN = (isbn: string): string => {
+    if (!isbn) return '';
+    return isbn.replace(/[-\s]/g, '').toUpperCase();
 };
 
 // Types based on the controller
@@ -116,7 +116,7 @@ function InsertBookPageContent() {
     const [bookData, setBookData] = useState<BookData>({
         title: "",
         author: "",
-        year: new Date().getFullYear(),
+        year: 0,
         publisher_name: "",
         isbn: "",
         other_code: "",
@@ -164,7 +164,7 @@ function InsertBookPageContent() {
                 setBookData({
                     title: result.book.title || "",
                     author: result.book.author || "",
-                    year: result.book.year || new Date().getFullYear(),
+                    year: result.book.year || 0,
                     publisher_name: result.book.publisher_name || "",
                     isbn: result.book.isbn || "",
                     other_code: result.book.other_code || "",
@@ -198,7 +198,10 @@ function InsertBookPageContent() {
 
     // Handle ISBN validation
     const handleISBNChange = (value: string) => {
-        setBookData({ ...bookData, isbn: value });
+        // Store the normalized version (without hyphens/spaces) for consistency
+        const normalizedISBN = normalizeISBN(value);
+        setBookData({ ...bookData, isbn: normalizedISBN });
+        
         if (value && !validateISBN(value)) {
             setIsbnError("Please enter a valid ISBN (10 or 13 digits)");
         } else {
@@ -232,6 +235,7 @@ function InsertBookPageContent() {
                 setIsbnError("ISBN is required");
                 return false;
             }
+            // Validate the normalized ISBN
             if (!validateISBN(bookData.isbn)) {
                 setIsbnError("Please enter a valid ISBN (10 or 13 digits)");
                 return false;
@@ -423,17 +427,25 @@ function InsertBookPageContent() {
                                     />
                                 </div>
                                 <div>
-                                    <Label htmlFor="year" className="text-gray-700 font-medium">Publication Year *</Label>
+                                    <Label htmlFor="year" className="text-gray-700 font-medium">Publication Year</Label>
                                     <Input
                                         id="year"
                                         type="number"
-                                        value={bookData.year}
-                                        onChange={(e) =>
-                                            setBookData({ ...bookData, year: parseInt(e.target.value) })
-                                        }
-                                        required
+                                        value={bookData.year || ''}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            if (value === '') {
+                                                setBookData({ ...bookData, year: 0 });
+                                            } else {
+                                                const numValue = parseInt(value);
+                                                if (!isNaN(numValue) && value.length <= 4) {
+                                                    setBookData({ ...bookData, year: numValue });
+                                                }
+                                            }
+                                        }}
                                         min="1000"
                                         max={new Date().getFullYear() + 1}
+                                        placeholder="e.g., 2023"
                                         className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
                                     />
                                 </div>
@@ -528,29 +540,16 @@ function InsertBookPageContent() {
                                     </Select>
                                 </div>
                                 <div>
-                                    <Label htmlFor="classification" className="text-gray-700 font-medium">Classification *</Label>
-                                    <Select
+                                    <Label htmlFor="classification" className="text-gray-700 font-medium">Classification</Label>
+                                    <Input
+                                        id="classification"
                                         value={bookData.classification}
-                                        onValueChange={(value) =>
-                                            setBookData({ ...bookData, classification: value })
+                                        onChange={(e) =>
+                                            setBookData({ ...bookData, classification: e.target.value })
                                         }
-                                    >
-                                        <SelectTrigger className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl text-gray-900">
-                                            <SelectValue placeholder="Select classification" />
-                                        </SelectTrigger>
-                                        <SelectContent className="bg-white border-2 border-gray-200 rounded-xl shadow-lg">
-                                            <SelectItem value="Fantasy" className="text-gray-900 hover:bg-amber-50">Fantasy</SelectItem>
-                                            <SelectItem value="Classic Literature" className="text-gray-900 hover:bg-amber-50">Classic Literature</SelectItem>
-                                            <SelectItem value="Dystopian Fiction" className="text-gray-900 hover:bg-amber-50">Dystopian Fiction</SelectItem>
-                                            <SelectItem value="Science Fiction" className="text-gray-900 hover:bg-amber-50">Science Fiction</SelectItem>
-                                            <SelectItem value="Mystery" className="text-gray-900 hover:bg-amber-50">Mystery</SelectItem>
-                                            <SelectItem value="Romance" className="text-gray-900 hover:bg-amber-50">Romance</SelectItem>
-                                            <SelectItem value="Non-Fiction" className="text-gray-900 hover:bg-amber-50">Non-Fiction</SelectItem>
-                                            <SelectItem value="Biography" className="text-gray-900 hover:bg-amber-50">Biography</SelectItem>
-                                            <SelectItem value="History" className="text-gray-900 hover:bg-amber-50">History</SelectItem>
-                                            <SelectItem value="Self-Help" className="text-gray-900 hover:bg-amber-50">Self-Help</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                        placeholder="e.g., Fiction, Non-Fiction, Science, etc."
+                                        className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                                    />
                                 </div>
                                 <div className="md:col-span-2">
                                     <Label htmlFor="remarks" className="text-gray-700 font-medium">Remarks</Label>
