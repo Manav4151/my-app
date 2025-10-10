@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "./ui/button";
-import { BookOpen, Home, Mail, FileText, Menu, X, LogOut } from "lucide-react";
+import { BookOpen, Home, Mail, FileText, Menu, X, LogOut, Building } from "lucide-react";
 import { useAuth } from "./auth-context";
 
 export default function Navbar() {
@@ -27,6 +27,7 @@ export default function Navbar() {
     { name: "Books", href: "/books", icon: BookOpen },
     { name: "Emails", href: "/emails", icon: Mail },
     { name: "Quotation", href: "/quotation", icon: FileText },
+    { name: "Management", href: "/management", icon: Building },
   ];
 
   const isActive = (href: string) => {
