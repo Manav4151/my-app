@@ -38,7 +38,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const { data: session } = await authClient.getSession();
       setSession(session);
-    } catch {
+    } catch (error) {
+      console.error("Failed to fetch user session:", error);
       setSession(null);
     } finally {
       setPending(false);
@@ -65,13 +66,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             await fetchUser();
           },
           onError: (error) => {
-            throw error.error.message || error.error.statusText;
+            console.error("Login error:", error);
+            throw error.error?.message || error.error?.statusText || "Login failed";
           },
         }
       );
       return { success: true };
     } catch (error: unknown) {
-      return { success: false, error: error?.toString() || "Login failed" };
+      console.error("Login failed:", error);
+      let errorMessage = "Login failed";
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error && typeof error === 'object' && 'message' in error) {
+        errorMessage = (error as any).message;
+      }
+      
+      // Check for common network errors
+      if (errorMessage.includes('Load failed') || errorMessage.includes('fetch')) {
+        errorMessage = "Cannot connect to server. Please make sure the backend server is running.";
+      }
+      
+      return { success: false, error: errorMessage };
     }
   }, [fetchUser]);
 

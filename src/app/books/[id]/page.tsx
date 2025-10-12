@@ -67,7 +67,7 @@ export default function BookDetailPage() {
     const router = useRouter();
     const params = useParams();
     const bookId = params.id as string;
-
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
     const [bookData, setBookData] = useState<BookDetailResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -83,7 +83,7 @@ export default function BookDetailPage() {
             setLoading(true);
             setError(null);
 
-            const response = await fetch(`http://localhost:5050/api/books/${bookId}/pricing`);
+            const response = await fetch(`${API_URL}/api/books/${bookId}/pricing`);
 
             if (!response.ok) {
                 const errorText = await response.text();
@@ -156,7 +156,7 @@ export default function BookDetailPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 flex items-center justify-center">
+            <div className="min-h-screen  flex items-center justify-center">
                 <div className="bg-white shadow-lg rounded-2xl p-8">
                     <div className="flex justify-center items-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
@@ -168,12 +168,12 @@ export default function BookDetailPage() {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 flex items-center justify-center">
+            <div className="min-h-screen  flex items-center justify-center">
                 <div className="bg-white shadow-lg rounded-2xl p-8 max-w-md">
                     <div className="text-center">
                         <p className="text-red-600 mb-4">Error: {error}</p>
                         <div className="flex gap-3 justify-center">
-                            <Button onClick={() => router.push("/")} variant="outline">
+                            <Button onClick={() => router.push("/books")} variant="outline">
                                 Back to Home
                             </Button>
                             <Button onClick={fetchBookDetails} className="bg-amber-600 hover:bg-amber-700">
@@ -188,7 +188,7 @@ export default function BookDetailPage() {
 
     if (!bookData) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 flex items-center justify-center">
+            <div className="min-h-screen  flex items-center justify-center">
                 <div className="bg-white shadow-lg rounded-2xl p-8">
                     <p className="text-gray-500">No book data available</p>
                 </div>
@@ -199,38 +199,36 @@ export default function BookDetailPage() {
     const { book, pricing, statistics } = bookData;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50">
-            {/* Header */}
-            <div className="bg-white shadow-sm border-b border-amber-100">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="min-h-screen ">
+            {/* Main Content */}
+            <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+                {/* Page Header */}
+                <div className="mb-8">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                            <Button
-                                onClick={() => router.push("/")}
+                            {/* <Button
+                                onClick={() => router.push("/books")}
                                 variant="outline"
                                 className="border-gray-300 text-gray-700 hover:bg-gray-50"
                             >
                                 <ArrowLeft className="w-4 h-4 mr-2" />
-                                Back to Home
-                            </Button>
-                            <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center">
-                                <BookOpen className="w-6 h-6 text-white" />
-                            </div>
+                                Back to Books
+                            </Button> */}
                             <div>
-                                <h1 className="text-2xl font-bold text-gray-900">Book Details</h1>
-                                <p className="text-sm text-gray-600">Complete book information and pricing</p>
+                                <h1 className="text-3xl font-bold text-gray-900">Book Details</h1>
+                                <p className="text-gray-600">Complete book information and pricing</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
                             <Button
-                                onClick={() => router.push(`/insert?edit=${bookId}`)}
+                                onClick={() => router.push(`/books/insert?edit=${bookId}`)}
                                 className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white"
                             >
                                 <Edit className="w-4 h-4 mr-2" />
                                 Edit Book
                             </Button>
                             <Button
-                                onClick={() => router.push("/insert")}
+                                onClick={() => router.push("/books/insert")}
                                 className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
                             >
                                 <Plus className="w-4 h-4 mr-2" />
@@ -239,15 +237,12 @@ export default function BookDetailPage() {
                         </div>
                     </div>
                 </div>
-            </div>
-
-            {/* Main Content */}
-            <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
                 <div className="space-y-8">
                     {/* Book Information */}
                     {/* Book Information Card */}
                     <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-8">
                         <div className="flex flex-col md:flex-row justify-between md:items-start gap-4 mb-6">
+
                             <div>
                                 <h1 className="text-3xl font-bold text-slate-900">{book.title}</h1>
                                 <p className="text-lg text-slate-600 mt-1">by {book.author}</p>
@@ -289,24 +284,26 @@ export default function BookDetailPage() {
                                 <p className="text-slate-600 text-sm leading-relaxed">{book.remarks}</p>
                             </div>
                         )}
-                    </section>
 
-                    {/* Pricing Section */}
-                    <section>
-                        <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2"><DollarSign className="w-5 h-5 text-green-600" /> Pricing Analysis</h2>
+                        <div className="border-t border-slate-200 my-6"></div>
+                        {/* Pricing Section */}
+
+                        <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2"> Pricing Analysis</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
 
-                            {/* Pricing Overview */}
-                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                                <h3 className="font-semibold text-slate-800 mb-4">Overview</h3>
-                                <div className="space-y-3">
-                                    <div className="flex justify-between items-center text-sm"><span className="text-slate-600">Total Sources</span><span className="font-medium text-slate-800">{statistics.totalSources}</span></div>
-                                    <div className="flex justify-between items-center text-sm"><span className="text-slate-600">Average Price</span><span className="font-medium text-slate-800">{formatPrice(statistics.averageRate, pricing[0]?.currency || 'USD')}</span></div>
-                                    <div className="flex justify-between items-center text-sm"><span className="text-slate-600">Price Range</span><span className="font-medium text-slate-800">{formatPrice(statistics.minRate, pricing[0]?.currency || 'USD')} - {formatPrice(statistics.maxRate, pricing[0]?.currency || 'USD')}</span></div>
-                                    <div className="flex justify-between items-center text-sm"><span className="text-slate-600">Avg. Discount</span><span className="font-medium text-slate-800">{statistics.averageDiscount.toFixed(1)}%</span></div>
+
+                                {/* Pricing Overview */}
+                                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 transition-all hover:border-slate-300 hover:shadow-md">
+                                    <h3 className="font-semibold text-slate-800 mb-4">Overview</h3>
+                                    <div className="space-y-">
+                                        <div className="items-center text-sm grid grid-cols-2 gap-6 "><span className="text-slate-600">Total Sources</span><span className="font-medium text-slate-800">{statistics.totalSources}</span></div>
+                                        <div className=" items-center text-sm grid grid-cols-2 gap-6"><span className="text-slate-600">Average Price</span><span className="font-medium text-slate-800">{formatPrice(statistics.averageRate, pricing[0]?.currency || 'USD')}</span></div>
+                                        <div className="flex items-center text-sm grid grid-cols-2 gap-6"><span className="text-slate-600">Price Range</span><span className="font-medium text-slate-800">{formatPrice(statistics.minRate, pricing[0]?.currency || 'USD')} - {formatPrice(statistics.maxRate, pricing[0]?.currency || 'USD')}</span></div>
+                                        <div className="flex  items-center text-sm grid grid-cols-2 gap-6"><span className="text-slate-600">Avg. Discount</span><span className="font-medium text-slate-800">{statistics.averageDiscount.toFixed(1)}%</span></div>
+                                    </div>
                                 </div>
                             </div>
-
                             {/* Pricing Sources */}
                             <div className="space-y-4">
                                 {pricing.length > 0 ? (
@@ -341,7 +338,7 @@ export default function BookDetailPage() {
                                 ) : (
                                     <div className="bg-white text-center py-10 px-6 rounded-xl shadow-sm border border-slate-200">
                                         <p className="text-slate-500 mb-4">No pricing information available for this book.</p>
-                                        <Button onClick={() => router.push(`/insert?bookId=${bookId}`)}>
+                                        <Button onClick={() => router.push(`/books/insert?bookId=${bookId}`)}>
                                             <Plus className="w-4 h-4 mr-2" />
                                             Add Pricing Info
                                         </Button>
