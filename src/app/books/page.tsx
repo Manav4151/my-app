@@ -267,7 +267,7 @@ export default function Home() {
   // Render loading state
   if (loading || pending) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="bg-white shadow-lg rounded-2xl p-8">
           <div className="flex justify-center items-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
@@ -279,7 +279,7 @@ export default function Home() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="bg-white shadow-lg rounded-2xl p-8 max-w-md">
           <div className="text-center">
             <p className="text-red-600 mb-4">Error: {error}</p>
@@ -294,7 +294,7 @@ export default function Home() {
 
   if (!data) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 flex items-center justify-center">
+      <div className="min-h-screen bflex items-center justify-center">
         <div className="bg-white shadow-lg rounded-2xl p-8">
           <p className="text-gray-500">No data available</p>
         </div>
@@ -303,7 +303,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50">
+    <div className="min-h-screen ">
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}

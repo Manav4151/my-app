@@ -40,23 +40,23 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50">
+    <div className="min-h-screen ">
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center">
           <div className="w-20 h-20 bg-gradient-to-br from-amber-500 to-orange-600 rounded-3xl flex items-center justify-center mx-auto mb-6">
             <BookOpen className="w-10 h-10 text-white" />
           </div>
-          
+
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
             Welcome to{" "}
             <span className="bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
               BookManager
             </span>
           </h1>
-          
+
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            A comprehensive book management system designed to streamline your inventory, 
+            A comprehensive book management system designed to streamline your inventory,
             track pricing, and manage your book collection with ease.
           </p>
 

@@ -156,7 +156,7 @@ export default function BookDetailPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 flex items-center justify-center">
+            <div className="min-h-screen  flex items-center justify-center">
                 <div className="bg-white shadow-lg rounded-2xl p-8">
                     <div className="flex justify-center items-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
@@ -168,7 +168,7 @@ export default function BookDetailPage() {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 flex items-center justify-center">
+            <div className="min-h-screen  flex items-center justify-center">
                 <div className="bg-white shadow-lg rounded-2xl p-8 max-w-md">
                     <div className="text-center">
                         <p className="text-red-600 mb-4">Error: {error}</p>
@@ -188,7 +188,7 @@ export default function BookDetailPage() {
 
     if (!bookData) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 flex items-center justify-center">
+            <div className="min-h-screen  flex items-center justify-center">
                 <div className="bg-white shadow-lg rounded-2xl p-8">
                     <p className="text-gray-500">No book data available</p>
                 </div>
@@ -199,21 +199,21 @@ export default function BookDetailPage() {
     const { book, pricing, statistics } = bookData;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50">
+        <div className="min-h-screen ">
             {/* Main Content */}
             <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
                 {/* Page Header */}
                 <div className="mb-8">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                            <Button
+                            {/* <Button
                                 onClick={() => router.push("/books")}
                                 variant="outline"
                                 className="border-gray-300 text-gray-700 hover:bg-gray-50"
                             >
                                 <ArrowLeft className="w-4 h-4 mr-2" />
                                 Back to Books
-                            </Button>
+                            </Button> */}
                             <div>
                                 <h1 className="text-3xl font-bold text-gray-900">Book Details</h1>
                                 <p className="text-gray-600">Complete book information and pricing</p>
@@ -242,6 +242,7 @@ export default function BookDetailPage() {
                     {/* Book Information Card */}
                     <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-8">
                         <div className="flex flex-col md:flex-row justify-between md:items-start gap-4 mb-6">
+
                             <div>
                                 <h1 className="text-3xl font-bold text-slate-900">{book.title}</h1>
                                 <p className="text-lg text-slate-600 mt-1">by {book.author}</p>
@@ -283,24 +284,26 @@ export default function BookDetailPage() {
                                 <p className="text-slate-600 text-sm leading-relaxed">{book.remarks}</p>
                             </div>
                         )}
-                    </section>
 
-                    {/* Pricing Section */}
-                    <section>
-                        <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2"><DollarSign className="w-5 h-5 text-green-600" /> Pricing Analysis</h2>
+                        <div className="border-t border-slate-200 my-6"></div>
+                        {/* Pricing Section */}
+
+                        <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2"> Pricing Analysis</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
 
-                            {/* Pricing Overview */}
-                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                                <h3 className="font-semibold text-slate-800 mb-4">Overview</h3>
-                                <div className="space-y-3">
-                                    <div className="flex justify-between items-center text-sm"><span className="text-slate-600">Total Sources</span><span className="font-medium text-slate-800">{statistics.totalSources}</span></div>
-                                    <div className="flex justify-between items-center text-sm"><span className="text-slate-600">Average Price</span><span className="font-medium text-slate-800">{formatPrice(statistics.averageRate, pricing[0]?.currency || 'USD')}</span></div>
-                                    <div className="flex justify-between items-center text-sm"><span className="text-slate-600">Price Range</span><span className="font-medium text-slate-800">{formatPrice(statistics.minRate, pricing[0]?.currency || 'USD')} - {formatPrice(statistics.maxRate, pricing[0]?.currency || 'USD')}</span></div>
-                                    <div className="flex justify-between items-center text-sm"><span className="text-slate-600">Avg. Discount</span><span className="font-medium text-slate-800">{statistics.averageDiscount.toFixed(1)}%</span></div>
+
+                                {/* Pricing Overview */}
+                                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 transition-all hover:border-slate-300 hover:shadow-md">
+                                    <h3 className="font-semibold text-slate-800 mb-4">Overview</h3>
+                                    <div className="space-y-">
+                                        <div className="items-center text-sm grid grid-cols-2 gap-6 "><span className="text-slate-600">Total Sources</span><span className="font-medium text-slate-800">{statistics.totalSources}</span></div>
+                                        <div className=" items-center text-sm grid grid-cols-2 gap-6"><span className="text-slate-600">Average Price</span><span className="font-medium text-slate-800">{formatPrice(statistics.averageRate, pricing[0]?.currency || 'USD')}</span></div>
+                                        <div className="flex items-center text-sm grid grid-cols-2 gap-6"><span className="text-slate-600">Price Range</span><span className="font-medium text-slate-800">{formatPrice(statistics.minRate, pricing[0]?.currency || 'USD')} - {formatPrice(statistics.maxRate, pricing[0]?.currency || 'USD')}</span></div>
+                                        <div className="flex  items-center text-sm grid grid-cols-2 gap-6"><span className="text-slate-600">Avg. Discount</span><span className="font-medium text-slate-800">{statistics.averageDiscount.toFixed(1)}%</span></div>
+                                    </div>
                                 </div>
                             </div>
-
                             {/* Pricing Sources */}
                             <div className="space-y-4">
                                 {pricing.length > 0 ? (
