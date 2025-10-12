@@ -19,6 +19,7 @@ interface Book {
   title: string;
   author: string;
   year: number;
+  publisher: { name: string };
   publisher_name: string;
   isbn?: string;
   binding_type: string;
@@ -510,7 +511,8 @@ export default function Home() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.author}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.year}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.publisher_name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.publisher_name || book.publisher.name}</td>
+
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
                           {book.price && typeof book.price === 'number' ? `$${book.price.toFixed(2)}` : 'N/A'}
                         </td>

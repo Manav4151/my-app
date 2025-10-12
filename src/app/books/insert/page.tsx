@@ -10,7 +10,7 @@ import { Textarea } from "@/app/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
 import { BookOpen, ArrowLeft, CheckCircle, AlertTriangle, Info, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { debounce } from 'lodash';
+import { debounce, set } from 'lodash';
 // ISBN validation functions
 const validateISBN10 = (cleanISBN: string): boolean => {
     // Check if it's exactly 10 characters
@@ -93,6 +93,9 @@ interface PricingData {
     currency: string;
 }
 
+interface PublisherData {
+    name: string;
+}
 interface CheckResponse {
     status: "NEW" | "DUPLICATE" | "CONFLICT" | "AUTHOR_CONFLICT";
     message: string;
@@ -131,7 +134,11 @@ function InsertBookPageContent() {
         classification: "",
         remarks: "",
     });
-
+    const [publisherData, setPublisherData] = useState<PublisherData>(
+        {
+            name: "",
+        }
+    );
     const [pricingData, setPricingData] = useState<PricingData>({
         source: "",
         rate: 0,
@@ -249,6 +256,7 @@ function InsertBookPageContent() {
     const handlePublisherChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newPublisherName = e.target.value;
         setBookData({ ...bookData, publisher_name: newPublisherName });
+        setPublisherData({ name: newPublisherName });
         debouncedFetchPublisherSuggestions(newPublisherName);
     };
 
@@ -265,6 +273,7 @@ function InsertBookPageContent() {
 
     const handlePublisherSuggestionClick = (publisher: PublisherSuggestion) => {
         setBookData({ ...bookData, publisher_name: publisher.name });
+        setPublisherData({ name: publisher.name });
         setPublisherSuggestions([]);
     };
     // Handle ISBN validation
@@ -354,6 +363,8 @@ function InsertBookPageContent() {
                 toast.success("Book updated successfully!");
                 router.push(`/books/${editBookId}`);
             } else {
+                console.log("Publisher data in check", publisherData);
+
                 // Check for duplicates in create mode
                 const response = await fetch(`${API_URL}/api/books/check`, {
                     method: "POST",
@@ -363,6 +374,7 @@ function InsertBookPageContent() {
                     body: JSON.stringify({
                         bookData,
                         pricingData,
+                        publisherData,
                     }),
                 });
 
@@ -387,9 +399,12 @@ function InsertBookPageContent() {
 
         setLoading(true);
         try {
+            console.log("publisher data", publisherData);
+
             const payload = {
                 bookData,
                 pricingData,
+                publisherData,
                 status: checkResponse.status,
                 pricingAction: action,
                 bookId: checkResponse.bookId,
