@@ -239,6 +239,14 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
     }
   };
 
+  const downloadSampleTemplate = () => {
+    const sampleUrl = `${API_URL}/public/sample-books-template-2025-09-29.xlsx`;
+    const link = document.createElement('a');
+    link.href = sampleUrl;
+    link.download = 'sample-books-template.xlsx';
+    link.click();
+  };
+
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -325,6 +333,12 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
                     <p className="text-sm text-gray-500">
                       Maximum file size: 10MB
                     </p>
+                    <div className="mt-3">
+                      <Button onClick={downloadSampleTemplate} variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
+                        <Download className="w-4 h-4 mr-2" />
+                        Download Sample Template
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ) : (
