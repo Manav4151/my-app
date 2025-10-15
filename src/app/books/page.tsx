@@ -22,6 +22,7 @@ interface Book {
   publisher: { name: string };
   publisher_name: string;
   isbn?: string;
+  edition?: string;
   binding_type: string;
   classification: string;
   price?: number | null;
@@ -379,6 +380,16 @@ export default function Home() {
                   />
                 </div>
                 <div>
+                  <Label htmlFor="filter-isbn" className="text-gray-700 font-medium">ISBN</Label>
+                  <Input
+                    id="filter-isbn"
+                    placeholder="Search by isbn..."
+                    value={pendingFilters.isbn || ''}
+                    onChange={(e) => setPendingFilters((f) => ({ ...f, isbn: e.target.value }))}
+                    className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                  />
+                </div>
+                <div>
                   <Label htmlFor="filter-author" className="text-gray-700 font-medium">Author</Label>
                   <Input
                     id="filter-author"
@@ -485,10 +496,13 @@ export default function Home() {
                         </th>
                       )}
                       <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Title</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">ISBN</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Author</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Year</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Edition</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Publisher</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Price</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Price Source</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
@@ -509,13 +523,16 @@ export default function Home() {
                           <div className="text-sm font-medium text-gray-900">{book.title}</div>
                           <div className="text-sm text-gray-500">{book.classification}</div>
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.isbn || 'N/A'}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.author}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.year}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.edition || 'N/A'}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.publisher_name || book.publisher.name}</td>
 
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
                           {book.price && typeof book.price === 'number' ? `$${book.price.toFixed(2)}` : 'N/A'}
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.pricing && book.pricing.length > 0 ? book.pricing[0].source : 'N/A'}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <Button
                             onClick={() => handleViewPricing(book._id)}
