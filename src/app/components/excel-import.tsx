@@ -36,26 +36,30 @@ interface ImportResult {
   message: string;
   data?: {
     fileName: string;
+    // Updated stats per new backend response
     stats: {
-      total: number;
-      inserted: number;
-      updated: number;
-      skipped: number;
-      conflicts: number;
-      duplicates: number;
-      errors: number;
+      totalRows?: number;
+      processed?: number;
+      booksAdded?: number;
+      pricesAdded?: number;
+      pricesUpdated?: number;
+      skippedAsDuplicate?: number;
+      skippedAsConflict?: number;
+      errors?: number;
+      // Backward-compat fields (if older API is returned)
+      total?: number;
+      inserted?: number;
+      updated?: number;
+      skipped?: number;
+      conflicts?: number;
+      duplicates?: number;
     };
-    summary: {
-      totalProcessed: number;
-      successful: number;
-      failed: number;
-      conflicts: number;
-      duplicates: number;
-      errors: number;
-      skipped: number;
-    };
-    logFile: string;
-    logFileUrl: string;
+    // Optional fields from backend
+    conflictDetails?: Array<unknown>;
+    errorDetails?: Array<unknown>;
+    summary?: unknown;
+    logFile?: string;
+    logFileUrl?: string;
   };
 }
 
@@ -73,6 +77,7 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [mappingConfirmed, setMappingConfirmed] = useState(false);
+  const [resultDialogOpen, setResultDialogOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -192,6 +197,12 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
         body: formData
       });
 
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Import failed:', response.status, errorText);
+        throw new Error(`Import failed: ${response.status} ${response.statusText}`);
+      }
+
       const result: ImportResult = await response.json();
       setImportResult(result);
 
@@ -199,9 +210,20 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
         setCurrentStep('import');
         console.log('Import result:', result);
         console.log('Log file URL:', result.data?.logFileUrl);
-        
-        // Simple success message
-        toast.success(`Import completed! ${result.data?.stats.inserted} records added (new books + pricing), ${result.data?.stats.duplicates} duplicates skipped`);
+
+        // Derive counts safely from new or old fields
+        const stats = result.data?.stats || {};
+        const total = stats.totalRows ?? stats.total ?? 0;
+        const added = (stats.booksAdded ?? 0) + (stats.pricesAdded ?? 0);
+        const updated = stats.pricesUpdated ?? stats.updated ?? 0;
+        const duplicates = stats.skippedAsDuplicate ?? stats.duplicates ?? 0;
+        const conflicts = stats.skippedAsConflict ?? stats.conflicts ?? 0;
+        const errors = stats.errors ?? 0;
+
+        toast.success(`Import completed! Added: ${added}, Updated: ${updated}, Conflicts: ${conflicts}, Duplicates: ${duplicates}, Errors: ${errors}, Total: ${total}`);
+        console.log('🎉 Setting result dialog to open...');
+        setResultDialogOpen(true);
+        console.log('✅ Result dialog state set to true');
         
         console.log('🔄 Calling onImportComplete callback...');
         onImportComplete?.();
@@ -234,7 +256,7 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
     if (importResult?.data?.logFileUrl) {
       const link = document.createElement('a');
       link.href = importResult.data.logFileUrl;
-      link.download = importResult.data.logFile;
+      link.download = importResult.data.logFile || 'import-log.json';
       link.click();
     }
   };
@@ -249,6 +271,7 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
 
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white">
@@ -379,7 +402,7 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
                       <p className="text-sm text-gray-600 mt-1">
                         {validationResult.data?.validation.hasRequiredBookFields 
                           ? 'All required fields mapped' 
-                          : `Missing: ${validationResult.data?.validation.missingBookFields.join(', ')}`
+                          : `Missing: ${validationResult.data?.validation.missingBookFields?.join(', ') || 'title, author'}`
                         }
                       </p>
                     </div>
@@ -400,7 +423,7 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
                       <p className="text-sm text-gray-600 mt-1">
                         {validationResult.data?.validation.hasRequiredPricingFields 
                           ? 'All required fields mapped' 
-                          : `Missing: ${validationResult.data?.validation.missingPricingFields.join(', ')}`
+                          : `Missing: ${validationResult.data?.validation.missingPricingFields?.join(', ') || 'rate, currency'}`
                         }
                       </p>
                     </div>
@@ -422,7 +445,7 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
                             <SelectTrigger>
                               <SelectValue placeholder="Select field..." />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="bg-white border-2 border-gray-200 rounded-xl shadow-lg">
                               <SelectItem value="none">-- Skip Column --</SelectItem>
                               <SelectItem value="book_separator" disabled>--- Book Fields ---</SelectItem>
                               {availableFields.book.map((field) => (
@@ -585,5 +608,125 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
         </div>
       </DialogContent>
     </Dialog>
+    
+    {/* Results Summary Dialog - Outside main dialog */}
+    <Dialog open={resultDialogOpen} onOpenChange={setResultDialogOpen}>
+        <DialogContent className="max-w-lg p-0 overflow-hidden">
+          {/* Success Header with Icon */}
+          <div className="relative bg-gradient-to-br from-blue-50 to-indigo-50 px-8 py-12 text-center">
+            {/* Decorative Elements */}
+            <div className="absolute inset-0 overflow-hidden">
+              <div className="absolute -top-4 -right-4 w-24 h-24 bg-blue-100 rounded-full opacity-30"></div>
+              <div className="absolute top-8 -left-6 w-16 h-16 bg-indigo-100 rounded-full opacity-40"></div>
+              <div className="absolute bottom-4 right-8 w-8 h-8 bg-blue-200 rounded-full opacity-50"></div>
+              <div className="absolute top-16 left-1/4 w-4 h-4 bg-red-200 rounded-full opacity-60"></div>
+              <div className="absolute bottom-8 left-8 w-6 h-6 bg-green-200 rounded-full opacity-40"></div>
+            </div>
+            
+            {/* Success Icon */}
+            <div className="relative z-10 mx-auto w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center mb-6 shadow-lg">
+              <CheckCircle className="w-10 h-10 text-white" />
+            </div>
+            
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Import Successful!</h2>
+            <p className="text-gray-600 text-base">
+              Your Excel data has been processed and imported successfully.
+            </p>
+          </div>
+
+          {/* Results Content */}
+          <div className="px-8 py-6 bg-white">
+            {(() => {
+              const stats = importResult?.data?.stats || {};
+              const total = stats.totalRows ?? stats.total ?? 0;
+              const processed = stats.processed ?? total;
+              const booksAdded = stats.booksAdded ?? 0;
+              const pricesAdded = stats.pricesAdded ?? 0;
+              const pricesUpdated = stats.pricesUpdated ?? 0;
+              const duplicates = stats.skippedAsDuplicate ?? stats.duplicates ?? 0;
+              const conflicts = stats.skippedAsConflict ?? stats.conflicts ?? 0;
+              const errors = stats.errors ?? 0;
+              
+              return (
+                <div className="space-y-4">
+                  {/* Summary Stats */}
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                      <div className="text-2xl font-bold text-green-600">{booksAdded + pricesAdded}</div>
+                      <div className="text-sm text-green-700 font-medium">Items Added</div>
+                    </div>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                      <div className="text-2xl font-bold text-blue-600">{pricesUpdated}</div>
+                      <div className="text-sm text-blue-700 font-medium">Items Updated</div>
+                    </div>
+                  </div>
+
+                  {/* Detailed Stats */}
+                  <div className="space-y-3">
+                    <h3 className="font-semibold text-gray-900 text-lg mb-3">Import Summary</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span className="text-gray-700">Total rows processed</span>
+                        <span className="font-semibold text-gray-900">{total}</span>
+                      </div>
+                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span className="text-gray-700">Books added</span>
+                        <span className="font-semibold text-green-600">{booksAdded}</span>
+                      </div>
+                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span className="text-gray-700">Prices added</span>
+                        <span className="font-semibold text-green-600">{pricesAdded}</span>
+                      </div>
+                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span className="text-gray-700">Prices updated</span>
+                        <span className="font-semibold text-blue-600">{pricesUpdated}</span>
+                      </div>
+                      {duplicates > 0 && (
+                        <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                          <span className="text-gray-700">Duplicates skipped</span>
+                          <span className="font-semibold text-yellow-600">{duplicates}</span>
+                        </div>
+                      )}
+                      {conflicts > 0 && (
+                        <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                          <span className="text-gray-700">Conflicts</span>
+                          <span className="font-semibold text-orange-600">{conflicts}</span>
+                        </div>
+                      )}
+                      {errors > 0 && (
+                        <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                          <span className="text-gray-700">Errors</span>
+                          <span className="font-semibold text-red-600">{errors}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="px-8 py-6 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
+            {importResult?.data?.logFileUrl && (
+              <Button 
+                variant="outline" 
+                onClick={downloadLogFile}
+                className="border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download Log
+              </Button>
+            )}
+            <Button 
+              onClick={() => setResultDialogOpen(false)}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-2 rounded-full font-medium shadow-lg transition-all duration-200 hover:shadow-xl"
+            >
+              Continue
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

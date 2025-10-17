@@ -89,8 +89,8 @@ interface BookData {
     title: string;
     author: string;
     year: number;
-    publisher_name: string;
     isbn?: string;
+    nonisbn?: string;
     other_code?: string;
     edition?: string;
     binding_type: string;
@@ -110,10 +110,11 @@ interface PricingData {
 }
 
 interface PublisherData {
-    name: string;
+    publisher_name: string;
 }
 interface CheckResponse {
-    status: "NEW" | "DUPLICATE" | "CONFLICT" | "AUTHOR_CONFLICT";
+    bookStatus: "NEW" | "DUPLICATE" | "CONFLICT" | "AUTHOR_CONFLICT";
+    pricingStatus?: "ADD_PRICE" | "UPDATE_PRICE" | "NO_CHANGE";
     message: string;
     existingBook?: any;
     newData?: BookData;
@@ -122,6 +123,13 @@ interface CheckResponse {
     differences?: Array<{ field: string; existing: any; new: any }>;
     bookId?: string;
     pricingId?: string;
+    details?: {
+        conflictFields?: any;
+        existingBook?: any;
+        bookId?: string;
+        pricingId?: string;
+        differences?: any;
+    };
 }
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
 function InsertBookPageContent() {
@@ -142,7 +150,6 @@ function InsertBookPageContent() {
         title: "",
         author: "",
         year: 0,
-        publisher_name: "",
         isbn: "",
         other_code: "",
         edition: "",
@@ -152,7 +159,7 @@ function InsertBookPageContent() {
     });
     const [publisherData, setPublisherData] = useState<PublisherData>(
         {
-            name: "",
+            publisher_name: "",
         }
     );
     const [pricingData, setPricingData] = useState<PricingData>({
@@ -191,16 +198,22 @@ function InsertBookPageContent() {
             if (result.success && result.book) {
                 // Populate book data
                 setBookData({
+                  
                     title: result.book.title || "",
                     author: result.book.author || "",
                     year: result.book.year || 0,
-                    publisher_name: result.book.publisher_name || "",
                     isbn: result.book.isbn || "",
+                    
                     other_code: result.book.other_code || "",
                     edition: result.book.edition || "",
                     binding_type: result.book.binding_type || "",
                     classification: result.book.classification || "",
                     remarks: result.book.remarks || "",
+                });
+
+                // Populate publisher data separately
+                setPublisherData({
+                    publisher_name: result.book.publisher_name || "",
                 });
 
                 // Set non-ISBN checkbox based on whether other_code exists
@@ -271,8 +284,7 @@ function InsertBookPageContent() {
 
     const handlePublisherChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newPublisherName = e.target.value;
-        setBookData({ ...bookData, publisher_name: newPublisherName });
-        setPublisherData({ name: newPublisherName });
+        setPublisherData({ publisher_name: newPublisherName });
         debouncedFetchPublisherSuggestions(newPublisherName);
     };
 
@@ -288,8 +300,7 @@ function InsertBookPageContent() {
     };
 
     const handlePublisherSuggestionClick = (publisher: PublisherSuggestion) => {
-        setBookData({ ...bookData, publisher_name: publisher.name });
-        setPublisherData({ name: publisher.name });
+        setPublisherData({ publisher_name: publisher.name });
         setPublisherSuggestions([]);
     };
     // Handle ISBN validation
@@ -382,7 +393,7 @@ function InsertBookPageContent() {
                 console.log("Publisher data in check", publisherData);
 
                 // Check for duplicates in create mode
-                const response = await fetch(`${API_URL}/api/books/check`, {
+                const response = await fetch(`${API_URL}/api/books/check-duplicate`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -394,13 +405,20 @@ function InsertBookPageContent() {
                     }),
                 });
 
-                if (!response.ok) {
-                    throw new Error(`Failed to check book: ${response.status}`);
-                }
-
                 const result = await response.json();
-                setCheckResponse(result);
-                setStep("check");
+                
+                // Handle different response statuses
+                if (response.status === 409) {
+                    // Conflict response - this is expected and should be handled
+                    setCheckResponse(result);
+                    setStep("check");
+                } else if (!response.ok) {
+                    throw new Error(`Failed to check book: ${response.status}`);
+                } else {
+                    // Success response (200)
+                    setCheckResponse(result);
+                    setStep("check");
+                }
             }
         } catch (error) {
             console.error("Error processing book:", error);
@@ -421,10 +439,10 @@ function InsertBookPageContent() {
                 bookData,
                 pricingData,
                 publisherData,
-                status: checkResponse.status,
+                status: checkResponse.bookStatus,
                 pricingAction: action,
-                bookId: checkResponse.bookId,
-                pricingId: checkResponse.pricingId,
+                bookId: checkResponse.bookId || checkResponse.details?.bookId,
+                pricingId: checkResponse.pricingId || checkResponse.details?.pricingId,
             };
 
             const response = await fetch(`${API_URL}/api/books`, {
@@ -590,7 +608,7 @@ function InsertBookPageContent() {
                                         <Label htmlFor="publisher_name" className="text-gray-700 font-medium">Publisher *</Label>
                                         <Input
                                             id="publisher_name"
-                                            value={bookData.publisher_name}
+                                            value={publisherData.publisher_name}
                                             onChange={handlePublisherChange}
                                             required
                                             placeholder="e.g., Charles Scribner's Sons"
@@ -832,7 +850,11 @@ function InsertBookPageContent() {
     const renderCheckResult = () => {
         if (!checkResponse) return null;
 
-        const { status, message, existingBook, conflictFields, pricingAction, differences } = checkResponse;
+        const { bookStatus, pricingStatus, message, existingBook, conflictFields, pricingAction, differences, details } = checkResponse;
+        
+        // Map the new API response format to the expected format
+        const status = bookStatus;
+        const pricingActionFromResponse = pricingStatus;
 
         return (
             <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50">
@@ -879,11 +901,11 @@ function InsertBookPageContent() {
                         </div>
 
                         {/* Conflict Fields Display */}
-                        {conflictFields && (
+                        {(conflictFields || details?.conflictFields) && (
                             <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6">
                                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Conflict Details</h3>
                                 <div className="space-y-4">
-                                    {Object.entries(conflictFields).map(([field, data]: [string, any]) => (
+                                    {Object.entries(conflictFields || details?.conflictFields || {}).map(([field, data]: [string, any]) => (
                                         data && (
                                             <div key={field} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-yellow-50 rounded-xl">
                                                 <div>
@@ -1004,7 +1026,7 @@ function InsertBookPageContent() {
 
                                 {status === "DUPLICATE" && (
                                     <>
-                                        {pricingAction === "ADD_PRICE" && (
+                                        {(pricingAction === "ADD_PRICE" || pricingActionFromResponse === "ADD_PRICE") && (
                                             <Button
                                                 onClick={() => handleAction("ADD_PRICE")}
                                                 disabled={loading}
@@ -1023,7 +1045,7 @@ function InsertBookPageContent() {
                                                 )}
                                             </Button>
                                         )}
-                                        {pricingAction === "UPDATE_POSSIBLE" && (
+                                        {(pricingAction === "UPDATE_POSSIBLE" || pricingActionFromResponse === "UPDATE_PRICE") && (
                                             <>
                                                 <Button
                                                     onClick={() => handleAction("UPDATE_PRICE")}
@@ -1056,7 +1078,7 @@ function InsertBookPageContent() {
                                                 </Button>
                                             </>
                                         )}
-                                        {pricingAction === "NO_CHANGE" && (
+                                        {(pricingAction === "NO_CHANGE" || pricingActionFromResponse === "NO_CHANGE") && (
                                             <div className="text-center py-4">
                                                 <p className="text-gray-600">Book and pricing are already up-to-date.</p>
                                                 <Button

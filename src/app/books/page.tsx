@@ -19,7 +19,7 @@ interface Book {
   title: string;
   author: string;
   year: number;
-  publisher: { name: string };
+  publisher: { name: string } | null;
   publisher_name: string;
   isbn?: string;
   edition?: string;
@@ -63,7 +63,7 @@ type Filters = {
 };
 
 // Fetch data from the API
-const fetchData = async (page: number = 1, limit: number = 10, filters: Filters = {}): Promise<ApiResponse> => {
+const fetchData = async (page: number = 1, limit: number = 10, filters: Filters = {}, retryCount: number = 0): Promise<ApiResponse> => {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
   if (filters.title) params.set('title', filters.title);
   if (filters.author) params.set('author', filters.author);
@@ -72,15 +72,55 @@ const fetchData = async (page: number = 1, limit: number = 10, filters: Filters 
   if (filters.classification) params.set('classification', filters.classification);
   if (filters.publisher_name) params.set('publisher_name', filters.publisher_name);
 
-  const response = await fetch(`${API_URL}/api/books?${params.toString()}`);
+  const url = `${API_URL}/api/books?${params.toString()}`;
+  console.log('📡 Fetching books from:', url, retryCount > 0 ? `(retry ${retryCount})` : '');
+  
+  let response;
+  try {
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    
+    response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      method: 'GET',
+      mode: 'cors',
+      credentials: 'omit'
+    });
+    
+    clearTimeout(timeoutId);
+  } catch (networkError) {
+    console.error('🌐 Network error fetching books:', networkError);
+    
+    // Retry logic for network errors
+    if (retryCount < 3) {
+      console.log(`🔄 Retrying in ${(retryCount + 1) * 2} seconds... (attempt ${retryCount + 1}/3)`);
+      await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 2000));
+      return fetchData(page, limit, filters, retryCount + 1);
+    }
+    
+    if (networkError instanceof Error && networkError.name === 'AbortError') {
+      throw new Error('Request timeout - the server is taking too long to respond');
+    }
+    const errorMessage = networkError instanceof Error ? networkError.message : 'Unknown network error';
+    throw new Error(`Network error: ${errorMessage}`);
+  }
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch books: ${response.status} ${response.statusText}`);
+    const errorText = await response.text();
+    console.error('❌ Books API error:', response.status, response.statusText, errorText);
+    throw new Error(`Failed to fetch books: ${response.status} ${response.statusText} - ${errorText}`);
   }
 
   const data = await response.json();
+  console.log('📊 Books API response:', data);
 
   if (!data.success) {
+    console.error('❌ Books API returned error:', data.message);
     throw new Error(data.message || 'Failed to fetch books');
   }
 
@@ -178,6 +218,9 @@ export default function Home() {
     setLoading(true);
     setError(null);
     try {
+      // Add a small delay to ensure database operations are complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       const response = await fetchData(page, limit, appliedFilters);
       setData(response);
       console.log('✅ Books data refreshed successfully:', response.pagination.totalBooks, 'total books');
@@ -185,6 +228,18 @@ export default function Home() {
       console.error("Error fetching data:", error);
       setError(error instanceof Error ? error.message : "Failed to fetch books");
       toast.error("Failed to load books");
+      
+      // Retry once after a longer delay if the first attempt fails
+      try {
+        console.log('🔄 Retrying books data fetch...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        const retryResponse = await fetchData(page, limit, appliedFilters);
+        setData(retryResponse);
+        console.log('✅ Books data refreshed on retry:', retryResponse.pagination.totalBooks, 'total books');
+        setError(null);
+      } catch (retryError) {
+        console.error("Retry also failed:", retryError);
+      }
     } finally {
       setLoading(false);
     }
@@ -527,7 +582,7 @@ export default function Home() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.author}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.year}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.edition || 'N/A'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.publisher_name || book.publisher.name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.publisher?.name || 'N/A'}</td>
 
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
                           {book.price && typeof book.price === 'number' ? `$${book.price.toFixed(2)}` : 'N/A'}
