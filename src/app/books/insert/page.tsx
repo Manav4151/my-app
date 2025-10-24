@@ -96,6 +96,8 @@ interface BookData {
     binding_type: string;
     classification: string;
     remarks?: string;
+    imprint?: string; // Added field
+    publisher_exclusive?: string; // Added field
     // Added to handle populated publisher from API
     publisher?: { name: string };
 }
@@ -113,22 +115,20 @@ interface PublisherData {
     publisher_name: string;
 }
 interface CheckResponse {
-    bookStatus: "NEW" | "DUPLICATE" | "CONFLICT" | "AUTHOR_CONFLICT";
+    bookStatus: "NEW" | "DUPLICATE" | "CONFLICT";
     pricingStatus?: "ADD_PRICE" | "UPDATE_PRICE" | "NO_CHANGE";
     message: string;
-    existingBook?: any;
-    newData?: BookData;
-    conflictFields?: any;
-    pricingAction?: "ADD_PRICE" | "UPDATE_POSSIBLE" | "NO_CHANGE";
-    differences?: Array<{ field: string; existing: any; new: any }>;
-    bookId?: string;
-    pricingId?: string;
-    details?: {
-        conflictFields?: any;
+    details: {
         existingBook?: any;
         bookId?: string;
         pricingId?: string;
-        differences?: any;
+        conflictFields?: {
+            [key: string]: { old: any; new: any };
+        };
+        differences?: {
+            rate?: { old: number; new: number };
+            discount?: { old: number; new: number };
+        };
     };
 }
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
@@ -156,6 +156,8 @@ function InsertBookPageContent() {
         binding_type: "",
         classification: "",
         remarks: "",
+        imprint: "", // Added field
+        publisher_exclusive: "", // Added field
     });
     const [publisherData, setPublisherData] = useState<PublisherData>(
         {
@@ -198,17 +200,20 @@ function InsertBookPageContent() {
             if (result.success && result.book) {
                 // Populate book data
                 setBookData({
-                  
+
                     title: result.book.title || "",
                     author: result.book.author || "",
                     year: result.book.year || 0,
                     isbn: result.book.isbn || "",
-                    
+
                     other_code: result.book.other_code || "",
                     edition: result.book.edition || "",
                     binding_type: result.book.binding_type || "",
                     classification: result.book.classification || "",
                     remarks: result.book.remarks || "",
+                    imprint: result.book.imprint || "", // Added field
+                    publisher_exclusive: result.book.publisher_exclusive || "", // Added field
+
                 });
 
                 // Populate publisher data separately
@@ -406,7 +411,7 @@ function InsertBookPageContent() {
                 });
 
                 const result = await response.json();
-                
+
                 // Handle different response statuses
                 if (response.status === 409) {
                     // Conflict response - this is expected and should be handled
@@ -433,16 +438,15 @@ function InsertBookPageContent() {
 
         setLoading(true);
         try {
-            console.log("publisher data", publisherData);
-
+            // Simplified: The status is now always taken directly from the check response.
             const payload = {
                 bookData,
                 pricingData,
                 publisherData,
                 status: checkResponse.bookStatus,
                 pricingAction: action,
-                bookId: checkResponse.bookId || checkResponse.details?.bookId,
-                pricingId: checkResponse.pricingId || checkResponse.details?.pricingId,
+                bookId: checkResponse.details?.bookId,
+                pricingId: checkResponse.details?.pricingId,
             };
 
             const response = await fetch(`${API_URL}/api/books`, {
@@ -454,15 +458,22 @@ function InsertBookPageContent() {
             });
 
             if (!response.ok) {
-                throw new Error(`Failed to ${action.toLowerCase()}: ${response.status}`);
+                const errorResult = await response.json();
+                throw new Error(errorResult.message || `Failed to ${action.toLowerCase()}: ${response.status}`);
             }
 
             const result = await response.json();
-            toast.success("Book operation completed successfully!");
-            router.push("/books");
-        } catch (error) {
+            toast.success(result.message || "Book operation completed successfully!");
+
+            if (result.book?._id) {
+                router.push(`/books/${result.book._id}`);
+            } else {
+                router.push("/books");
+            }
+
+        } catch (error: any) {
             console.error("Error performing action:", error);
-            toast.error(`Failed to ${action.toLowerCase()}`);
+            toast.error(error.message || `Failed to perform action.`);
         } finally {
             setLoading(false);
         }
@@ -675,6 +686,33 @@ function InsertBookPageContent() {
                                             </div>
                                         )}
                                     </div>
+                                    {/* imprint */}
+                                    <div>
+                                        <Label htmlFor="imprint" className="text-gray-700 font-medium">Imprint</Label>
+                                        <Input
+                                            id="imprint"
+                                            value={bookData.imprint}
+                                            onChange={(e) =>
+                                                setBookData({ ...bookData, imprint: e.target.value })
+                                            }
+                                            placeholder="Imprint"
+                                            className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                                        />
+                                    </div>
+
+                                    {/* publisher_exclusive */}
+                                    <div>
+                                        <Label htmlFor="publisher_exclusive" className="text-gray-700 font-medium">Publisher Exclusive</Label>
+                                        <Input
+                                            id="publisher_exclusive"
+                                            value={bookData.publisher_exclusive}
+                                            onChange={(e) =>
+                                                setBookData({ ...bookData, publisher_exclusive: e.target.value })
+                                            }
+                                            placeholder="Publisher Exclusive"
+                                            className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                                        />
+                                    </div>
                                     <div>
                                         <Label htmlFor="edition" className="text-gray-700 font-medium">Edition</Label>
                                         <Input
@@ -850,11 +888,8 @@ function InsertBookPageContent() {
     const renderCheckResult = () => {
         if (!checkResponse) return null;
 
-        const { bookStatus, pricingStatus, message, existingBook, conflictFields, pricingAction, differences, details } = checkResponse;
-        
-        // Map the new API response format to the expected format
-        const status = bookStatus;
-        const pricingActionFromResponse = pricingStatus;
+        // Simplified Destructuring: Get everything from the new response structure
+        const { bookStatus, pricingStatus, message, details } = checkResponse;
 
         return (
             <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50">
@@ -883,34 +918,61 @@ function InsertBookPageContent() {
 
                     <div className="space-y-6">
                         {/* Status Message */}
-                        <div className={`p-6 rounded-2xl border ${status === "NEW" ? "bg-green-50 border-green-200" :
-                            status === "DUPLICATE" ? "bg-blue-50 border-blue-200" :
+                        <div className={`p-6 rounded-2xl border ${bookStatus === "NEW" ? "bg-green-50 border-green-200" :
+                            bookStatus === "DUPLICATE" ? "bg-blue-50 border-blue-200" :
                                 "bg-yellow-50 border-yellow-200"
                             }`}>
                             <div className="flex items-center gap-3 mb-2">
-                                {status === "NEW" && <CheckCircle className="w-6 h-6 text-green-600" />}
-                                {status === "DUPLICATE" && <Info className="w-6 h-6 text-blue-600" />}
-                                {(status === "CONFLICT" || status === "AUTHOR_CONFLICT") && <AlertTriangle className="w-6 h-6 text-yellow-600" />}
+                                {bookStatus === "NEW" && <CheckCircle className="w-6 h-6 text-green-600" />}
+                                {bookStatus === "DUPLICATE" && <Info className="w-6 h-6 text-blue-600" />}
+                                {bookStatus === "CONFLICT" && <AlertTriangle className="w-6 h-6 text-yellow-600" />}
                                 <h2 className="text-xl font-semibold">
-                                    {status === "NEW" && "New Book Detected"}
-                                    {status === "DUPLICATE" && "Duplicate Book Found"}
-                                    {(status === "CONFLICT" || status === "AUTHOR_CONFLICT") && "Conflict Detected"}
+                                    {bookStatus === "NEW" && "New Book Detected"}
+                                    {bookStatus === "DUPLICATE" && "Duplicate Book Found"}
+                                    {bookStatus === "CONFLICT" && "Conflict Detected"}
                                 </h2>
                             </div>
                             <p className="text-gray-700">{message}</p>
                         </div>
 
                         {/* Conflict Fields Display */}
-                        {(conflictFields || details?.conflictFields) && (
+                        {bookStatus === "CONFLICT" && details?.conflictFields && (
                             <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6">
                                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Conflict Details</h3>
                                 <div className="space-y-4">
-                                    {Object.entries(conflictFields || details?.conflictFields || {}).map(([field, data]: [string, any]) => (
+                                    {Object.entries(details.conflictFields).map(([field, data]: [string, any]) => (
                                         data && (
                                             <div key={field} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-yellow-50 rounded-xl">
                                                 <div>
                                                     <Label className="text-sm font-medium text-gray-700">Field</Label>
                                                     <p className="text-sm text-gray-900 capitalize">{field.replace('_', ' ')}</p>
+                                                </div>
+                                                <div>
+                                                    <Label className="text-sm font-medium text-gray-700">Existing Value</Label>
+                                                    <p className="text-sm text-gray-900">{String(data.old) || "N/A"}</p>
+                                                </div>
+                                                <div>
+                                                    <Label className="text-sm font-medium text-gray-700">New Value</Label>
+                                                    <p className="text-sm text-gray-900">{String(data.new) || "N/A"}</p>
+                                                </div>
+                                            </div>
+                                        )
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Pricing Differences Display */}
+                        {bookStatus === "DUPLICATE" && pricingStatus === "UPDATE_PRICE" && details?.differences && (
+                            <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6">
+                                <h3 className="text-lg font-semibold text-gray-900 mb-4">Pricing Differences</h3>
+                                <div className="space-y-4">
+                                    {Object.entries(details.differences).map(([field, data]: [string, any]) => (
+                                        data && (
+                                            <div key={field} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-blue-50 rounded-xl">
+                                                <div>
+                                                    <Label className="text-sm font-medium text-gray-700">Field</Label>
+                                                    <p className="text-sm text-gray-900 capitalize">{field}</p>
                                                 </div>
                                                 <div>
                                                     <Label className="text-sm font-medium text-gray-700">Existing Value</Label>
@@ -927,165 +989,86 @@ function InsertBookPageContent() {
                             </div>
                         )}
 
-                        {/* Pricing Differences */}
-                        {differences && differences.length > 0 && (
-                            <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-4">Pricing Differences</h3>
-                                <div className="space-y-4">
-                                    {differences.map((diff, index) => (
-                                        <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-blue-50 rounded-xl">
-                                            <div>
-                                                <Label className="text-sm font-medium text-gray-700">Field</Label>
-                                                <p className="text-sm text-gray-900 capitalize">{diff.field}</p>
-                                            </div>
-                                            <div>
-                                                <Label className="text-sm font-medium text-gray-700">Existing Value</Label>
-                                                <p className="text-sm text-gray-900">{diff.existing}</p>
-                                            </div>
-                                            <div>
-                                                <Label className="text-sm font-medium text-gray-700">New Value</Label>
-                                                <p className="text-sm text-gray-900">{diff.new}</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
                         {/* Action Buttons */}
                         <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Choose Action</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Choose Your Action</h3>
                             <div className="flex flex-wrap gap-4">
-                                {status === "NEW" && (
+
+                                {/* Case 1: NEW BOOK */}
+                                {bookStatus === "NEW" && (
                                     <Button
                                         onClick={() => handleAction("INSERT")}
                                         disabled={loading}
                                         className="h-12 px-6 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold rounded-xl"
                                     >
-                                        {loading ? (
-                                            <>
-                                                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                                Inserting...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <CheckCircle className="w-5 h-5 mr-2" />
-                                                Insert Book
-                                            </>
-                                        )}
+                                        {loading ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Inserting...</> : <><CheckCircle className="w-5 h-5 mr-2" /> Insert Book</>}
                                     </Button>
                                 )}
 
-                                {(status === "CONFLICT" || status === "AUTHOR_CONFLICT") && (
+                                {/* Case 2: CONFLICT DETECTED */}
+                                {bookStatus === "CONFLICT" && (
                                     <>
+
                                         <Button
-                                            onClick={() => handleAction("KEEP_NEW")}
-                                            disabled={loading}
-                                            className="h-12 px-6 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold rounded-xl"
-                                        >
-                                            {loading ? (
-                                                <>
-                                                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                                    Updating...
-                                                </>
-                                            ) : (
-                                                "Keep New"
-                                            )}
-                                        </Button>
-                                        <Button
-                                            onClick={() => handleAction("KEEP_OLD")}
+                                            onClick={() => setStep("form")}
                                             disabled={loading}
                                             variant="outline"
                                             className="h-12 px-6 border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl"
                                         >
-                                            {loading ? (
-                                                <>
-                                                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                                    Keeping...
-                                                </>
-                                            ) : (
-                                                "Keep Old"
-                                            )}
-                                        </Button>
-                                        <Button
-                                            onClick={() => handleAction("KEEP_BOTH")}
-                                            disabled={loading}
-                                            className="h-12 px-6 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold rounded-xl"
-                                        >
-                                            {loading ? (
-                                                <>
-                                                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                                    Creating...
-                                                </>
-                                            ) : (
-                                                "Keep Both"
-                                            )}
+                                            Discard
                                         </Button>
                                     </>
                                 )}
 
-                                {status === "DUPLICATE" && (
+                                {/* Case 3: DUPLICATE BOOK FOUND */}
+                                {bookStatus === "DUPLICATE" && (
                                     <>
-                                        {(pricingAction === "ADD_PRICE" || pricingActionFromResponse === "ADD_PRICE") && (
-                                            <Button
-                                                onClick={() => handleAction("ADD_PRICE")}
-                                                disabled={loading}
-                                                className="h-12 px-6 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold rounded-xl"
-                                            >
-                                                {loading ? (
-                                                    <>
-                                                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                                        Adding...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <CheckCircle className="w-5 h-5 mr-2" />
-                                                        Add Price
-                                                    </>
-                                                )}
-                                            </Button>
+                                        {pricingStatus === "ADD_PRICE" && (
+                                            <>
+                                                <Button
+                                                    onClick={() => handleAction("ADD_PRICE")}
+                                                    disabled={loading}
+                                                    className="h-12 px-6 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold rounded-xl"
+                                                >
+                                                    {loading ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Adding...</> : "Add Price"}
+                                                </Button>
+                                                <Button
+                                                    onClick={() => setStep("form")}
+                                                    disabled={loading}
+                                                    variant="outline"
+                                                    className="h-12 px-6 border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl"
+                                                >
+                                                    Discard
+                                                </Button>
+                                            </>
                                         )}
-                                        {(pricingAction === "UPDATE_POSSIBLE" || pricingActionFromResponse === "UPDATE_PRICE") && (
+                                        {pricingStatus === "UPDATE_PRICE" && (
                                             <>
                                                 <Button
                                                     onClick={() => handleAction("UPDATE_PRICE")}
                                                     disabled={loading}
                                                     className="h-12 px-6 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold rounded-xl"
                                                 >
-                                                    {loading ? (
-                                                        <>
-                                                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                                            Updating...
-                                                        </>
-                                                    ) : (
-                                                        "Update Price"
-                                                    )}
+                                                    {loading ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Updating...</> : "Update Price"}
                                                 </Button>
                                                 <Button
-                                                    onClick={() => handleAction("IGNORE")}
+                                                    onClick={() => setStep("form")}
                                                     disabled={loading}
                                                     variant="outline"
                                                     className="h-12 px-6 border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl"
                                                 >
-                                                    {loading ? (
-                                                        <>
-                                                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                                            Ignoring...
-                                                        </>
-                                                    ) : (
-                                                        "Keep Old"
-                                                    )}
+                                                    Discard Changes
                                                 </Button>
                                             </>
                                         )}
-                                        {(pricingAction === "NO_CHANGE" || pricingActionFromResponse === "NO_CHANGE") && (
-                                            <div className="text-center py-4">
+                                        {pricingStatus === "NO_CHANGE" && (
+                                            <div className="text-center py-4 w-full">
                                                 <p className="text-gray-600">Book and pricing are already up-to-date.</p>
                                                 <Button
                                                     onClick={() => router.push("/books")}
                                                     className="mt-4 bg-amber-600 hover:bg-amber-700"
                                                 >
-                                                    Return to Home
+                                                    Return to Book List
                                                 </Button>
                                             </div>
                                         )}
@@ -1098,7 +1081,6 @@ function InsertBookPageContent() {
             </div>
         );
     };
-
     return (
         <>
             {step === "form" && renderForm()}

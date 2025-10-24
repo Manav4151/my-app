@@ -10,6 +10,8 @@ import { Plus, Trash2, X } from "lucide-react";
 import { useAuth } from "../components/auth-context";
 import { toast } from "sonner";
 import ExcelImport from "../components/excel-import";
+import ViewOnAmazonButton from "../components/ViewOnAmazonButton";
+import SearchBookOnlineButton from "../components/ViewOnAmazonButton";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
 console.log("API_URL", API_URL);
@@ -74,13 +76,13 @@ const fetchData = async (page: number = 1, limit: number = 10, filters: Filters 
 
   const url = `${API_URL}/api/books?${params.toString()}`;
   console.log('📡 Fetching books from:', url, retryCount > 0 ? `(retry ${retryCount})` : '');
-  
+
   let response;
   try {
     // Create AbortController for timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-    
+
     response = await fetch(url, {
       signal: controller.signal,
       headers: {
@@ -91,18 +93,18 @@ const fetchData = async (page: number = 1, limit: number = 10, filters: Filters 
       mode: 'cors',
       credentials: 'omit'
     });
-    
+
     clearTimeout(timeoutId);
   } catch (networkError) {
     console.error('🌐 Network error fetching books:', networkError);
-    
+
     // Retry logic for network errors
     if (retryCount < 3) {
       console.log(`🔄 Retrying in ${(retryCount + 1) * 2} seconds... (attempt ${retryCount + 1}/3)`);
       await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 2000));
       return fetchData(page, limit, filters, retryCount + 1);
     }
-    
+
     if (networkError instanceof Error && networkError.name === 'AbortError') {
       throw new Error('Request timeout - the server is taking too long to respond');
     }
@@ -220,7 +222,7 @@ export default function Home() {
     try {
       // Add a small delay to ensure database operations are complete
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       const response = await fetchData(page, limit, appliedFilters);
       setData(response);
       console.log('✅ Books data refreshed successfully:', response.pagination.totalBooks, 'total books');
@@ -228,7 +230,7 @@ export default function Home() {
       console.error("Error fetching data:", error);
       setError(error instanceof Error ? error.message : "Failed to fetch books");
       toast.error("Failed to load books");
-      
+
       // Retry once after a longer delay if the first attempt fails
       try {
         console.log('🔄 Retrying books data fetch...');
@@ -597,6 +599,8 @@ export default function Home() {
                           >
                             View Details
                           </Button>
+                          {/* The new button that searches on Google */}
+                          <SearchBookOnlineButton book={book} />
                         </td>
                       </tr>
                     ))}

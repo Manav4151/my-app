@@ -20,7 +20,8 @@ import {
     ExternalLink,
     Clock,
     Tag,
-    Info
+    Info,
+    ShoppingCart
 } from "lucide-react";
 import { toast } from "sonner";
 interface Book {
@@ -71,7 +72,15 @@ export default function BookDetailPage() {
     const [bookData, setBookData] = useState<BookDetailResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
+    // --- PASTE THIS DUMMY DATA ---
+    const lastPurchaseData = {
+        date: "2025-09-15T10:30:00Z",
+        edition: "2022 Revised Edition",
+        price: 450.00,
+        currency: "INR",
+        customer: "Central Library",
+    };
+    // --- END OF DUMMY DATA ---
     useEffect(() => {
         if (bookId) {
             fetchBookDetails();
@@ -347,6 +356,34 @@ export default function BookDetailPage() {
                             </div>
                         </div>
                     </section>
+                    {/* --- PASTE THE NEW SECTION HERE --- */}
+                    {/* Last Purchase Information */}
+                    <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-8">
+                        <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                            <ShoppingCart className="w-5 h-5 text-amber-600" />
+                            Last Purchase Information
+                        </h2>
+
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-8">
+                            <div>
+                                <p className="text-sm text-slate-500 flex items-center gap-2"><Calendar className="w-4 h-4" /> Purchase Date</p>
+                                <p className="font-medium text-slate-800 mt-1">{formatDate(lastPurchaseData.date)}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-slate-500 flex items-center gap-2"><User className="w-4 h-4" /> Customer</p>
+                                <p className="font-medium text-slate-800 mt-1">{lastPurchaseData.customer}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-slate-500 flex items-center gap-2"><Tag className="w-4 h-4" /> Purchased Edition</p>
+                                <p className="font-medium text-slate-800 mt-1">{lastPurchaseData.edition}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-slate-500 flex items-center gap-2"><DollarSign className="w-4 h-4" /> Purchase Price</p>
+                                <p className="font-medium text-slate-800 mt-1">{formatPrice(lastPurchaseData.price, lastPurchaseData.currency)}</p>
+                            </div>
+                        </div>
+                    </section>
+                    {/* --- END OF NEW SECTION --- */}
                 </div>
             </main>
         </div>
