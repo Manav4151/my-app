@@ -798,7 +798,7 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
               <Label className="text-sm font-medium truncate" title={header}>{header}</Label>
               <Select value={customMapping[header] || ''} onValueChange={(value) => handleMappingChange(header, value)}>
                 <SelectTrigger><SelectValue placeholder="Select field..." /></SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border-2 border-gray-200 rounded-xl shadow-lg">
                   <SelectItem value="none">-- Skip Column --</SelectItem>
                   <SelectItem value="book_separator" disabled>--- Book Fields ---</SelectItem>
                   {availableFields.book.map(f => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}

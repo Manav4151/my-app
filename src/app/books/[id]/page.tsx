@@ -114,7 +114,34 @@ export default function BookDetailPage() {
             setLoading(false);
         }
     };
+    const markAsOutOfPrint = async () => {
+        try {
 
+            setError(null);
+
+            const response = await fetch(`${API_URL}/api/books/${bookId}/outOfPrint`, {
+                method: 'PUT',
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Failed to mark book as out of print: ${response.status} - ${errorText}`);
+            }
+
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(data.message || 'Failed to mark book as out of print');
+            }
+            toast.success("Book marked as out of print successfully");
+        } catch (error) {
+            console.error("Error marking book as out of print:", error);
+            setError(error instanceof Error ? error.message : "Failed to mark book as out of print");
+            toast.error("Failed to mark book as out of print");
+        } finally {
+
+        }
+    }
     const formatPrice = (rate: number, currency: string) => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
@@ -235,6 +262,13 @@ export default function BookDetailPage() {
                             >
                                 <Edit className="w-4 h-4 mr-2" />
                                 Edit Book
+                            </Button>
+                            <Button
+                                onClick={() => markAsOutOfPrint()}
+                                className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white"
+                            >
+                                <Edit className="w-4 h-4 mr-2" />
+                                Mark out of print
                             </Button>
                             <Button
                                 onClick={() => router.push("/books/insert")}

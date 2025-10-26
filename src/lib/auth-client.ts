@@ -1,19 +1,21 @@
 import { createAuthClient } from "better-auth/react";
 import { inferAdditionalFields } from "better-auth/client/plugins";
 
-const baseURL = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:8000";
+const baseURL = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5050";
 
 export const authClient = createAuthClient({
   baseURL: baseURL,
-  plugins: [inferAdditionalFields({
-    user: {
-      languages: {
-        type: "string[]"
-      }
-    }
-  })],
+  plugins: [
+    inferAdditionalFields({
+      user: {
+        // Replace 'languages' with 'role' to match the backend
+        role: {
+          type: "string",
+        },
+      },
+    }),
+  ],
 });
-
 export type Session = typeof authClient.$Infer.Session
 
 // Password reset helpers for our API
