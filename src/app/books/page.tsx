@@ -447,6 +447,16 @@ export default function Home() {
                   />
                 </div>
                 <div>
+                  <Label htmlFor="filter-publisher_name" className="text-gray-700 font-medium">Publisher</Label>
+                  <Input
+                    id="filter-publisher_name"
+                    placeholder="Search by publisher..."
+                    value={pendingFilters.publisher_name || ''}
+                    onChange={(e) => setPendingFilters((f) => ({ ...f, publisher_name: e.target.value }))}
+                    className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                  />
+                </div>
+                <div>
                   <Label htmlFor="filter-author" className="text-gray-700 font-medium">Author</Label>
                   <Input
                     id="filter-author"

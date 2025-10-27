@@ -57,7 +57,7 @@
 // }
 
 // // --- CONSTANTS ---
-// const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
+// const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 // const MAX_FILE_SIZE_MB = 10;
 // const ALLOWED_FILE_TYPES = [
 //   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
@@ -481,6 +481,10 @@ import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "./ui/dialog";
 import { Upload, FileSpreadsheet, CheckCircle, AlertCircle, X, Download, Loader2 } from "lucide-react";
+import TemplateSelector from "./template-selector";
+import SaveTemplateDialog from "./save-template-dialog";
+import { templateApi } from "@/lib/template-api";
+import { ImportTemplate, TemplateMatchResult } from "@/types/template";
 
 // --- TYPE DEFINITIONS ---
 interface ValidationResult {
@@ -492,6 +496,8 @@ interface ValidationResult {
     mapping: Record<string, string>;
     unmappedHeaders: string[];
     suggestedMapping?: Record<string, string>;
+    templateMatch?: boolean;
+    templateMatchDetails?: TemplateMatchResult;
     validation: {
       totalRows: number;
     };
@@ -530,7 +536,7 @@ interface ExcelImportProps {
 }
 
 // --- CONSTANTS ---
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const MAX_FILE_SIZE_MB = 10;
 const ALLOWED_FILE_TYPES = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
@@ -539,7 +545,7 @@ const ALLOWED_FILE_TYPES = [
 const REQUIRED_BOOK_FIELDS = ['title', 'author'];
 const REQUIRED_PRICING_FIELDS = ['rate', 'currency'];
 
-type WizardStep = 'initial' | 'validating' | 'mapping' | 'importing' | 'complete';
+type WizardStep = 'initial' | 'validating' | 'mapping' | 'importing' | 'complete' | 'review' | 'no-match';
 type ImportStats = NonNullable<ImportResult['data']>['stats'];
 
 // --- MAIN COMPONENT ---
@@ -553,6 +559,12 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [resultDialogOpen, setResultDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Template-related state
+  const [selectedTemplate, setSelectedTemplate] = useState<ImportTemplate | null>(null);
+  const [templateMatchResult, setTemplateMatchResult] = useState<TemplateMatchResult | null>(null);
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [showSaveTemplateDialog, setShowSaveTemplateDialog] = useState(false);
 
   // --- DERIVED STATE & MEMOS ---
   const validationData = useMemo(() => validationResult?.data, [validationResult]);
@@ -605,6 +617,10 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
     setValidationResult(null);
     setCustomMapping({});
     setImportResult(null);
+    setSelectedTemplate(null);
+    setTemplateMatchResult(null);
+    setShowTemplateSelector(false);
+    setShowSaveTemplateDialog(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -640,6 +656,11 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
     try {
       const formData = new FormData();
       formData.append('excelFile', file);
+      
+      // Add template ID if template is selected
+      if (selectedTemplate) {
+        formData.append('templateId', selectedTemplate._id);
+      }
 
       const response = await fetch(`${API_URL}/api/books/validate-excel`, {
         method: 'POST',
@@ -650,8 +671,21 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
 
       if (result.success && result.data) {
         setValidationResult(result);
-        setCustomMapping(result.data.mapping || {});
-        setStep('mapping');
+        
+        if (selectedTemplate && result.data.templateMatch) {
+          // Perfect template match
+          setCustomMapping(result.data.mapping);
+          setTemplateMatchResult(result.data.templateMatchDetails || null);
+          setStep('review');
+        } else if (selectedTemplate && result.data.templateMatchDetails) {
+          // Template not compatible
+          setTemplateMatchResult(result.data.templateMatchDetails);
+          setStep('no-match');
+        } else {
+          // Manual mapping required
+          setCustomMapping(result.data.mapping || {});
+          setStep('mapping');
+        }
       } else {
         throw new Error(result.message || 'Validation failed on the server.');
       }
@@ -731,12 +765,57 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
     downloadFile(`/sample-books-template.xlsx`, 'sample-books-template.xlsx');
   };
 
+  // Template-related handlers
+  const handleTemplateSelect = (template: ImportTemplate) => {
+    setSelectedTemplate(template);
+    setShowTemplateSelector(false);
+  };
+
+  const handleSaveTemplate = () => {
+    if (validationData) {
+      setShowSaveTemplateDialog(true);
+    }
+  };
+
+  const handleTemplateSaved = () => {
+    alert('Template saved successfully!');
+  };
+
   // --- RENDER METHODS FOR EACH STEP ---
   const renderInitialStep = () => (
     <div className="text-center">
       <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
       <h3 className="text-lg font-semibold mb-2">Upload Excel File</h3>
       <p className="text-gray-600 mb-4">Select an Excel file (.xlsx or .xls) to import your book data.</p>
+      
+      {/* Template Selection Buttons */}
+      <div className="flex gap-2 justify-center mb-4">
+        <Button 
+          onClick={() => setShowTemplateSelector(true)} 
+          variant="outline"
+          className="bg-blue-50 hover:bg-blue-100"
+        >
+          <FileSpreadsheet className="w-4 h-4 mr-2" />
+          Load Template
+        </Button>
+      </div>
+      
+      {selectedTemplate && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+          <p className="text-sm text-blue-800">
+            <strong>Selected Template:</strong> {selectedTemplate.name}
+          </p>
+          <Button 
+            onClick={() => setSelectedTemplate(null)} 
+            variant="ghost" 
+            size="sm"
+            className="text-blue-600 hover:text-blue-700"
+          >
+            Clear Template
+          </Button>
+        </div>
+      )}
+      
       <div className="border-2 border-dashed border-gray-300 rounded-lg p-8">
         <input ref={fileInputRef} type="file" accept=".xlsx,.xls" onChange={handleFileSelect} className="hidden" />
         <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="mb-4">
@@ -827,7 +906,15 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
           </div>
         )}
 
-        <div className="flex justify-center pt-4">
+        <div className="flex justify-center gap-2 pt-4">
+          <Button 
+            onClick={handleSaveTemplate} 
+            variant="outline"
+            className="text-green-600 hover:text-green-700"
+          >
+            <FileSpreadsheet className="w-4 h-4 mr-2" />
+            Save as Template
+          </Button>
           <Button onClick={handleImport} disabled={isImportDisabled} className="bg-green-600 hover:bg-green-700">
             {step === 'importing'
               ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Importing...</>
@@ -838,6 +925,73 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
       </div>
     );
   };
+
+  // Template-related render methods
+  const renderPerfectMatch = () => (
+    <div className="space-y-4">
+      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="flex items-center gap-2">
+          <CheckCircle className="w-5 h-5 text-green-600" />
+          <h3 className="font-semibold text-green-800">Template Applied Successfully!</h3>
+        </div>
+        <p className="text-sm text-green-700 mt-1">
+          All columns matched perfectly. Ready to import.
+        </p>
+      </div>
+      
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h4 className="font-medium text-blue-800 mb-2">Mapped Columns:</h4>
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          {Object.entries(selectedTemplate?.mapping || {}).map(([excelHeader, dbField]) => (
+            <div key={excelHeader} className="flex justify-between">
+              <span className="text-gray-700">{excelHeader}</span>
+              <span className="text-blue-600 font-medium">{dbField}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      <div className="flex justify-center gap-2">
+        <Button onClick={handleImport} className="bg-green-600 hover:bg-green-700">
+          Import Data Now
+        </Button>
+        <Button variant="outline" onClick={() => setStep('mapping')}>
+          Edit Mapping
+        </Button>
+      </div>
+    </div>
+  );
+
+  const renderNoMatch = () => (
+    <div className="space-y-4">
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="flex items-center gap-2">
+          <AlertCircle className="w-5 h-5 text-yellow-600" />
+          <h3 className="font-semibold text-yellow-800">Template Not Compatible</h3>
+        </div>
+        <p className="text-sm text-yellow-700 mt-1">
+          File headers don't match template exactly. Manual mapping required.
+        </p>
+      </div>
+      
+      {templateMatchResult?.missingHeaders && templateMatchResult.missingHeaders.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <h4 className="font-medium text-red-800 mb-2">Missing Headers:</h4>
+          <ul className="text-sm text-red-700 list-disc list-inside">
+            {templateMatchResult.missingHeaders.map(header => (
+              <li key={header}>{header}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      
+      <div className="flex justify-center">
+        <Button onClick={() => setStep('mapping')} className="bg-blue-600 hover:bg-blue-700">
+          Go to Manual Mapping
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
     <>
@@ -855,6 +1009,8 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
             {step === 'initial' && renderInitialStep()}
             {step === 'validating' && renderLoadingStep('Validating your file...')}
             {step === 'mapping' && renderMappingStep()}
+            {step === 'review' && renderPerfectMatch()}
+            {step === 'no-match' && renderNoMatch()}
             {step === 'importing' && renderLoadingStep('Importing your data... Please wait.')}
           </div>
         </DialogContent>
@@ -883,6 +1039,24 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* Template Components */}
+      {showTemplateSelector && (
+        <TemplateSelector
+          onTemplateSelect={handleTemplateSelect}
+          onClose={() => setShowTemplateSelector(false)}
+        />
+      )}
+
+      {showSaveTemplateDialog && (
+        <SaveTemplateDialog
+          isOpen={showSaveTemplateDialog}
+          onClose={() => setShowSaveTemplateDialog(false)}
+          mapping={customMapping}
+          expectedHeaders={validationData?.headers || []}
+          onTemplateSaved={handleTemplateSaved}
+        />
       )}
     </>
   );
