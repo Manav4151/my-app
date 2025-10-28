@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback, use, useRef } from "react"; // Ensure
 import { useRouter } from "next/navigation";
 import { Mail, Paperclip, Download, ArrowLeft, User, Calendar, FileText } from "lucide-react";
 import { Button } from "../../components/ui/button";
+import { apiFunctions } from "@/services/api.service";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
 
@@ -48,14 +49,13 @@ export default function EmailDetailPage({ params }: { params: Promise<{ id: stri
     const fetchEmailDetail = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await fetch(`${API_URL}/api/emails/${resolvedParams.id}`);
+            const response = await apiFunctions.getEmailDetail( resolvedParams.id );
 
-            if (!response.ok) {
+            if (!response.success) {
                 throw new Error('Failed to fetch email details');
             }
 
-            const data = await response.json();
-            setEmail(data.data);
+            setEmail(response.data);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred');
             console.error('Error fetching email detail:', err);
@@ -72,13 +72,10 @@ export default function EmailDetailPage({ params }: { params: Promise<{ id: stri
 
     const downloadAttachment = async (filename: string) => {
         try {
-            const response = await fetch(`${API_URL}/api/emails/${resolvedParams.id}/attachments/${filename}`);
+           
+            const blob = await apiFunctions.downloadEmailAttachment(resolvedParams.id, filename);
 
-            if (!response.ok) {
-                throw new Error('Failed to download attachment');
-            }
-
-            const blob = await response.blob();
+            
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;

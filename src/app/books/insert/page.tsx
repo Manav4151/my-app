@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { BookOpen, ArrowLeft, CheckCircle, AlertTriangle, Info, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { debounce, set } from 'lodash';
+import { apiFunctions } from "@/services/api.service";
 // ISBN validation functions
 // Remove all non-alphanumeric characters; keep digits and allow 'X' (uppercase) only as ISBN-10 check digit
 const cleanIsbnInput = (raw: string): string => {
@@ -189,13 +190,13 @@ function InsertBookPageContent() {
     const fetchExistingBookData = async (bookId: string) => {
         try {
             setInitialLoading(true);
-            const response = await fetch(`${API_URL}/api/books/${bookId}/pricing`);
+            const result = await apiFunctions.getBookDetails(bookId);
 
-            if (!response.ok) {
-                throw new Error(`Failed to fetch book data: ${response.status}`);
+            if (!result.success) {
+                throw new Error(`Failed to fetch book data: ${result.status}`);
             }
 
-            const result = await response.json();
+            
 
             if (result.success && result.book) {
                 // Populate book data
@@ -249,10 +250,9 @@ function InsertBookPageContent() {
             return;
         }
         try {
-            const response = await fetch(`${API_URL}/api/books/suggestions?q=${encodeURIComponent(query)}`);
-            const result = await response.json();
-            if (result.success) {
-                setBookSuggestions(result.books);
+            const response = await apiFunctions.getBookSuggestions(query);
+            if (response.success) {
+                setBookSuggestions(response.books);
             }
         } catch (error) {
             console.error("Failed to fetch book suggestions:", error);
@@ -266,10 +266,9 @@ function InsertBookPageContent() {
             return;
         }
         try {
-            const response = await fetch(`${API_URL}/api/publisher-suggestions?q=${encodeURIComponent(query)}`);
-            const result = await response.json();
-            if (result.success) {
-                setPublisherSuggestions(result.publishers);
+            const response = await apiFunctions.getPublisherSuggestions(query);
+            if (response.success) {
+                setPublisherSuggestions(response.publishers);
             }
         } catch (error) {
             console.error("Failed to fetch publisher suggestions:", error);
@@ -376,49 +375,33 @@ function InsertBookPageContent() {
         try {
             if (isEditMode && editBookId) {
                 // Direct update for edit mode
-                const response = await fetch(`${API_URL}/api/books/${editBookId}`, {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        bookData,
-                        pricingData,
-                    }),
+                const response = await apiFunctions.updateBook(editBookId, {
+                    bookData,
+                    pricingData,
+                    
                 });
 
-                if (!response.ok) {
+                if (!response.success) {
                     throw new Error(`Failed to update book: ${response.status}`);
                 }
 
-                const result = await response.json();
                 toast.success("Book updated successfully!");
                 router.push(`/books/${editBookId}`);
             } else {
                 console.log("Publisher data in check", publisherData);
 
                 // Check for duplicates in create mode
-                const response = await fetch(`${API_URL}/api/books/check-duplicate`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        bookData,
-                        pricingData,
-                        publisherData,
-                    }),
-                });
+                const response = await apiFunctions.checkBookDuplicate({bookData, pricingData, publisherData});
 
-                const result = await response.json();
+                const result = await response.data;
 
                 // Handle different response statuses
-                if (response.status === 409) {
+                if (response.statusCode === 409) {
                     // Conflict response - this is expected and should be handled
                     setCheckResponse(result);
                     setStep("check");
-                } else if (!response.ok) {
-                    throw new Error(`Failed to check book: ${response.status}`);
+                } else if (!result.success) {
+                    throw new Error(`Failed to check book: ${result.message}`);
                 } else {
                     // Success response (200)
                     setCheckResponse(result);
@@ -449,24 +432,18 @@ function InsertBookPageContent() {
                 pricingId: checkResponse.details?.pricingId,
             };
 
-            const response = await fetch(`${API_URL}/api/books`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(payload),
-            });
+            const response = await apiFunctions.createBook(payload);
 
-            if (!response.ok) {
-                const errorResult = await response.json();
-                throw new Error(errorResult.message || `Failed to ${action.toLowerCase()}: ${response.status}`);
+            if (!response.success) {
+                
+                throw new Error(response.message || `Failed to ${action.toLowerCase()}: ${response.status}`);
             }
 
-            const result = await response.json();
-            toast.success(result.message || "Book operation completed successfully!");
+            
+            toast.success(response.message || "Book operation completed successfully!");
 
-            if (result.book?._id) {
-                router.push(`/books/${result.book._id}`);
+            if (response.book?._id) {
+                router.push(`/books/${response.book._id}`);
             } else {
                 router.push("/books");
             }

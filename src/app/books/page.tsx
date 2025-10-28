@@ -12,9 +12,8 @@ import { toast } from "sonner";
 import ExcelImport from "../components/excel-import";
 import ViewOnAmazonButton from "../components/ViewOnAmazonButton";
 import SearchBookOnlineButton from "../components/ViewOnAmazonButton";
+import { ApiError, apiFunctions } from "@/services/api.service";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
-console.log("API_URL", API_URL);
 // Define the data type based on API response
 interface Book {
   _id: string;
@@ -64,111 +63,6 @@ type Filters = {
   publisher_name?: string;
 };
 
-// Fetch data from the API
-const fetchData = async (page: number = 1, limit: number = 10, filters: Filters = {}, retryCount: number = 0): Promise<ApiResponse> => {
-  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
-  if (filters.title) params.set('title', filters.title);
-  if (filters.author) params.set('author', filters.author);
-  if (filters.isbn) params.set('isbn', filters.isbn);
-  if (filters.year) params.set('year', filters.year);
-  if (filters.classification) params.set('classification', filters.classification);
-  if (filters.publisher_name) params.set('publisher_name', filters.publisher_name);
-
-  const url = `${API_URL}/api/books?${params.toString()}`;
-  console.log('📡 Fetching books from:', url, retryCount > 0 ? `(retry ${retryCount})` : '');
-
-  let response;
-  try {
-    // Create AbortController for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-
-    response = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      method: 'GET',
-      mode: 'cors',
-      credentials: 'omit'
-    });
-
-    clearTimeout(timeoutId);
-  } catch (networkError) {
-    console.error('🌐 Network error fetching books:', networkError);
-
-    // Retry logic for network errors
-    if (retryCount < 3) {
-      console.log(`🔄 Retrying in ${(retryCount + 1) * 2} seconds... (attempt ${retryCount + 1}/3)`);
-      await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 2000));
-      return fetchData(page, limit, filters, retryCount + 1);
-    }
-
-    if (networkError instanceof Error && networkError.name === 'AbortError') {
-      throw new Error('Request timeout - the server is taking too long to respond');
-    }
-    const errorMessage = networkError instanceof Error ? networkError.message : 'Unknown network error';
-    throw new Error(`Network error: ${errorMessage}`);
-  }
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('❌ Books API error:', response.status, response.statusText, errorText);
-    throw new Error(`Failed to fetch books: ${response.status} ${response.statusText} - ${errorText}`);
-  }
-
-  const data = await response.json();
-  console.log('📊 Books API response:', data);
-
-  if (!data.success) {
-    console.error('❌ Books API returned error:', data.message);
-    throw new Error(data.message || 'Failed to fetch books');
-  }
-
-  return data;
-};
-
-// --- NEW --- Function to delete books
-const deleteBooks = async (bookIds: string[]): Promise<{ success: boolean; message?: string }> => {
-  console.log("Deleting books with IDs:", bookIds);
-
-  try {
-    const response = await fetch(`${API_URL}/api/books/bulk`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      // Correctly format the body by stringifying the object
-      body: JSON.stringify({ "bookIds": bookIds })
-    });
-    console.log("Response", response);
-    if (!response.ok) {
-      // Try to get a more specific error message from the API response body
-      const errorData = await response.json().catch(() => ({
-        message: `API error: ${response.status} ${response.statusText}`
-      }));
-      throw new Error(errorData.message);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("Failed to delete books:", error);
-    // Re-throw a user-friendly error
-    throw new Error(error instanceof Error ? error.message : "An unknown network error occurred.");
-  }
-
-
-  // Simulate deleting from our mock data source
-  // allMockBooks = allMockBooks.filter(book => !bookIds.includes(book._id));
-
-  // Simulating a successful API call for demonstration purposes
-  // return new Promise((resolve) => {
-  //   setTimeout(() => {
-  //     resolve({ success: true, message: "Books deleted successfully" });
-  //   }, 500);
-  // });
-};
 export default function Home() {
   const { session, pending } = useAuth();
   const router = useRouter();
@@ -185,25 +79,8 @@ export default function Home() {
   const headerCheckboxRef = useRef<HTMLInputElement>(null);
 
 
-  // Fetch data on page or appliedFilters change
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await fetchData(page, limit, appliedFilters);
-        setData(response);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        setError(error instanceof Error ? error.message : "Failed to fetch books");
-        toast.error("Failed to load books");
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
-  }, [page, limit, appliedFilters]);
 
+  
   useEffect(() => {
     if (selectionMode && headerCheckboxRef.current && data?.books) {
       const numSelected = selectedBooks.length;
@@ -213,39 +90,49 @@ export default function Home() {
     }
   }, [selectedBooks, data?.books, selectionMode]);
 
-  // Place this alongside your other functions like applyFilters, clearFilters, etc.
-
+  // --- UPDATE loadData ---
   const loadData = useCallback(async () => {
     console.log('🔄 Refreshing books data...');
     setLoading(true);
     setError(null);
     try {
-      // Add a small delay to ensure database operations are complete
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Create URLSearchParams like before
+      const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+      if (appliedFilters.title) params.set('title', appliedFilters.title);
+      if (appliedFilters.author) params.set('author', appliedFilters.author);
+      if (appliedFilters.isbn) params.set('isbn', appliedFilters.isbn);
+      if (appliedFilters.year) params.set('year', appliedFilters.year);
+      if (appliedFilters.classification) params.set('classification', appliedFilters.classification);
+      if (appliedFilters.publisher_name) params.set('publisher_name', appliedFilters.publisher_name);
 
-      const response = await fetchData(page, limit, appliedFilters);
+      // Call the API function directly
+      const response = await apiFunctions.getBooks(params); // <-- 2. Use the imported function
+
+      console.log('📊 Books API response:', response); // Axios gives you the JSON directly
+
+      // Optional: Check for application-specific success flags if your backend sends them
+      if (!response.success) { // Assuming your API returns { success: boolean, ... }
+         throw new Error(response.message || 'Failed to fetch books');
+      }
+
       setData(response);
       console.log('✅ Books data refreshed successfully:', response.pagination.totalBooks, 'total books');
-    } catch (error) {
+    } catch (error) { // Catch ApiError or generic Error from the api-service
       console.error("Error fetching data:", error);
-      setError(error instanceof Error ? error.message : "Failed to fetch books");
-      toast.error("Failed to load books");
-
-      // Retry once after a longer delay if the first attempt fails
-      try {
-        console.log('🔄 Retrying books data fetch...');
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        const retryResponse = await fetchData(page, limit, appliedFilters);
-        setData(retryResponse);
-        console.log('✅ Books data refreshed on retry:', retryResponse.pagination.totalBooks, 'total books');
-        setError(null);
-      } catch (retryError) {
-        console.error("Retry also failed:", retryError);
-      }
+      const message = error instanceof ApiError ? error.message : "Failed to fetch books";
+      setError(message);
+      toast.error(message);
+      // NOTE: Retry logic is removed here. Axios can be configured with interceptors for retries if needed.
+      // NOTE: Timeout logic is removed. Axios has a 'timeout' config option if needed.
     } finally {
       setLoading(false);
     }
-  }, [page, limit, appliedFilters]); // <-- Add dependencies here
+  }, [page, limit, appliedFilters]); // <-- Dependencies
+
+  // --- useEffect hook remains the same, calling the new loadData ---
+  useEffect(() => {
+    loadData();
+  }, [loadData]); // Dependency is the useCallback function
   // Apply filters
   const applyFilters = () => {
     setPage(1);
@@ -289,11 +176,11 @@ export default function Home() {
     if (window.confirm(`Are you sure you want to delete ${selectedBooks.length} book(s)?`)) {
       try {
         setLoading(true);
-        const result = await deleteBooks(selectedBooks);
+        const result = await apiFunctions.deleteBooks(selectedBooks);
         if (result.success) {
           toast.success(result.message || "Books deleted successfully!");
           setSelectedBooks([]);
-          setSelectionMode(false); // --- NEW --- Exit selection mode after deletion
+          setSelectionMode(false);
           if (data && data.books.length === selectedBooks.length && page > 1) {
             setPage(page - 1);
           } else {

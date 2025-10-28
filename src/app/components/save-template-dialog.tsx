@@ -7,7 +7,7 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { CheckCircle, Loader2 } from "lucide-react";
-import { templateApi } from "@/lib/template-api";
+import { apiFunctions } from "@/services/api.service";
 
 interface SaveTemplateDialogProps {
   isOpen: boolean;
@@ -33,7 +33,7 @@ export default function SaveTemplateDialog({
 
     try {
       setSaving(true);
-      const response = await templateApi.createTemplate({
+      const response = await apiFunctions.createTemplate({
         name: name.trim(),
         description: description.trim(),
         mapping,

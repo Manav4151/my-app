@@ -483,8 +483,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Upload, FileSpreadsheet, CheckCircle, AlertCircle, X, Download, Loader2 } from "lucide-react";
 import TemplateSelector from "./template-selector";
 import SaveTemplateDialog from "./save-template-dialog";
-import { templateApi } from "@/lib/template-api";
+
 import { ImportTemplate, TemplateMatchResult } from "@/types/template";
+import { apiFunctions } from "@/services/api.service";
 
 // --- TYPE DEFINITIONS ---
 interface ValidationResult {
@@ -662,12 +663,9 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
         formData.append('templateId', selectedTemplate._id);
       }
 
-      const response = await fetch(`${API_URL}/api/books/validate-excel`, {
-        method: 'POST',
-        body: formData,
-      });
+      const response = await apiFunctions.validateExcel(formData);
 
-      const result: ValidationResult = await response.json();
+      const result: ValidationResult =  response
 
       if (result.success && result.data) {
         setValidationResult(result);
@@ -713,17 +711,13 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
       formData.append('excelFile', selectedFile);
       formData.append('mapping', JSON.stringify(customMapping));
 
-      const response = await fetch(`${API_URL}/api/books/bulk-import`, {
-        method: 'POST',
-        body: formData,
-      });
+      const response = await apiFunctions.importExcel(formData);
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'An unknown server error occurred.' }));
-        throw new Error(errorData.message);
+      if (!response.success) {
+        throw new Error(response.message);
       }
 
-      const result: ImportResult = await response.json();
+      const result: ImportResult =  response;
 
       if (result.success && result.data) {
         setImportResult(result);

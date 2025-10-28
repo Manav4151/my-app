@@ -5,8 +5,8 @@ import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { FileSpreadsheet, Plus, Search, Clock, User, Loader2 } from "lucide-react";
-import { templateApi } from "@/lib/template-api";
 import { ImportTemplate } from "@/types/template";
+import { apiFunctions } from "@/services/api.service";
 
 interface TemplateSelectorProps {
   onTemplateSelect: (template: ImportTemplate) => void;
@@ -26,7 +26,7 @@ export default function TemplateSelector({ onTemplateSelect, onClose }: Template
     try {
       setLoading(true);
       console.log('Loading templates...');
-      const response = await templateApi.getTemplates();
+      const response = await apiFunctions.getTemplates();
       console.log('Template API response:', response);
       
       if (response.success && Array.isArray(response.data)) {

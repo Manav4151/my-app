@@ -11,6 +11,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "../ui/select";
+import { apiFunctions } from "@/services/api.service";
+import { toast } from "sonner";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
 
@@ -41,14 +43,14 @@ export default function EmailList({ onEmailSelect, selectedEmailUid }: EmailList
     const fetchEmails = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`${API_URL}/api/emails`);
+            const response = await apiFunctions.getEmails();
 
-            if (!response.ok) {
-                throw new Error('Failed to fetch emails');
+            if (!response.success) {
+                throw new Error(response.message || 'Failed to fetch emails');
             }
 
-            const data = await response.json();
-            const emailsWithStatus = (data.data || []).map((email: Email) => ({
+            
+            const emailsWithStatus = (response.data || []).map((email: Email) => ({
                 ...email,
                 status: email.status || 'pending'
             }));
@@ -79,11 +81,13 @@ export default function EmailList({ onEmailSelect, selectedEmailUid }: EmailList
         setTimeout(() => setRecentlyUpdated(null), 2000);
 
         try {
-            await fetch(`${API_URL}/api/emails/${emailUid}/status`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: newStatus }),
-            });
+            const response = await apiFunctions.updateEmailStatus(emailUid, newStatus);
+            if (response.success) {
+                toast.success(response.message || 'Email status updated successfully');
+            }
+            if (!response.success) {
+                throw new Error(response.message || 'Failed to update email status');
+            }
         } catch (err) {
             console.warn('Server update failed, but local update succeeded:', err);
         }

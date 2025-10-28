@@ -24,6 +24,7 @@ import {
     ShoppingCart
 } from "lucide-react";
 import { toast } from "sonner";
+import { apiFunctions } from "@/services/api.service";
 interface Book {
     _id: string;
     title: string;
@@ -92,20 +93,20 @@ export default function BookDetailPage() {
             setLoading(true);
             setError(null);
 
-            const response = await fetch(`${API_URL}/api/books/${bookId}/pricing`);
+            const response = await apiFunctions.getBookDetails(bookId);
 
-            if (!response.ok) {
-                const errorText = await response.text();
+            if (!response.success) {
+                const errorText = await response.message;
                 throw new Error(`Failed to fetch book details: ${response.status} - ${errorText}`);
             }
 
-            const data = await response.json();
+            
 
-            if (!data.success) {
-                throw new Error(data.message || 'Failed to fetch book details');
+            if (!response.success) {
+                throw new Error(response.message || 'Failed to fetch book details');
             }
 
-            setBookData(data);
+            setBookData(response);
         } catch (error) {
             console.error("Error fetching book details:", error);
             setError(error instanceof Error ? error.message : "Failed to fetch book details");
@@ -119,19 +120,17 @@ export default function BookDetailPage() {
 
             setError(null);
 
-            const response = await fetch(`${API_URL}/api/books/${bookId}/outOfPrint`, {
-                method: 'PUT',
-            });
+            const response = await apiFunctions.markAsOutOfPrint(bookId);
 
-            if (!response.ok) {
-                const errorText = await response.text();
+            if (!response.success) {
+                const errorText = await response.message;
                 throw new Error(`Failed to mark book as out of print: ${response.status} - ${errorText}`);
             }
 
-            const data = await response.json();
+            
 
-            if (!data.success) {
-                throw new Error(data.message || 'Failed to mark book as out of print');
+            if (!response.success) {
+                throw new Error(response.message || 'Failed to mark book as out of print');
             }
             toast.success("Book marked as out of print successfully");
         } catch (error) {

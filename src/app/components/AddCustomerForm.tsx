@@ -9,6 +9,7 @@ import { Label } from "@/app/components/ui/label";
 import { CheckCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { apiFunctions } from "@/services/api.service";
 
 interface CustomerData {
     name: string;
@@ -127,18 +128,12 @@ export function AddCustomerForm() {
         setLoading(true);
         try {
             const payload = { ...customerData, discount: customerData.discount ?? 0 };
-            const response = await fetch('http://localhost:8000/api/addCustomer', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            });
+            const response = await apiFunctions.addCustomer(payload);
 
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ message: `API Error: ${response.status}` }));
-                throw new Error(errorData.message);
+            if (!response.success) {
+                throw new Error(response.message);
             }
-            const result = await response.json();
-            toast.success(result.message || "Customer added successfully!");
+            toast.success(response.message || "Customer added successfully!");
             setCustomerData(initialState);
             setErrors({ email: "", phone: "", contactPersonEmail: "", contactPersonPhone: "" });
         } catch (error) {
