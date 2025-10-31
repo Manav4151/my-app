@@ -560,7 +560,7 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [resultDialogOpen, setResultDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   // Template-related state
   const [selectedTemplate, setSelectedTemplate] = useState<ImportTemplate | null>(null);
   const [templateMatchResult, setTemplateMatchResult] = useState<TemplateMatchResult | null>(null);
@@ -657,7 +657,7 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
     try {
       const formData = new FormData();
       formData.append('excelFile', file);
-      
+
       // Add template ID if template is selected
       if (selectedTemplate) {
         formData.append('templateId', selectedTemplate._id);
@@ -665,11 +665,11 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
 
       const response = await apiFunctions.validateExcel(formData);
 
-      const result: ValidationResult =  response
+      const result: ValidationResult = response
 
       if (result.success && result.data) {
         setValidationResult(result);
-        
+
         if (selectedTemplate && result.data.templateMatch) {
           // Perfect template match
           setCustomMapping(result.data.mapping);
@@ -717,7 +717,7 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
         throw new Error(response.message);
       }
 
-      const result: ImportResult =  response;
+      const result: ImportResult = response;
 
       if (result.success && result.data) {
         setImportResult(result);
@@ -781,11 +781,11 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
       <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
       <h3 className="text-lg font-semibold mb-2">Upload Excel File</h3>
       <p className="text-gray-600 mb-4">Select an Excel file (.xlsx or .xls) to import your book data.</p>
-      
+
       {/* Template Selection Buttons */}
       <div className="flex gap-2 justify-center mb-4">
-        <Button 
-          onClick={() => setShowTemplateSelector(true)} 
+        <Button
+          onClick={() => setShowTemplateSelector(true)}
           variant="outline"
           className="bg-blue-50 hover:bg-blue-100"
         >
@@ -793,15 +793,15 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
           Load Template
         </Button>
       </div>
-      
+
       {selectedTemplate && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
           <p className="text-sm text-blue-800">
             <strong>Selected Template:</strong> {selectedTemplate.name}
           </p>
-          <Button 
-            onClick={() => setSelectedTemplate(null)} 
-            variant="ghost" 
+          <Button
+            onClick={() => setSelectedTemplate(null)}
+            variant="ghost"
             size="sm"
             className="text-blue-600 hover:text-blue-700"
           >
@@ -809,7 +809,7 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
           </Button>
         </div>
       )}
-      
+
       <div className="border-2 border-dashed border-gray-300 rounded-lg p-8">
         <input ref={fileInputRef} type="file" accept=".xlsx,.xls" onChange={handleFileSelect} className="hidden" />
         <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="mb-4">
@@ -901,8 +901,8 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
         )}
 
         <div className="flex justify-center gap-2 pt-4">
-          <Button 
-            onClick={handleSaveTemplate} 
+          <Button
+            onClick={handleSaveTemplate}
             variant="outline"
             className="text-green-600 hover:text-green-700"
           >
@@ -932,7 +932,7 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
           All columns matched perfectly. Ready to import.
         </p>
       </div>
-      
+
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h4 className="font-medium text-blue-800 mb-2">Mapped Columns:</h4>
         <div className="grid grid-cols-2 gap-2 text-sm">
@@ -944,7 +944,7 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
           ))}
         </div>
       </div>
-      
+
       <div className="flex justify-center gap-2">
         <Button onClick={handleImport} className="bg-green-600 hover:bg-green-700">
           Import Data Now
@@ -964,10 +964,10 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
           <h3 className="font-semibold text-yellow-800">Template Not Compatible</h3>
         </div>
         <p className="text-sm text-yellow-700 mt-1">
-          File headers don't match template exactly. Manual mapping required.
+          File headers do not match template exactly. Manual mapping required.
         </p>
       </div>
-      
+
       {templateMatchResult?.missingHeaders && templateMatchResult.missingHeaders.length > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <h4 className="font-medium text-red-800 mb-2">Missing Headers:</h4>
@@ -978,7 +978,7 @@ export default function ExcelImport({ onImportComplete }: ExcelImportProps) {
           </ul>
         </div>
       )}
-      
+
       <div className="flex justify-center">
         <Button onClick={() => setStep('mapping')} className="bg-blue-600 hover:bg-blue-700">
           Go to Manual Mapping

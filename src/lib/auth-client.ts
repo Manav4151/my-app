@@ -8,13 +8,7 @@ export const authClient = createAuthClient({
   baseURL,
   plugins: [
     customSessionClient(), // ✅ This enables session management (getAccessToken, current session, etc.)
-    inferAdditionalFields({
-      user: {
-        role: {
-          type: "string",
-        },
-      },
-    }),
+
   ],
 });
 
@@ -34,7 +28,7 @@ export async function requestPasswordReset(params: { email: string; redirectTo?:
   // });
   const response = await apiFunctions.requestPasswordReset(params.email, params.redirectTo || "");
   if (!response.success) {
-   
+
     throw { error: { message: response.message || response.statusText, status: response.status } };
   }
   return response;
@@ -52,7 +46,7 @@ export async function resetPasswordWithToken(params: { token: string; newPasswor
   // });
   const response = await apiFunctions.resetPasswordWithToken(params.token, params.newPassword);
   if (!response.success) {
-    
+
     throw { error: { message: response.message || response.statusText, status: response.status } };
   }
   return response;
