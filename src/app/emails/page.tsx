@@ -5,12 +5,14 @@ import { Send, RefreshCw, Inbox } from "lucide-react";
 import { Button } from "../components/ui/button";
 import EmailList from "../components/email/email-list";
 import ComposeEmail from "../components/email/compose-email";
+import { apiFunctions } from "@/services/api.service";
+import { toast } from "sonner";
 
 export default function EmailsPage() {
   const [showCompose, setShowCompose] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [activeTab, setActiveTab] = useState("inbox");
-
+  const [showInbox, setShowInbox] = useState(false);
   const handleComposeClose = () => {
     setShowCompose(false);
   };
@@ -22,7 +24,19 @@ export default function EmailsPage() {
   const handleRefresh = () => {
     setRefreshTrigger(prev => prev + 1);
   };
-
+  const handleGoogleAuth = async () => {
+    try {
+      const res = await apiFunctions.authGoogle();
+      if (res.url) {
+        window.location.href = res.url
+      } else {
+        toast.error("Failed to authenticate with Google");
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
+  
   const tabs = [
     { id: "inbox", label: "Inbox", icon: Inbox },
     // { id: "favourite", label: "Favourite", icon: Star },
@@ -58,6 +72,15 @@ export default function EmailsPage() {
 
             {/* Action Buttons */}
             <div className="flex items-center space-x-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleGoogleAuth}
+                className="h-8 px-3 text-xs border-amber-300 text-amber-700 hover:bg-amber-50"
+              >
+                <RefreshCw className="w-3 h-3 mr-1" />
+                Sync Google Mail
+              </Button>
               <Button
                 size="sm"
                 variant="outline"

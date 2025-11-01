@@ -23,7 +23,7 @@ export default function Navbar() {
     return null;
   }
   // Check if the user has the 'ADMIN' role
-  const isAdmin = session?.user?.role === "ADMIN";
+  const isAdmin = "ADMIN";
   console.log("isadmin", isAdmin);
 
   const navigation = [

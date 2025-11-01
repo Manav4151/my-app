@@ -1,3 +1,4 @@
+import { ParamsOf } from './../../.next/types/routes.d';
 import axios from "axios";
 
 const api = axios.create({
@@ -159,7 +160,7 @@ export const apiFunctions = { // Renamed to avoid conflict with axios instance n
     checkBookDuplicate: async (data: { bookData: any; pricingData: any; publisherData: any }) => {
         try {
             const response = await api.post('/api/books/check-duplicate', data);
-            return {data: response.data, statusCode: response.status};
+            return { data: response.data, statusCode: response.status };
         } catch (error) {
             throw handleError(error);
         }
@@ -196,7 +197,7 @@ export const apiFunctions = { // Renamed to avoid conflict with axios instance n
         } catch (error) { throw handleError(error); }
     },
 
-    updateEmailStatus: async (emailUid: number, status: string) => {
+    updateEmailStatus: async (emailUid: string, status: string) => {
         try {
             const response = await api.patch(`/api/emails/${emailUid}/status`, { status });
             return response.data;
@@ -238,6 +239,52 @@ export const apiFunctions = { // Renamed to avoid conflict with axios instance n
     addPublisher: async (payload: any) => {
         try {
             const response = await api.post('/api/addPublisher', payload);
+            return response.data;
+        } catch (error) { throw handleError(error); }
+    },
+
+    // ==== Google email api call ====
+    authGoogle: async () => {
+        try {
+            const response = await api.get('/api/google/auth-url');
+            return response.data;
+        } catch (error) { throw handleError(error); }
+    },
+
+    getGoogleEmail: async () => {
+        try {
+            const response = await api.get('/api/google/emails');
+            return response.data;
+        } catch (error) { throw handleError(error); }
+    },
+
+    getGoogleEmailDetail: async (id: string) => {
+        try {
+            const response = await api.get(`/api/google/email`, { params: { messageId: id } });
+            return response.data;
+        } catch (error) { throw handleError(error); }
+    },
+
+    // quotation
+    getQuotationPreview: async (bookIds: string[]) => {
+        try {
+            const response = await api.post('/api/quotations/preview', { bookIds });
+            return response.data;
+        } catch (error) { throw handleError(error); }
+    },
+
+    createQuotation: async (payload: any) => {
+        try {
+            const response = await api.post('/api/quotations/create', payload);
+            console.log("resposnse ---------------- ", response);
+
+            return response.data;
+        } catch (error) { throw handleError(error); }
+    },
+
+    getQuotation: async () => {
+        try {
+            const response = await api.get(`/api/quotations/`);
             return response.data;
         } catch (error) { throw handleError(error); }
     },

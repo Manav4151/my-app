@@ -17,7 +17,8 @@ import { toast } from "sonner";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
 
 interface Email {
-    uid: number;
+    id: string;
+    threadId: string;
     from: string;
     subject: string;
     date: string;
@@ -26,7 +27,7 @@ interface Email {
 
 interface EmailListProps {
     onEmailSelect?: (email: Email) => void;
-    selectedEmailUid?: number;
+    selectedEmailUid?: string;
 }
 
 export default function EmailList({ onEmailSelect, selectedEmailUid }: EmailListProps) {
@@ -34,7 +35,7 @@ export default function EmailList({ onEmailSelect, selectedEmailUid }: EmailList
     const [emails, setEmails] = useState<Email[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [recentlyUpdated, setRecentlyUpdated] = useState<number | null>(null);
+    const [recentlyUpdated, setRecentlyUpdated] = useState<string | null>(null);
 
     useEffect(() => {
         fetchEmails();
@@ -43,14 +44,13 @@ export default function EmailList({ onEmailSelect, selectedEmailUid }: EmailList
     const fetchEmails = async () => {
         try {
             setLoading(true);
-            const response = await apiFunctions.getEmails();
+            const response = await apiFunctions.getGoogleEmail();
+            console.log("Resposnse ****************", response);
 
-            if (!response.success) {
-                throw new Error(response.message || 'Failed to fetch emails');
-            }
 
-            
-            const emailsWithStatus = (response.data || []).map((email: Email) => ({
+
+
+            const emailsWithStatus = (response || []).map((email: Email) => ({
                 ...email,
                 status: email.status || 'pending'
             }));
@@ -68,10 +68,10 @@ export default function EmailList({ onEmailSelect, selectedEmailUid }: EmailList
         }
     };
 
-    const updateEmailStatus = async (emailUid: number, newStatus: string) => {
+    const updateEmailStatus = async (emailUid: string, newStatus: string) => {
         setEmails(prevEmails =>
             prevEmails.map(email =>
-                email.uid === emailUid
+                email.id === emailUid
                     ? { ...email, status: newStatus }
                     : email
             )
@@ -163,14 +163,14 @@ export default function EmailList({ onEmailSelect, selectedEmailUid }: EmailList
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                 {emails.map((email) => (
                     <div
-                        key={email.uid}
-                        className={`flex items-center p-3 border-b border-gray-100 hover:bg-gray-50 transition-colors ${selectedEmailUid === email.uid ? 'bg-purple-50 border-l-4 border-l-purple-500' : ''}`}
+                        key={email.id}
+                        className={`flex items-center p-3 border-b border-gray-100 hover:bg-gray-50 transition-colors ${selectedEmailUid === email.id ? 'bg-purple-50 border-l-4 border-l-purple-500' : ''}`}
                     >
                         <div
                             className="flex-1 min-w-0 cursor-pointer"
                             onClick={() => {
                                 if (onEmailSelect) onEmailSelect(email);
-                                else router.push(`/emails/${email.uid}`);
+                                else router.push(`/emails/${email.id}`);
                             }}
                         >
                             <div className="flex items-center justify-between">
@@ -200,10 +200,10 @@ export default function EmailList({ onEmailSelect, selectedEmailUid }: EmailList
                             <Select
                                 value={email.status || 'pending'}
                                 onValueChange={(newStatus) => {
-                                    updateEmailStatus(email.uid, newStatus);
+                                    updateEmailStatus(email.id, newStatus);
                                 }}
                             >
-                                <SelectTrigger className={`h-8 text-xs px-3 py-1 rounded-full border transition-all duration-100 ${getStatusColor(email.status || 'pending')} ${recentlyUpdated === email.uid ? "" : ''}`}>
+                                <SelectTrigger className={`h-8 text-xs px-3 py-1 rounded-full border transition-all duration-100 ${getStatusColor(email.status || 'pending')} ${recentlyUpdated === email.id ? "" : ''}`}>
                                     <SelectValue placeholder="Set status" />
                                 </SelectTrigger>
                                 <SelectContent className="bg-white border-gray-200 rounded-lg shadow-lg">

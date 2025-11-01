@@ -13,6 +13,7 @@ import ExcelImport from "../components/excel-import";
 import ViewOnAmazonButton from "../components/ViewOnAmazonButton";
 import SearchBookOnlineButton from "../components/ViewOnAmazonButton";
 import { ApiError, apiFunctions } from "@/services/api.service";
+import { set } from "lodash";
 
 // Define the data type based on API response
 interface Book {
@@ -80,7 +81,7 @@ export default function Home() {
 
 
 
-  
+
   useEffect(() => {
     if (selectionMode && headerCheckboxRef.current && data?.books) {
       const numSelected = selectedBooks.length;
@@ -112,7 +113,7 @@ export default function Home() {
 
       // Optional: Check for application-specific success flags if your backend sends them
       if (!response.success) { // Assuming your API returns { success: boolean, ... }
-         throw new Error(response.message || 'Failed to fetch books');
+        throw new Error(response.message || 'Failed to fetch books');
       }
 
       setData(response);
@@ -197,6 +198,25 @@ export default function Home() {
         setLoading(false);
       }
     }
+  };
+
+  const handleGenerateQuotes = () => {
+    if (selectedBooks.length === 0) {
+      toast.warning("No books selected to generate quotes for.");
+      return;
+    }
+    try {
+      // pass data to the preview page
+      const params = new URLSearchParams();
+      selectedBooks.forEach(id => {
+        params.append('id', id); // We add the key 'id' for *each* item
+      });
+      router.push(`/quotation/preview?${params.toString()}`);
+    } catch (error) {
+      console.error("Error generating quotes:", error);
+      toast.error(error instanceof Error ? error.message : "An unknown error occurred.");
+    }
+
   };
   // Handle view pricing - navigate to book detail page
   const handleViewPricing = (bookId: string) => {
@@ -402,6 +422,11 @@ export default function Home() {
             <Button onClick={handleDeleteSelected} variant="destructive" className="bg-red-600 hover:bg-red-700">
               <Trash2 className="w-4 h-4 mr-2" />
               Delete Selected
+            </Button>
+
+            <Button onClick={handleGenerateQuotes} variant="destructive" className="bg-red-600 hover:bg-red-700">
+              <Trash2 className="w-4 h-4 mr-2" />
+              Generate Quotation
             </Button>
           </div>
         )}

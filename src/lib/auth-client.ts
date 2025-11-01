@@ -8,6 +8,7 @@ export const authClient = createAuthClient({
   baseURL,
   plugins: [
     customSessionClient(), // ✅ This enables session management (getAccessToken, current session, etc.)
+  
 
   ],
 });
