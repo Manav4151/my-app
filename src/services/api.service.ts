@@ -288,4 +288,11 @@ export const apiFunctions = { // Renamed to avoid conflict with axios instance n
             return response.data;
         } catch (error) { throw handleError(error); }
     },
+
+    getQuotationById: async (id: string) => {
+        try {
+            const response = await api.get(`/api/quotations/${id}`);
+            return response.data;
+        } catch (error) { throw handleError(error); }
+    },
 };

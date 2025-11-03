@@ -21,6 +21,7 @@ import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge"; // Assuming you have a Badge component
 import { apiFunctions } from "@/services/api.service";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 // --- Type Definitions (Unchanged) ---
 type Customer = {
@@ -145,8 +146,17 @@ function QuotationStats({
 // === CHANGED: New QuotationCard component based on HTML reference ===
 // =================================================================
 function QuotationCard({ quotation }: { quotation: Quotation }) {
+  const router = useRouter();
+
+  const handleCardClick = () => {
+    router.push(`/quotation/${quotation._id}`);
+  };
+
   return (
-    <div className="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 bg-white rounded-xl shadow-sm border border-transparent hover:border-purple-200 hover:shadow-lg transition-all duration-300">
+    <div 
+      onClick={handleCardClick}
+      className="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 bg-white rounded-xl shadow-sm border border-transparent hover:border-purple-200 hover:shadow-lg transition-all duration-300 cursor-pointer"
+    >
 
       {/* Main Info Grid */}
       <div className="flex-1 flex flex-wrap justify-between gap-4 w-full">
@@ -188,7 +198,14 @@ function QuotationCard({ quotation }: { quotation: Quotation }) {
       </div>
 
       {/* Action Button */}
-      <Button variant="ghost" size="icon" className="text-gray-500 hover:text-purple-600 ml-auto md:ml-0 flex-shrink-0">
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        className="text-gray-500 hover:text-purple-600 ml-auto md:ml-0 flex-shrink-0"
+        onClick={(e) => {
+          e.stopPropagation(); // Prevent card click when clicking button
+        }}
+      >
         <MoreVertical className="w-5 h-5" />
       </Button>
     </div>
