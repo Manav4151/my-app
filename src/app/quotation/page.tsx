@@ -19,9 +19,13 @@ import {
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge"; // Assuming you have a Badge component
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { Label } from "../components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
 import { apiFunctions } from "@/services/api.service";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 // --- Type Definitions (Unchanged) ---
 type Customer = {
@@ -220,6 +224,127 @@ export default function QuotationPage() {
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  // --- New: Book selection dialog state ---
+  type Book = {
+    _id: string;
+    title: string;
+    author: string;
+    year: number;
+    publisher: { name: string } | null;
+    publisher_name: string;
+    isbn?: string;
+    edition?: string;
+    binding_type: string;
+    classification: string;
+    price?: number | null;
+  };
+  type BooksApiResponse = {
+    success: boolean;
+    books: Book[];
+    pagination: {
+      totalBooks: number;
+      currentPage: number;
+      totalPages: number;
+      hasNextPage: boolean;
+      hasPrevPage: boolean;
+      showing: { from: number; to: number; total: number };
+    };
+  };
+  type BookFilters = {
+    title?: string;
+    author?: string;
+    isbn?: string;
+    year?: string;
+    classification?: string;
+    publisher_name?: string;
+  };
+
+  const [bookDialogOpen, setBookDialogOpen] = useState(false);
+  const [bookData, setBookData] = useState<BooksApiResponse | null>(null);
+  const [bookPage, setBookPage] = useState(1);
+  const [bookLimit] = useState(10);
+  const [pendingBookFilters, setPendingBookFilters] = useState<BookFilters>({});
+  const [appliedBookFilters, setAppliedBookFilters] = useState<BookFilters>({});
+  const [bookLoading, setBookLoading] = useState(false);
+  const [selectedBookIds, setSelectedBookIds] = useState<string[]>([]);
+  const headerCheckboxRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (bookDialogOpen) {
+      // Reset selection when dialog opens
+      setSelectedBookIds([]);
+      setBookPage(1);
+      setAppliedBookFilters({});
+    }
+  }, [bookDialogOpen]);
+
+  useEffect(() => {
+    if (bookDialogOpen && headerCheckboxRef.current && bookData?.books) {
+      const numSelected = selectedBookIds.length;
+      const numBooksOnPage = bookData.books.length;
+      headerCheckboxRef.current.checked = numSelected === numBooksOnPage && numBooksOnPage > 0;
+      headerCheckboxRef.current.indeterminate = numSelected > 0 && numSelected < numBooksOnPage;
+    }
+  }, [selectedBookIds, bookData?.books, bookDialogOpen]);
+
+  const loadBooks = useCallback(async () => {
+    if (!bookDialogOpen) return;
+    setBookLoading(true);
+    try {
+      const params = new URLSearchParams({ page: String(bookPage), limit: String(bookLimit) });
+      if (appliedBookFilters.title) params.set("title", appliedBookFilters.title);
+      if (appliedBookFilters.author) params.set("author", appliedBookFilters.author);
+      if (appliedBookFilters.isbn) params.set("isbn", appliedBookFilters.isbn);
+      if (appliedBookFilters.year) params.set("year", appliedBookFilters.year);
+      if (appliedBookFilters.classification) params.set("classification", appliedBookFilters.classification);
+      if (appliedBookFilters.publisher_name) params.set("publisher_name", appliedBookFilters.publisher_name);
+
+      const response = await apiFunctions.getBooks(params);
+      if (!response.success) throw new Error(response.message || "Failed to fetch books");
+      setBookData(response as BooksApiResponse);
+    } catch (e) {
+      console.error(e);
+      toast.error(e instanceof Error ? e.message : "Failed to fetch books");
+    } finally {
+      setBookLoading(false);
+    }
+  }, [bookDialogOpen, bookPage, bookLimit, appliedBookFilters]);
+
+  useEffect(() => {
+    loadBooks();
+  }, [loadBooks]);
+
+  const applyBookFilters = () => {
+    setBookPage(1);
+    setAppliedBookFilters({ ...pendingBookFilters });
+  };
+  const clearBookFilters = () => {
+    setPendingBookFilters({});
+    setAppliedBookFilters({});
+    setBookPage(1);
+  };
+  const toggleSelectBook = (bookId: string) => {
+    setSelectedBookIds(prev => prev.includes(bookId) ? prev.filter(id => id !== bookId) : [...prev, bookId]);
+  };
+  const handleSelectAllBooks = () => {
+    if (bookData?.books && selectedBookIds.length === bookData.books.length) {
+      setSelectedBookIds([]);
+    } else {
+      setSelectedBookIds(bookData?.books.map(b => b._id) || []);
+    }
+  };
+  const proceedToPreview = () => {
+    if (selectedBookIds.length === 0) {
+      toast.warning("Please select at least one book.");
+      return;
+    }
+    const params = new URLSearchParams();
+    selectedBookIds.forEach(id => params.append("id", id));
+    setBookDialogOpen(false);
+    router.push(`/quotation/preview?${params.toString()}`);
+  };
 
   // =================================================================
   // === NEW: useEffect to fetch data on component mount ===
@@ -306,7 +431,7 @@ export default function QuotationPage() {
             Manage and track all your quotations.
           </p>
         </div>
-        <Button className="bg-purple-600 hover:bg-purple-700 text-white flex items-center space-x-2">
+        <Button className="bg-purple-600 hover:bg-purple-700 text-white flex items-center space-x-2" onClick={() => setBookDialogOpen(true)}>
           <Plus className="w-4 h-4" />
           <span>Create New Quotation</span>
         </Button>
@@ -376,6 +501,163 @@ export default function QuotationPage() {
           </div>
         )}
       </div>
+
+      {/* Book Selection Dialog for Creating Quotation */}
+      <Dialog open={bookDialogOpen} onOpenChange={setBookDialogOpen}>
+        <DialogContent className="max-w-5xl h-[85vh] flex flex-col overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>Select Books for Quotation</DialogTitle>
+          </DialogHeader>
+
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-auto overflow-x-auto pr-1">
+          {/* Filters */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="q-filter-title" className="text-gray-700 font-medium">Title</Label>
+                <Input
+                  id="q-filter-title"
+                  placeholder="Search by title..."
+                  value={pendingBookFilters.title || ''}
+                  onChange={(e) => setPendingBookFilters((f) => ({ ...f, title: e.target.value }))}
+                  className="mt-1 h-10"
+                />
+              </div>
+              <div>
+                <Label htmlFor="q-filter-isbn" className="text-gray-700 font-medium">ISBN</Label>
+                <Input
+                  id="q-filter-isbn"
+                  placeholder="Search by isbn..."
+                  value={pendingBookFilters.isbn || ''}
+                  onChange={(e) => setPendingBookFilters((f) => ({ ...f, isbn: e.target.value }))}
+                  className="mt-1 h-10"
+                />
+              </div>
+              <div>
+                <Label htmlFor="q-filter-publisher" className="text-gray-700 font-medium">Publisher</Label>
+                <Input
+                  id="q-filter-publisher"
+                  placeholder="Search by publisher..."
+                  value={pendingBookFilters.publisher_name || ''}
+                  onChange={(e) => setPendingBookFilters((f) => ({ ...f, publisher_name: e.target.value }))}
+                  className="mt-1 h-10"
+                />
+              </div>
+              <div>
+                <Label htmlFor="q-filter-author" className="text-gray-700 font-medium">Author</Label>
+                <Input
+                  id="q-filter-author"
+                  placeholder="Search by author..."
+                  value={pendingBookFilters.author || ''}
+                  onChange={(e) => setPendingBookFilters((f) => ({ ...f, author: e.target.value }))}
+                  className="mt-1 h-10"
+                />
+              </div>
+              <div>
+                <Label htmlFor="q-filter-year" className="text-gray-700 font-medium">Year</Label>
+                <Input
+                  id="q-filter-year"
+                  placeholder="Search by year"
+                  value={pendingBookFilters.year || ''}
+                  onChange={(e) => setPendingBookFilters((f) => ({ ...f, year: e.target.value }))}
+                  className="mt-1 h-10"
+                />
+              </div>
+              <div>
+                <Label htmlFor="q-filter-classification" className="text-gray-700 font-medium">Classification</Label>
+                <Select
+                  value={pendingBookFilters.classification || ''}
+                  onValueChange={(v) => setPendingBookFilters((f) => ({ ...f, classification: v === 'all' ? undefined : v }))}
+                >
+                  <SelectTrigger className="mt-1 h-10">
+                    <SelectValue placeholder="Select classification" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="Fantasy">Fantasy</SelectItem>
+                    <SelectItem value="Classic Literature">Classic Literature</SelectItem>
+                    <SelectItem value="Science Fiction">Science Fiction</SelectItem>
+                    <SelectItem value="Mystery">Mystery</SelectItem>
+                    <SelectItem value="Non-Fiction">Non-Fiction</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-4">
+              <Button onClick={applyBookFilters} disabled={bookLoading}>Apply Filters</Button>
+              <Button onClick={clearBookFilters} variant="outline" disabled={bookLoading}>Clear</Button>
+            </div>
+          </div>
+
+          {/* Books Table */}
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="px-4 py-3 border-b flex items-center justify-between">
+              <h3 className="text-base font-semibold">Books</h3>
+              <div className="text-sm text-gray-600">{bookData?.pagination.showing.from}-{bookData?.pagination.showing.to} of {bookData?.pagination.showing.total}</div>
+            </div>
+            {bookLoading ? (
+              <div className="p-6 text-center">Loading...</div>
+            ) : (bookData && bookData.books.length > 0 ? (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-max min-w-full divide-y">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 text-left">
+                          <Input type="checkbox" ref={headerCheckboxRef} onChange={handleSelectAllBooks} className="h-4 w-4" />
+                        </th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Title</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">ISBN</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Author</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Year</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Publisher</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y">
+                      {bookData.books.map((book) => (
+                        <tr key={book._id} className="hover:bg-gray-50">
+                          <td className="px-4 py-2">
+                            <Input type="checkbox" className="h-4 w-4" checked={selectedBookIds.includes(book._id)} onChange={() => toggleSelectBook(book._id)} />
+                          </td>
+                          <td className="px-4 py-2">
+                            <div className="text-sm font-medium text-gray-900">{book.title}</div>
+                            <div className="text-xs text-gray-500">{book.classification}</div>
+                          </td>
+                          <td className="px-4 py-2 text-sm text-gray-700">{book.isbn || 'N/A'}</td>
+                          <td className="px-4 py-2 text-sm text-gray-700">{book.author}</td>
+                          <td className="px-4 py-2 text-sm text-gray-700">{book.year}</td>
+                          <td className="px-4 py-2 text-sm text-gray-700">{book.publisher?.name || 'N/A'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {/* Pagination */}
+                {bookData.pagination.totalPages > 1 && (
+                  <div className="px-4 py-3 border-t flex items-center justify-between">
+                    <Button variant="outline" size="sm" disabled={!bookData.pagination.hasPrevPage} onClick={() => setBookPage(p => Math.max(1, p - 1))}>Previous</Button>
+                    <span className="text-sm">Page {bookData.pagination.currentPage} of {bookData.pagination.totalPages}</span>
+                    <Button variant="outline" size="sm" disabled={!bookData.pagination.hasNextPage} onClick={() => setBookPage(p => p + 1)}>Next</Button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="p-6 text-center text-gray-500">No books found</div>
+            ))}
+          </div>
+          </div>
+
+          {/* Sticky Footer */}
+          <div className="mt-4 flex items-center justify-between sticky bottom-0 bg-white border-t pt-3 pb-2">
+            <div className="text-sm text-gray-600">{selectedBookIds.length} selected</div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setBookDialogOpen(false)}>Cancel</Button>
+              <Button onClick={proceedToPreview} className="bg-purple-600 hover:bg-purple-700 text-white">Generate Quotation</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
