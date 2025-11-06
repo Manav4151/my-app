@@ -26,6 +26,7 @@ import { apiFunctions } from "@/services/api.service";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { RoleGate } from "@/lib/use-role";
 
 // --- Type Definitions (Unchanged) ---
 type Customer = {
@@ -431,10 +432,12 @@ export default function QuotationPage() {
             Manage and track all your quotations.
           </p>
         </div>
-        <Button className="bg-purple-600 hover:bg-purple-700 text-white flex items-center space-x-2" onClick={() => setBookDialogOpen(true)}>
-          <Plus className="w-4 h-4" />
-          <span>Create New Quotation</span>
-        </Button>
+        <RoleGate allow={["ADMIN", "MANAGER"]}>
+          <Button className="bg-purple-600 hover:bg-purple-700 text-white flex items-center space-x-2" onClick={() => setBookDialogOpen(true)}>
+            <Plus className="w-4 h-4" />
+            <span>Create New Quotation</span>
+          </Button>
+        </RoleGate>
       </header>
 
       {/* ======================================================== */}
@@ -494,10 +497,12 @@ export default function QuotationPage() {
             <p className="text-gray-600 mb-6 max-w-md mx-auto">
               Get started by creating your first quotation.
             </p>
-            <Button className="bg-purple-600 hover:bg-purple-700 text-white">
-              <Plus className="w-4 h-4 mr-2" />
-              Create New Quotation
-            </Button>
+            <RoleGate allow={["ADMIN", "MANAGER"]}>
+              <Button className="bg-purple-600 hover:bg-purple-700 text-white">
+                <Plus className="w-4 h-4 mr-2" />
+                Create New Quotation
+              </Button>
+            </RoleGate>
           </div>
         )}
       </div>

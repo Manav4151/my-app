@@ -1,5 +1,6 @@
 import { createAuthClient } from "better-auth/react";
-import { customSessionClient, inferAdditionalFields } from "better-auth/client/plugins";
+import { customSessionClient } from "better-auth/client/plugins";
+import { adminClient } from "better-auth/client/plugins";
 import { apiFunctions } from "@/services/api.service";
 
 const baseURL = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5050";
@@ -7,14 +8,36 @@ const baseURL = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5050";
 export const authClient = createAuthClient({
   baseURL,
   plugins: [
-    customSessionClient(), // ✅ This enables session management (getAccessToken, current session, etc.)
-  
-
+    customSessionClient(), // ✅ Enables session management (getAccessToken, session, etc.)
+    adminClient(),
   ],
 });
 
 // ✅ Export Session type for TypeScript support
 export type Session = typeof authClient.$Infer.Session;
+
+// ---- Role helpers ----
+export type Role = "USER" | "ADMIN" | "MANAGER";
+
+export function hasRole(session: Session | null, required: Role | Role[]): boolean {
+  if (!session || !session.user) return false;
+  const userRole = (session.user as any).role as Role | undefined;
+  if (!userRole) return false;
+  const requiredList = Array.isArray(required) ? required : [required];
+  return requiredList.includes(userRole);
+}
+
+export function hasAnyRole(session: Session | null, roles: Role[]): boolean {
+  return hasRole(session, roles);
+}
+
+export function isAdmin(session: Session | null): boolean {
+  return hasRole(session, "ADMIN");
+}
+
+// You can use these helpers in components, e.g.:
+// const session = await authClient.getSession();
+// if (!hasRole(session, ["ADMIN"])) redirect("/not-authorized");
 
 // Password reset helpers for our API
 export async function requestPasswordReset(params: { email: string; redirectTo?: string }) {
