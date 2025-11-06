@@ -295,4 +295,19 @@ export const apiFunctions = { // Renamed to avoid conflict with axios instance n
             return response.data;
         } catch (error) { throw handleError(error); }
     },
+
+    // company profile
+    createCompanyProfile: async (payload: any) => {
+        try {
+            const response = await api.post('/api/company-profiles', payload);
+            return response.data;
+        } catch (error) { throw handleError(error); }
+    },
+
+    getCompanyProfiles: async () => {
+        try {
+            const response = await api.get('/api/company-profiles');
+            return response.data;
+        } catch (error) { throw handleError(error); }
+    },
 };

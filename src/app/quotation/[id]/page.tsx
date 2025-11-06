@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
 import { apiFunctions } from "@/services/api.service";
 import { toast } from "sonner";
 
@@ -118,12 +119,16 @@ export default function QuotationDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
+  const [profiles, setProfiles] = useState<Array<{ _id: string; profileName: string }>>([]);
+  const [selectedProfileId, setSelectedProfileId] = useState<string>("");
+  const [loadingProfiles, setLoadingProfiles] = useState(false);
 
   const API_URL = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5050";
 
   useEffect(() => {
     if (quotationId) {
       fetchQuotationDetails();
+      fetchCompanyProfiles();
     }
   }, [quotationId]);
 
@@ -146,6 +151,30 @@ export default function QuotationDetailPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchCompanyProfiles = async () => {
+    try {
+      setLoadingProfiles(true);
+      const response = await apiFunctions.getCompanyProfiles();
+      if (response.success && response.data) {
+        setProfiles(response.data);
+      }
+    } catch (err) {
+      console.error("Error fetching company profiles:", err);
+      // Don't show error toast for profiles, just log it
+    } finally {
+      setLoadingProfiles(false);
+    }
+  };
+
+  const handlePreviewPDF = () => {
+    if (!selectedProfileId) {
+      toast.error("Please select a profile first");
+      return;
+    }
+    const previewUrl = `${API_URL}/api/quotations/${quotationId}/preview?profileId=${selectedProfileId}`;
+    window.open(previewUrl, '_blank');
   };
 
   const handleDownloadPDF = async () => {
@@ -420,13 +449,47 @@ export default function QuotationDetailPage() {
                 <Eye className="w-5 h-5 text-purple-600" />
                 PDF Preview
               </h2>
-              <div className="border border-gray-200 rounded-lg overflow-hidden">
+              
+              {/* Profile Selection */}
+              <div className="mb-4 space-y-3">
+                <div>
+                  <label htmlFor="profile-select" className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Company Profile
+                  </label>
+                  <Select
+                    value={selectedProfileId}
+                    onValueChange={setSelectedProfileId}
+                    disabled={loadingProfiles}
+                  >
+                    <SelectTrigger id="profile-select" className="w-full">
+                      <SelectValue placeholder={loadingProfiles ? "Loading profiles..." : "Select a profile"} />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[200px] overflow-y-auto bg-white">
+                      {profiles.map((profile) => (
+                        <SelectItem key={profile._id} value={profile._id}>
+                          {profile.profileName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  onClick={handlePreviewPDF}
+                  disabled={!selectedProfileId || loadingProfiles}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  Preview PDF
+                </Button>
+              </div>
+
+              {/* <div className="border border-gray-200 rounded-lg overflow-hidden">
                 <iframe
                   src={pdfPreviewUrl}
                   className="w-full h-[600px] border-0"
                   title="Quotation PDF Preview"
                 />
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

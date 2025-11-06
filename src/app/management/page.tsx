@@ -100,9 +100,10 @@ import { Button } from "@/app/components/ui/button";
 import { ArrowLeft, Building, User } from "lucide-react";
 import { AddPublisherForm } from "../components/AddPublisherForm";
 import { AddCustomerForm } from "../components/AddCustomerForm";
+import { AddCompanyProfileForm } from "../components/AddCompanyProfileForm";
 import { cn } from "@/lib/utils";
 
-type ActiveTab = "publisher" | "customer";
+type ActiveTab = "publisher" | "customer" | "company";
 
 function ManagementPageContent() {
     const router = useRouter();
@@ -139,7 +140,7 @@ function ManagementPageContent() {
 
                 {/* Tab Switcher */}
                 <div className="relative mb-8 border-b border-gray-200">
-                    <div className="flex justify-start max-w-xs">
+                    <div className="flex justify-start max-w-md">
                         <button onClick={() => setActiveTab("customer")} className="flex-1 text-center relative focus:outline-none py-2">
                             <span className={getTabItemClassName("customer")}>
                                 Customer
@@ -152,6 +153,12 @@ function ManagementPageContent() {
                             </span>
                             <span className={getUnderlineClassName("publisher")} />
                         </button>
+                        <button onClick={() => setActiveTab("company")} className="flex-1 text-center relative focus:outline-none py-2">
+                            <span className={getTabItemClassName("company")}>
+                                Company Profile
+                            </span>
+                            <span className={getUnderlineClassName("company")} />
+                        </button>
                     </div>
                 </div>
 
@@ -159,6 +166,7 @@ function ManagementPageContent() {
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
                     {activeTab === "publisher" && <AddPublisherForm />}
                     {activeTab === "customer" && <AddCustomerForm />}
+                    {activeTab === "company" && <AddCompanyProfileForm />}
                 </div>
 
             </div>
