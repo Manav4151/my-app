@@ -258,9 +258,10 @@ export const apiFunctions = { // Renamed to avoid conflict with axios instance n
         } catch (error) { throw handleError(error); }
     },
 
-    getGoogleEmail: async () => {
+    getGoogleEmail: async (search?: string) => {
         try {
-            const response = await api.get('/api/google/emails');
+            const params = search ? { search } : {};
+            const response = await api.get('/api/google/emails', { params });
             return response.data;
         } catch (error) { throw handleError(error); }
     },
