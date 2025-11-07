@@ -260,6 +260,7 @@ import { Send, Paperclip, X, FileText, Frown, Minus } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
+import { apiFunctions } from "@/services/api.service";
 
 interface ComposeEmailProps {
   onClose: () => void;
@@ -316,14 +317,10 @@ export default function ComposeEmail({ onClose, onEmailSent }: ComposeEmailProps
         formDataToSend.append('attachment', attachment);
       }
 
-      const response = await fetch('http://localhost:8000/api/emails/send', {
-        method: 'POST',
-        body: formDataToSend,
-      });
+      const response = await apiFunctions.sendEmail(formDataToSend);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to send email.');
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to send email.');
       }
 
       if (onEmailSent) onEmailSent();

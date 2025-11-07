@@ -10,8 +10,26 @@ import { Textarea } from "@/app/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
 import { BookOpen, ArrowLeft, CheckCircle, AlertTriangle, Info, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { debounce } from 'lodash';
+import { debounce, set } from 'lodash';
+import { apiFunctions } from "@/services/api.service";
 // ISBN validation functions
+// Remove all non-alphanumeric characters; keep digits and allow 'X' (uppercase) only as ISBN-10 check digit
+const cleanIsbnInput = (raw: string): string => {
+    if (!raw) return '';
+    const upper = raw.toUpperCase();
+    // Keep only digits and 'X'
+    const alnum = upper.replace(/[^0-9X]/g, '');
+    // If length > 10, it's potentially ISBN-13 → must be digits only
+    if (alnum.length > 10) {
+        return alnum.replace(/[^0-9]/g, '');
+    }
+    // For length <= 10, allow X but only at last position; if X appears earlier, remove it
+    if (alnum.includes('X') && alnum.indexOf('X') !== alnum.length - 1) {
+        return alnum.replace(/X/g, '');
+    }
+    return alnum;
+};
+
 const validateISBN10 = (cleanISBN: string): boolean => {
     // Check if it's exactly 10 characters
     if (cleanISBN.length !== 10) return false;
@@ -49,8 +67,7 @@ const validateISBN13 = (cleanISBN: string): boolean => {
 
 const validateISBN = (isbn: string): boolean => {
     if (!isbn || isbn.trim() === '') return false;
-
-    const cleanISBN = isbn.replace(/[-\s]/g, '');
+    const cleanISBN = cleanIsbnInput(isbn);
 
     // Check if it's ISBN-10 or ISBN-13
     if (cleanISBN.length === 10) {
@@ -62,10 +79,10 @@ const validateISBN = (isbn: string): boolean => {
     return false;
 };
 
-// Helper function to normalize ISBN for comparison (removes formatting)
+// Helper function to normalize ISBN for comparison/storage (plain number, allow X only as ISBN-10 check digit)
 const normalizeISBN = (isbn: string): string => {
     if (!isbn) return '';
-    return isbn.replace(/[-\s]/g, '').toUpperCase();
+    return cleanIsbnInput(isbn);
 };
 
 // Types based on the controller
@@ -73,13 +90,15 @@ interface BookData {
     title: string;
     author: string;
     year: number;
-    publisher_name: string;
     isbn?: string;
+    nonisbn?: string;
     other_code?: string;
     edition?: string;
     binding_type: string;
     classification: string;
     remarks?: string;
+    imprint?: string; // Added field
+    publisher_exclusive?: string; // Added field
     // Added to handle populated publisher from API
     publisher?: { name: string };
 }
@@ -93,16 +112,25 @@ interface PricingData {
     currency: string;
 }
 
+interface PublisherData {
+    publisher_name: string;
+}
 interface CheckResponse {
-    status: "NEW" | "DUPLICATE" | "CONFLICT" | "AUTHOR_CONFLICT";
+    bookStatus: "NEW" | "DUPLICATE" | "CONFLICT";
+    pricingStatus?: "ADD_PRICE" | "UPDATE_PRICE" | "NO_CHANGE";
     message: string;
-    existingBook?: any;
-    newData?: BookData;
-    conflictFields?: any;
-    pricingAction?: "ADD_PRICE" | "UPDATE_POSSIBLE" | "NO_CHANGE";
-    differences?: Array<{ field: string; existing: any; new: any }>;
-    bookId?: string;
-    pricingId?: string;
+    details: {
+        existingBook?: any;
+        bookId?: string;
+        pricingId?: string;
+        conflictFields?: {
+            [key: string]: { old: any; new: any };
+        };
+        differences?: {
+            rate?: { old: number; new: number };
+            discount?: { old: number; new: number };
+        };
+    };
 }
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
 function InsertBookPageContent() {
@@ -123,15 +151,20 @@ function InsertBookPageContent() {
         title: "",
         author: "",
         year: 0,
-        publisher_name: "",
         isbn: "",
         other_code: "",
         edition: "",
         binding_type: "",
         classification: "",
         remarks: "",
+        imprint: "", // Added field
+        publisher_exclusive: "", // Added field
     });
-
+    const [publisherData, setPublisherData] = useState<PublisherData>(
+        {
+            publisher_name: "",
+        }
+    );
     const [pricingData, setPricingData] = useState<PricingData>({
         source: "",
         rate: 0,
@@ -157,27 +190,36 @@ function InsertBookPageContent() {
     const fetchExistingBookData = async (bookId: string) => {
         try {
             setInitialLoading(true);
-            const response = await fetch(`${API_URL}/api/books/${bookId}/pricing`);
+            const result = await apiFunctions.getBookDetails(bookId);
 
-            if (!response.ok) {
-                throw new Error(`Failed to fetch book data: ${response.status}`);
+            if (!result.success) {
+                throw new Error(`Failed to fetch book data: ${result.status}`);
             }
 
-            const result = await response.json();
+            
 
             if (result.success && result.book) {
                 // Populate book data
                 setBookData({
+
                     title: result.book.title || "",
                     author: result.book.author || "",
                     year: result.book.year || 0,
-                    publisher_name: result.book.publisher_name || "",
                     isbn: result.book.isbn || "",
+
                     other_code: result.book.other_code || "",
                     edition: result.book.edition || "",
                     binding_type: result.book.binding_type || "",
                     classification: result.book.classification || "",
                     remarks: result.book.remarks || "",
+                    imprint: result.book.imprint || "", // Added field
+                    publisher_exclusive: result.book.publisher_exclusive || "", // Added field
+
+                });
+
+                // Populate publisher data separately
+                setPublisherData({
+                    publisher_name: result.book.publisher_name || "",
                 });
 
                 // Set non-ISBN checkbox based on whether other_code exists
@@ -208,10 +250,9 @@ function InsertBookPageContent() {
             return;
         }
         try {
-            const response = await fetch(`${API_URL}/api/books/suggestions?q=${encodeURIComponent(query)}`);
-            const result = await response.json();
-            if (result.success) {
-                setBookSuggestions(result.books);
+            const response = await apiFunctions.getBookSuggestions(query);
+            if (response.success) {
+                setBookSuggestions(response.books);
             }
         } catch (error) {
             console.error("Failed to fetch book suggestions:", error);
@@ -225,10 +266,9 @@ function InsertBookPageContent() {
             return;
         }
         try {
-            const response = await fetch(`${API_URL}/api/publisher-suggestions?q=${encodeURIComponent(query)}`);
-            const result = await response.json();
-            if (result.success) {
-                setPublisherSuggestions(result.publishers);
+            const response = await apiFunctions.getPublisherSuggestions(query);
+            if (response.success) {
+                setPublisherSuggestions(response.publishers);
             }
         } catch (error) {
             console.error("Failed to fetch publisher suggestions:", error);
@@ -248,7 +288,7 @@ function InsertBookPageContent() {
 
     const handlePublisherChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newPublisherName = e.target.value;
-        setBookData({ ...bookData, publisher_name: newPublisherName });
+        setPublisherData({ publisher_name: newPublisherName });
         debouncedFetchPublisherSuggestions(newPublisherName);
     };
 
@@ -264,12 +304,12 @@ function InsertBookPageContent() {
     };
 
     const handlePublisherSuggestionClick = (publisher: PublisherSuggestion) => {
-        setBookData({ ...bookData, publisher_name: publisher.name });
+        setPublisherData({ publisher_name: publisher.name });
         setPublisherSuggestions([]);
     };
     // Handle ISBN validation
     const handleISBNChange = (value: string) => {
-        // Store the normalized version (without hyphens/spaces) for consistency
+        // Store the normalized version (digits only; 'X' allowed only as ISBN-10 check digit)
         const normalizedISBN = normalizeISBN(value);
         setBookData({ ...bookData, isbn: normalizedISBN });
 
@@ -335,44 +375,38 @@ function InsertBookPageContent() {
         try {
             if (isEditMode && editBookId) {
                 // Direct update for edit mode
-                const response = await fetch(`${API_URL}/api/books/${editBookId}`, {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        bookData,
-                        pricingData,
-                    }),
+                const response = await apiFunctions.updateBook(editBookId, {
+                    bookData,
+                    pricingData,
+                    
                 });
 
-                if (!response.ok) {
+                if (!response.success) {
                     throw new Error(`Failed to update book: ${response.status}`);
                 }
 
-                const result = await response.json();
                 toast.success("Book updated successfully!");
                 router.push(`/books/${editBookId}`);
             } else {
+                console.log("Publisher data in check", publisherData);
+
                 // Check for duplicates in create mode
-                const response = await fetch(`${API_URL}/api/books/check`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        bookData,
-                        pricingData,
-                    }),
-                });
+                const response = await apiFunctions.checkBookDuplicate({bookData, pricingData, publisherData});
 
-                if (!response.ok) {
-                    throw new Error(`Failed to check book: ${response.status}`);
+                const result = await response.data;
+
+                // Handle different response statuses
+                if (response.statusCode === 409) {
+                    // Conflict response - this is expected and should be handled
+                    setCheckResponse(result);
+                    setStep("check");
+                } else if (!result.success) {
+                    throw new Error(`Failed to check book: ${result.message}`);
+                } else {
+                    // Success response (200)
+                    setCheckResponse(result);
+                    setStep("check");
                 }
-
-                const result = await response.json();
-                setCheckResponse(result);
-                setStep("check");
             }
         } catch (error) {
             console.error("Error processing book:", error);
@@ -387,33 +421,36 @@ function InsertBookPageContent() {
 
         setLoading(true);
         try {
+            // Simplified: The status is now always taken directly from the check response.
             const payload = {
                 bookData,
                 pricingData,
-                status: checkResponse.status,
+                publisherData,
+                status: checkResponse.bookStatus,
                 pricingAction: action,
-                bookId: checkResponse.bookId,
-                pricingId: checkResponse.pricingId,
+                bookId: checkResponse.details?.bookId,
+                pricingId: checkResponse.details?.pricingId,
             };
 
-            const response = await fetch(`${API_URL}/api/books`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(payload),
-            });
+            const response = await apiFunctions.createBook(payload);
 
-            if (!response.ok) {
-                throw new Error(`Failed to ${action.toLowerCase()}: ${response.status}`);
+            if (!response.success) {
+                
+                throw new Error(response.message || `Failed to ${action.toLowerCase()}: ${response.status}`);
             }
 
-            const result = await response.json();
-            toast.success("Book operation completed successfully!");
-            router.push("/books");
-        } catch (error) {
+            
+            toast.success(response.message || "Book operation completed successfully!");
+
+            if (response.book?._id) {
+                router.push(`/books/${response.book._id}`);
+            } else {
+                router.push("/books");
+            }
+
+        } catch (error: any) {
             console.error("Error performing action:", error);
-            toast.error(`Failed to ${action.toLowerCase()}`);
+            toast.error(error.message || `Failed to perform action.`);
         } finally {
             setLoading(false);
         }
@@ -559,7 +596,7 @@ function InsertBookPageContent() {
                                         <Label htmlFor="publisher_name" className="text-gray-700 font-medium">Publisher *</Label>
                                         <Input
                                             id="publisher_name"
-                                            value={bookData.publisher_name}
+                                            value={publisherData.publisher_name}
                                             onChange={handlePublisherChange}
                                             required
                                             placeholder="e.g., Charles Scribner's Sons"
@@ -626,6 +663,33 @@ function InsertBookPageContent() {
                                             </div>
                                         )}
                                     </div>
+                                    {/* imprint */}
+                                    <div>
+                                        <Label htmlFor="imprint" className="text-gray-700 font-medium">Imprint</Label>
+                                        <Input
+                                            id="imprint"
+                                            value={bookData.imprint}
+                                            onChange={(e) =>
+                                                setBookData({ ...bookData, imprint: e.target.value })
+                                            }
+                                            placeholder="Imprint"
+                                            className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                                        />
+                                    </div>
+
+                                    {/* publisher_exclusive */}
+                                    <div>
+                                        <Label htmlFor="publisher_exclusive" className="text-gray-700 font-medium">Publisher Exclusive</Label>
+                                        <Input
+                                            id="publisher_exclusive"
+                                            value={bookData.publisher_exclusive}
+                                            onChange={(e) =>
+                                                setBookData({ ...bookData, publisher_exclusive: e.target.value })
+                                            }
+                                            placeholder="Publisher Exclusive"
+                                            className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                                        />
+                                    </div>
                                     <div>
                                         <Label htmlFor="edition" className="text-gray-700 font-medium">Edition</Label>
                                         <Input
@@ -639,7 +703,7 @@ function InsertBookPageContent() {
                                         />
                                     </div>
                                     <div>
-                                        <Label htmlFor="binding_type" className="text-gray-700 font-medium">Binding Type *</Label>
+                                        <Label htmlFor="binding_type" className="text-gray-700 font-medium">Binding Type</Label>
                                         <Select
                                             value={bookData.binding_type}
                                             onValueChange={(value) =>
@@ -738,7 +802,7 @@ function InsertBookPageContent() {
                                         />
                                     </div>
                                     <div>
-                                        <Label htmlFor="currency" className="text-gray-700 font-medium">Currency *</Label>
+                                        <Label htmlFor="currency" className="text-gray-700 font-medium">Currency</Label>
                                         <Select
                                             value={pricingData.currency}
                                             onValueChange={(value) =>
@@ -801,7 +865,8 @@ function InsertBookPageContent() {
     const renderCheckResult = () => {
         if (!checkResponse) return null;
 
-        const { status, message, existingBook, conflictFields, pricingAction, differences } = checkResponse;
+        // Simplified Destructuring: Get everything from the new response structure
+        const { bookStatus, pricingStatus, message, details } = checkResponse;
 
         return (
             <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50">
@@ -830,34 +895,61 @@ function InsertBookPageContent() {
 
                     <div className="space-y-6">
                         {/* Status Message */}
-                        <div className={`p-6 rounded-2xl border ${status === "NEW" ? "bg-green-50 border-green-200" :
-                            status === "DUPLICATE" ? "bg-blue-50 border-blue-200" :
+                        <div className={`p-6 rounded-2xl border ${bookStatus === "NEW" ? "bg-green-50 border-green-200" :
+                            bookStatus === "DUPLICATE" ? "bg-blue-50 border-blue-200" :
                                 "bg-yellow-50 border-yellow-200"
                             }`}>
                             <div className="flex items-center gap-3 mb-2">
-                                {status === "NEW" && <CheckCircle className="w-6 h-6 text-green-600" />}
-                                {status === "DUPLICATE" && <Info className="w-6 h-6 text-blue-600" />}
-                                {(status === "CONFLICT" || status === "AUTHOR_CONFLICT") && <AlertTriangle className="w-6 h-6 text-yellow-600" />}
+                                {bookStatus === "NEW" && <CheckCircle className="w-6 h-6 text-green-600" />}
+                                {bookStatus === "DUPLICATE" && <Info className="w-6 h-6 text-blue-600" />}
+                                {bookStatus === "CONFLICT" && <AlertTriangle className="w-6 h-6 text-yellow-600" />}
                                 <h2 className="text-xl font-semibold">
-                                    {status === "NEW" && "New Book Detected"}
-                                    {status === "DUPLICATE" && "Duplicate Book Found"}
-                                    {(status === "CONFLICT" || status === "AUTHOR_CONFLICT") && "Conflict Detected"}
+                                    {bookStatus === "NEW" && "New Book Detected"}
+                                    {bookStatus === "DUPLICATE" && "Duplicate Book Found"}
+                                    {bookStatus === "CONFLICT" && "Conflict Detected"}
                                 </h2>
                             </div>
                             <p className="text-gray-700">{message}</p>
                         </div>
 
                         {/* Conflict Fields Display */}
-                        {conflictFields && (
+                        {bookStatus === "CONFLICT" && details?.conflictFields && (
                             <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6">
                                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Conflict Details</h3>
                                 <div className="space-y-4">
-                                    {Object.entries(conflictFields).map(([field, data]: [string, any]) => (
+                                    {Object.entries(details.conflictFields).map(([field, data]: [string, any]) => (
                                         data && (
                                             <div key={field} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-yellow-50 rounded-xl">
                                                 <div>
                                                     <Label className="text-sm font-medium text-gray-700">Field</Label>
                                                     <p className="text-sm text-gray-900 capitalize">{field.replace('_', ' ')}</p>
+                                                </div>
+                                                <div>
+                                                    <Label className="text-sm font-medium text-gray-700">Existing Value</Label>
+                                                    <p className="text-sm text-gray-900">{String(data.old) || "N/A"}</p>
+                                                </div>
+                                                <div>
+                                                    <Label className="text-sm font-medium text-gray-700">New Value</Label>
+                                                    <p className="text-sm text-gray-900">{String(data.new) || "N/A"}</p>
+                                                </div>
+                                            </div>
+                                        )
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Pricing Differences Display */}
+                        {bookStatus === "DUPLICATE" && pricingStatus === "UPDATE_PRICE" && details?.differences && (
+                            <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6">
+                                <h3 className="text-lg font-semibold text-gray-900 mb-4">Pricing Differences</h3>
+                                <div className="space-y-4">
+                                    {Object.entries(details.differences).map(([field, data]: [string, any]) => (
+                                        data && (
+                                            <div key={field} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-blue-50 rounded-xl">
+                                                <div>
+                                                    <Label className="text-sm font-medium text-gray-700">Field</Label>
+                                                    <p className="text-sm text-gray-900 capitalize">{field}</p>
                                                 </div>
                                                 <div>
                                                     <Label className="text-sm font-medium text-gray-700">Existing Value</Label>
@@ -874,165 +966,86 @@ function InsertBookPageContent() {
                             </div>
                         )}
 
-                        {/* Pricing Differences */}
-                        {differences && differences.length > 0 && (
-                            <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-4">Pricing Differences</h3>
-                                <div className="space-y-4">
-                                    {differences.map((diff, index) => (
-                                        <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-blue-50 rounded-xl">
-                                            <div>
-                                                <Label className="text-sm font-medium text-gray-700">Field</Label>
-                                                <p className="text-sm text-gray-900 capitalize">{diff.field}</p>
-                                            </div>
-                                            <div>
-                                                <Label className="text-sm font-medium text-gray-700">Existing Value</Label>
-                                                <p className="text-sm text-gray-900">{diff.existing}</p>
-                                            </div>
-                                            <div>
-                                                <Label className="text-sm font-medium text-gray-700">New Value</Label>
-                                                <p className="text-sm text-gray-900">{diff.new}</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
                         {/* Action Buttons */}
                         <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Choose Action</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Choose Your Action</h3>
                             <div className="flex flex-wrap gap-4">
-                                {status === "NEW" && (
+
+                                {/* Case 1: NEW BOOK */}
+                                {bookStatus === "NEW" && (
                                     <Button
                                         onClick={() => handleAction("INSERT")}
                                         disabled={loading}
                                         className="h-12 px-6 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold rounded-xl"
                                     >
-                                        {loading ? (
-                                            <>
-                                                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                                Inserting...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <CheckCircle className="w-5 h-5 mr-2" />
-                                                Insert Book
-                                            </>
-                                        )}
+                                        {loading ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Inserting...</> : <><CheckCircle className="w-5 h-5 mr-2" /> Insert Book</>}
                                     </Button>
                                 )}
 
-                                {(status === "CONFLICT" || status === "AUTHOR_CONFLICT") && (
+                                {/* Case 2: CONFLICT DETECTED */}
+                                {bookStatus === "CONFLICT" && (
                                     <>
+
                                         <Button
-                                            onClick={() => handleAction("KEEP_NEW")}
-                                            disabled={loading}
-                                            className="h-12 px-6 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold rounded-xl"
-                                        >
-                                            {loading ? (
-                                                <>
-                                                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                                    Updating...
-                                                </>
-                                            ) : (
-                                                "Keep New"
-                                            )}
-                                        </Button>
-                                        <Button
-                                            onClick={() => handleAction("KEEP_OLD")}
+                                            onClick={() => setStep("form")}
                                             disabled={loading}
                                             variant="outline"
                                             className="h-12 px-6 border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl"
                                         >
-                                            {loading ? (
-                                                <>
-                                                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                                    Keeping...
-                                                </>
-                                            ) : (
-                                                "Keep Old"
-                                            )}
-                                        </Button>
-                                        <Button
-                                            onClick={() => handleAction("KEEP_BOTH")}
-                                            disabled={loading}
-                                            className="h-12 px-6 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold rounded-xl"
-                                        >
-                                            {loading ? (
-                                                <>
-                                                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                                    Creating...
-                                                </>
-                                            ) : (
-                                                "Keep Both"
-                                            )}
+                                            Discard
                                         </Button>
                                     </>
                                 )}
 
-                                {status === "DUPLICATE" && (
+                                {/* Case 3: DUPLICATE BOOK FOUND */}
+                                {bookStatus === "DUPLICATE" && (
                                     <>
-                                        {pricingAction === "ADD_PRICE" && (
-                                            <Button
-                                                onClick={() => handleAction("ADD_PRICE")}
-                                                disabled={loading}
-                                                className="h-12 px-6 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold rounded-xl"
-                                            >
-                                                {loading ? (
-                                                    <>
-                                                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                                        Adding...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <CheckCircle className="w-5 h-5 mr-2" />
-                                                        Add Price
-                                                    </>
-                                                )}
-                                            </Button>
+                                        {pricingStatus === "ADD_PRICE" && (
+                                            <>
+                                                <Button
+                                                    onClick={() => handleAction("ADD_PRICE")}
+                                                    disabled={loading}
+                                                    className="h-12 px-6 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold rounded-xl"
+                                                >
+                                                    {loading ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Adding...</> : "Add Price"}
+                                                </Button>
+                                                <Button
+                                                    onClick={() => setStep("form")}
+                                                    disabled={loading}
+                                                    variant="outline"
+                                                    className="h-12 px-6 border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl"
+                                                >
+                                                    Discard
+                                                </Button>
+                                            </>
                                         )}
-                                        {pricingAction === "UPDATE_POSSIBLE" && (
+                                        {pricingStatus === "UPDATE_PRICE" && (
                                             <>
                                                 <Button
                                                     onClick={() => handleAction("UPDATE_PRICE")}
                                                     disabled={loading}
                                                     className="h-12 px-6 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold rounded-xl"
                                                 >
-                                                    {loading ? (
-                                                        <>
-                                                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                                            Updating...
-                                                        </>
-                                                    ) : (
-                                                        "Update Price"
-                                                    )}
+                                                    {loading ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Updating...</> : "Update Price"}
                                                 </Button>
                                                 <Button
-                                                    onClick={() => handleAction("IGNORE")}
+                                                    onClick={() => setStep("form")}
                                                     disabled={loading}
                                                     variant="outline"
                                                     className="h-12 px-6 border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl"
                                                 >
-                                                    {loading ? (
-                                                        <>
-                                                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                                            Ignoring...
-                                                        </>
-                                                    ) : (
-                                                        "Keep Old"
-                                                    )}
+                                                    Discard Changes
                                                 </Button>
                                             </>
                                         )}
-                                        {pricingAction === "NO_CHANGE" && (
-                                            <div className="text-center py-4">
+                                        {pricingStatus === "NO_CHANGE" && (
+                                            <div className="text-center py-4 w-full">
                                                 <p className="text-gray-600">Book and pricing are already up-to-date.</p>
                                                 <Button
                                                     onClick={() => router.push("/books")}
                                                     className="mt-4 bg-amber-600 hover:bg-amber-700"
                                                 >
-                                                    Return to Home
+                                                    Return to Book List
                                                 </Button>
                                             </div>
                                         )}
@@ -1045,7 +1058,6 @@ function InsertBookPageContent() {
             </div>
         );
     };
-
     return (
         <>
             {step === "form" && renderForm()}
@@ -1067,472 +1079,3 @@ export default function InsertBookPage() {
         </Suspense>
     );
 }
-
-
-// /* eslint-disable @typescript-eslint/no-explicit-any */
-// "use client";
-
-// import React, { useState, useEffect, Suspense, useCallback } from "react";
-// import { useRouter, useSearchParams } from "next/navigation";
-// import { Button } from "@/app/components/ui/button";
-// import { Input } from "@/app/components/ui/input";
-// import { Label } from "@/app/components/ui/label";
-// import { Textarea } from "@/app/components/ui/textarea";
-// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
-// import { BookOpen, ArrowLeft, CheckCircle, AlertTriangle, Info, Loader2 } from "lucide-react";
-// import { toast } from "sonner";
-// import { debounce } from 'lodash';
-
-// // --- Helper Functions (ISBN Validation) ---
-// const validateISBN10 = (cleanISBN: string): boolean => {
-//     if (cleanISBN.length !== 10 || !/^\d{9}[\dX]$/.test(cleanISBN)) return false;
-//     let sum = 0;
-//     for (let i = 0; i < 9; i++) {
-//         sum += parseInt(cleanISBN[i]) * (10 - i);
-//     }
-//     const checkDigit = cleanISBN[9] === 'X' ? 10 : parseInt(cleanISBN[9]);
-//     sum += checkDigit;
-//     return sum % 11 === 0;
-// };
-
-// const validateISBN13 = (cleanISBN: string): boolean => {
-//     if (cleanISBN.length !== 13 || !/^\d{13}$/.test(cleanISBN)) return false;
-//     let sum = 0;
-//     for (let i = 0; i < 12; i++) {
-//         const digit = parseInt(cleanISBN[i]);
-//         sum += digit * (i % 2 === 0 ? 1 : 3);
-//     }
-//     const checkDigit = (10 - (sum % 10)) % 10;
-//     return checkDigit === parseInt(cleanISBN[12]);
-// };
-
-// const validateISBN = (isbn: string): boolean => {
-//     if (!isbn || isbn.trim() === '') return false;
-//     const cleanISBN = isbn.replace(/[-\s]/g, '');
-//     if (cleanISBN.length === 10) return validateISBN10(cleanISBN);
-//     if (cleanISBN.length === 13) return validateISBN13(cleanISBN);
-//     return false;
-// };
-
-// const normalizeISBN = (isbn: string): string => {
-//     if (!isbn) return '';
-//     return isbn.replace(/[-\s]/g, '').toUpperCase();
-// };
-
-// // --- Interfaces ---
-// interface BookData {
-//     title: string;
-//     author: string;
-//     year: number;
-//     publisher_name: string;
-//     isbn?: string;
-//     other_code?: string;
-//     edition?: string;
-//     binding_type: string;
-//     classification: string;
-//     remarks?: string;
-//     // Added to handle populated publisher from API
-//     publisher?: { name: string };
-// }
-
-// interface PublisherSuggestion {
-//     name: string;
-// }
-
-// interface PricingData {
-//     source: string;
-//     rate: number;
-//     discount: number;
-//     currency: string;
-// }
-
-// interface CheckResponse {
-//     status: "NEW" | "DUPLICATE" | "CONFLICT" | "AUTHOR_CONFLICT";
-//     message: string;
-//     existingBook?: any;
-//     newData?: BookData;
-//     conflictFields?: any;
-//     pricingAction?: "ADD_PRICE" | "UPDATE_POSSIBLE" | "NO_CHANGE";
-//     differences?: Array<{ field: string; existing: any; new: any }>;
-//     bookId?: string;
-//     pricingId?: string;
-// }
-
-// const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
-
-// // --- Component ---
-// function InsertBookPageContent() {
-//     const router = useRouter();
-//     const searchParams = useSearchParams();
-//     const [step, setStep] = useState<"form" | "check" | "result">("form");
-//     const [loading, setLoading] = useState(false);
-//     const [checkResponse, setCheckResponse] = useState<CheckResponse | null>(null);
-//     const [isEditMode, setIsEditMode] = useState(false);
-//     const [editBookId, setEditBookId] = useState<string | null>(null);
-//     const [initialLoading, setInitialLoading] = useState(false);
-//     const [isNonISBN, setIsNonISBN] = useState(false);
-//     const [isbnError, setIsbnError] = useState("");
-
-//     // State for suggestions
-//     const [bookSuggestions, setBookSuggestions] = useState<BookData[]>([]);
-//     const [publisherSuggestions, setPublisherSuggestions] = useState<PublisherSuggestion[]>([]);
-
-//     const [bookData, setBookData] = useState<BookData>({
-//         title: "",
-//         author: "",
-//         year: 0,
-//         publisher_name: "",
-//         isbn: "",
-//         other_code: "",
-//         edition: "",
-//         binding_type: "",
-//         classification: "",
-//         remarks: "",
-//     });
-
-//     const [pricingData, setPricingData] = useState<PricingData>({
-//         source: "",
-//         rate: 0,
-//         discount: 0,
-//         currency: "USD",
-//     });
-
-//     useEffect(() => {
-//         const editParam = searchParams.get('edit');
-//         const bookIdParam = searchParams.get('bookId');
-//         const bookId = editParam || bookIdParam;
-//         if (bookId) {
-//             setIsEditMode(true);
-//             setEditBookId(bookId);
-//             fetchExistingBookData(bookId);
-//         }
-//     }, [searchParams]);
-
-//     const fetchExistingBookData = async (bookId: string) => {
-//         setInitialLoading(true);
-//         try {
-//             const response = await fetch(`${API_URL}/api/books/${bookId}/pricing`);
-//             if (!response.ok) throw new Error(`Failed to fetch book data: ${response.status}`);
-//             const result = await response.json();
-//             if (result.success && result.book) {
-//                 setBookData({
-//                     title: result.book.title || "",
-//                     author: result.book.author || "",
-//                     year: result.book.year || 0,
-//                     publisher_name: result.book.publisher?.name || result.book.publisher_name || "",
-//                     isbn: result.book.isbn || "",
-//                     other_code: result.book.other_code || "",
-//                     edition: result.book.edition || "",
-//                     binding_type: result.book.binding_type || "",
-//                     classification: result.book.classification || "",
-//                     remarks: result.book.remarks || "",
-//                 });
-//                 setIsNonISBN(!!result.book.other_code && !result.book.isbn);
-//                 if (result.pricing && result.pricing.length > 0) {
-//                     const firstPricing = result.pricing[0];
-//                     setPricingData({
-//                         source: firstPricing.source || "",
-//                         rate: firstPricing.rate || 0,
-//                         discount: firstPricing.discount || 0,
-//                         currency: firstPricing.currency || "USD",
-//                     });
-//                 }
-//             }
-//         } catch (error) {
-//             console.error("Error fetching existing book data:", error);
-//             toast.error("Failed to load book data for editing");
-//         } finally {
-//             setInitialLoading(false);
-//         }
-//     };
-
-//     // --- Suggestion Logic ---
-
-//     // Fetch Book Suggestions
-//     const fetchBookSuggestions = async (query: string) => {
-//         if (query.length < 2) {
-//             setBookSuggestions([]);
-//             return;
-//         }
-//         try {
-//             const response = await fetch(`${API_URL}/api/books/suggestions?q=${encodeURIComponent(query)}`);
-//             const result = await response.json();
-//             if (result.success) {
-//                 setBookSuggestions(result.books);
-//             }
-//         } catch (error) {
-//             console.error("Failed to fetch book suggestions:", error);
-//         }
-//     };
-
-//     // Fetch Publisher Suggestions
-//     const fetchPublisherSuggestions = async (query: string) => {
-//         if (query.length < 2) {
-//             setPublisherSuggestions([]);
-//             return;
-//         }
-//         try {
-//             const response = await fetch(`${API_URL}/api/publisher-suggestions?q=${encodeURIComponent(query)}`);
-//             const result = await response.json();
-//             if (result.success) {
-//                 setPublisherSuggestions(result.publishers);
-//             }
-//         } catch (error) {
-//             console.error("Failed to fetch publisher suggestions:", error);
-//         }
-//     };
-
-//     const debouncedFetchBookSuggestions = useCallback(debounce(fetchBookSuggestions, 300), []);
-//     const debouncedFetchPublisherSuggestions = useCallback(debounce(fetchPublisherSuggestions, 300), []);
-
-//     // --- Input Handlers ---
-
-//     const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//         const newTitle = e.target.value;
-//         setBookData({ ...bookData, title: newTitle });
-//         debouncedFetchBookSuggestions(newTitle);
-//     };
-
-//     const handlePublisherChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//         const newPublisherName = e.target.value;
-//         setBookData({ ...bookData, publisher_name: newPublisherName });
-//         debouncedFetchPublisherSuggestions(newPublisherName);
-//     };
-
-//     const handleBookSuggestionClick = (book: BookData) => {
-//         setBookData({
-//             ...book,
-//             publisher_name: book.publisher ? book.publisher.name : ""
-//         });
-//         setBookSuggestions([]);
-//     };
-
-//     const handlePublisherSuggestionClick = (publisher: PublisherSuggestion) => {
-//         setBookData({ ...bookData, publisher_name: publisher.name });
-//         setPublisherSuggestions([]);
-//     };
-
-//     const handleISBNChange = (value: string) => {
-//         const normalizedISBN = normalizeISBN(value);
-//         setBookData({ ...bookData, isbn: normalizedISBN });
-//         if (value && !validateISBN(value)) {
-//             setIsbnError("Please enter a valid ISBN (10 or 13 digits)");
-//         } else {
-//             setIsbnError("");
-//         }
-//     };
-
-//     const handleOtherCodeChange = (value: string) => {
-//         setBookData({ ...bookData, other_code: value });
-//     };
-
-//     const handleNonISBNToggle = (checked: boolean) => {
-//         setIsNonISBN(checked);
-//         setBookData(prev => ({
-//             ...prev,
-//             isbn: checked ? "" : prev.isbn,
-//             other_code: checked ? prev.other_code : ""
-//         }));
-//         if (checked) setIsbnError("");
-//     };
-
-//     // --- Form Submission and Validation ---
-
-//     const validateForm = (): boolean => {
-//         if (!isNonISBN) {
-//             if (!bookData.isbn || bookData.isbn.trim() === '') {
-//                 setIsbnError("ISBN is required");
-//                 return false;
-//             }
-//             if (!validateISBN(bookData.isbn)) {
-//                 setIsbnError("Please enter a valid ISBN (10 or 13 digits)");
-//                 return false;
-//             }
-//         } else {
-//             if (!bookData.other_code || bookData.other_code.trim() === '') {
-//                 toast.error("Other code is required for non-ISBN books");
-//                 return false;
-//             }
-//         }
-//         return true;
-//     };
-
-//     const handleSubmit = async (e: React.FormEvent) => {
-//         e.preventDefault();
-//         if (!validateForm()) return;
-
-//         setLoading(true);
-//         try {
-//             const endpoint = isEditMode && editBookId ? `${API_URL}/api/books/${editBookId}` : `${API_URL}/api/books/check`;
-//             const method = isEditMode ? "PUT" : "POST";
-//             const response = await fetch(endpoint, {
-//                 method,
-//                 headers: { "Content-Type": "application/json" },
-//                 body: JSON.stringify({ bookData, pricingData }),
-//             });
-
-//             if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
-//             const result = await response.json();
-
-//             if (isEditMode) {
-//                 toast.success("Book updated successfully!");
-//                 router.push(`/books/${editBookId}`);
-//             } else {
-//                 setCheckResponse(result);
-//                 setStep("check");
-//             }
-//         } catch (error) {
-//             console.error("Error processing book:", error);
-//             toast.error(isEditMode ? "Failed to update book" : "Failed to check book status");
-//         } finally {
-//             setLoading(false);
-//         }
-//     };
-
-//     const handleAction = async (action: string) => {
-//         if (!checkResponse) return;
-//         setLoading(true);
-//         try {
-//             const payload = {
-//                 bookData,
-//                 pricingData,
-//                 status: checkResponse.status,
-//                 pricingAction: action,
-//                 bookId: checkResponse.bookId,
-//                 pricingId: checkResponse.pricingId,
-//             };
-//             const response = await fetch(`${API_URL}/api/books`, {
-//                 method: "POST",
-//                 headers: { "Content-Type": "application/json" },
-//                 body: JSON.stringify(payload),
-//             });
-//             if (!response.ok) throw new Error(`Failed to ${action.toLowerCase()}: ${response.status}`);
-//             toast.success("Book operation completed successfully!");
-//             router.push("/books");
-//         } catch (error) {
-//             console.error("Error performing action:", error);
-//             toast.error(`Failed to ${action.toLowerCase()}`);
-//         } finally {
-//             setLoading(false);
-//         }
-//     };
-
-//     // --- Render Functions ---
-
-//     const renderForm = () => {
-//         if (initialLoading) {
-//             return (
-//                 <div className="min-h-screen flex items-center justify-center">
-//                     <div className="bg-white shadow-lg rounded-2xl p-8 flex items-center">
-//                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
-//                         <span className="ml-3 text-gray-600">Loading book data...</span>
-//                     </div>
-//                 </div>
-//             );
-//         }
-
-//         return (
-//             <div className="min-h-screen">
-//                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-//                     <div className="bg-white rounded-2xl p-8 shadow-sm border border-amber-100">
-//                         {/* Header */}
-//                         <div className="mb-8">
-//                             {/* ... Back Button and Header Text ... */}
-//                         </div>
-//                         <form onSubmit={handleSubmit} className="space-y-8">
-//                             {/* Book Information */}
-//                             <div>
-//                                 <h2 className="text-xl font-semibold text-gray-900 mb-6">Book Information</h2>
-//                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-//                                     {/* Title Input with Suggestions */}
-//                                     <div className="relative">
-//                                         <Label htmlFor="title" className="text-gray-700 font-medium">Title *</Label>
-//                                         <Input
-//                                             id="title"
-//                                             value={bookData.title}
-//                                             onChange={handleTitleChange}
-//                                             required
-//                                             placeholder="e.g., The Great Gatsby"
-//                                             className="mt-1 h-12 ..."
-//                                             autoComplete="off"
-//                                         />
-//                                         {bookSuggestions.length > 0 && (
-//                                             <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
-//                                                 {bookSuggestions.map((book, index) => (
-//                                                     <div
-//                                                         key={index}
-//                                                         className="px-4 py-2 cursor-pointer hover:bg-amber-50"
-//                                                         onClick={() => handleBookSuggestionClick(book)}
-//                                                     >
-//                                                         <p className="font-semibold">{book.title}</p>
-//                                                         <p className="text-sm text-gray-500">{book.author}</p>
-//                                                     </div>
-//                                                 ))}
-//                                             </div>
-//                                         )}
-//                                     </div>
-//                                     {/* Author Input */}
-//                                     <div>
-//                                         {/* ... Author input code ... */}
-//                                     </div>
-//                                     {/* Publication Year Input */}
-//                                     <div>
-//                                         {/* ... Year input code ... */}
-//                                     </div>
-//                                     {/* Publisher Input with Suggestions */}
-//                                     <div className="relative">
-//                                         <Label htmlFor="publisher_name" className="text-gray-700 font-medium">Publisher *</Label>
-//                                         <Input
-//                                             id="publisher_name"
-//                                             value={bookData.publisher_name}
-//                                             onChange={handlePublisherChange}
-//                                             required
-//                                             placeholder="e.g., Charles Scribner's Sons"
-//                                             className="mt-1 h-12 ..."
-//                                             autoComplete="off"
-//                                         />
-//                                         {publisherSuggestions.length > 0 && (
-//                                             <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
-//                                                 {publisherSuggestions.map((pub, index) => (
-//                                                     <div
-//                                                         key={index}
-//                                                         className="px-4 py-2 cursor-pointer hover:bg-amber-50"
-//                                                         onClick={() => handlePublisherSuggestionClick(pub)}
-//                                                     >
-//                                                         <p>{pub.name}</p>
-//                                                     </div>
-//                                                 ))}
-//                                             </div>
-//                                         )}
-//                                     </div>
-//                                     {/* ... Other book info fields ... */}
-//                                 </div>
-//                             </div>
-//                             {/* ... Pricing Info and Submit Button ... */}
-//                         </form>
-//                     </div>
-//                 </div>
-//             </div>
-//         );
-//     };
-
-//     const renderCheckResult = () => {
-//         // ... Your existing renderCheckResult JSX ...
-//         return <div>Check Result</div>;
-//     };
-
-//     return (
-//         <>
-//             {step === "form" && renderForm()}
-//             {step === "check" && renderCheckResult()}
-//         </>
-//     );
-// }
-
-// export default function InsertBookPage() {
-//     return (
-//         <Suspense fallback={<div>Loading...</div>}>
-//             <InsertBookPageContent />
-//         </Suspense>
-//     );
-// }

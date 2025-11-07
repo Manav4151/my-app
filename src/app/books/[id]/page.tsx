@@ -20,9 +20,11 @@ import {
     ExternalLink,
     Clock,
     Tag,
-    Info
+    Info,
+    ShoppingCart
 } from "lucide-react";
 import { toast } from "sonner";
+import { apiFunctions } from "@/services/api.service";
 interface Book {
     _id: string;
     title: string;
@@ -71,7 +73,15 @@ export default function BookDetailPage() {
     const [bookData, setBookData] = useState<BookDetailResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
+    // --- PASTE THIS DUMMY DATA ---
+    const lastPurchaseData = {
+        date: "2025-09-15T10:30:00Z",
+        edition: "2022 Revised Edition",
+        price: 450.00,
+        currency: "INR",
+        customer: "Central Library",
+    };
+    // --- END OF DUMMY DATA ---
     useEffect(() => {
         if (bookId) {
             fetchBookDetails();
@@ -83,20 +93,20 @@ export default function BookDetailPage() {
             setLoading(true);
             setError(null);
 
-            const response = await fetch(`${API_URL}/api/books/${bookId}/pricing`);
+            const response = await apiFunctions.getBookDetails(bookId);
 
-            if (!response.ok) {
-                const errorText = await response.text();
+            if (!response.success) {
+                const errorText = await response.message;
                 throw new Error(`Failed to fetch book details: ${response.status} - ${errorText}`);
             }
 
-            const data = await response.json();
+            
 
-            if (!data.success) {
-                throw new Error(data.message || 'Failed to fetch book details');
+            if (!response.success) {
+                throw new Error(response.message || 'Failed to fetch book details');
             }
 
-            setBookData(data);
+            setBookData(response);
         } catch (error) {
             console.error("Error fetching book details:", error);
             setError(error instanceof Error ? error.message : "Failed to fetch book details");
@@ -105,7 +115,32 @@ export default function BookDetailPage() {
             setLoading(false);
         }
     };
+    const markAsOutOfPrint = async () => {
+        try {
 
+            setError(null);
+
+            const response = await apiFunctions.markAsOutOfPrint(bookId);
+
+            if (!response.success) {
+                const errorText = await response.message;
+                throw new Error(`Failed to mark book as out of print: ${response.status} - ${errorText}`);
+            }
+
+            
+
+            if (!response.success) {
+                throw new Error(response.message || 'Failed to mark book as out of print');
+            }
+            toast.success("Book marked as out of print successfully");
+        } catch (error) {
+            console.error("Error marking book as out of print:", error);
+            setError(error instanceof Error ? error.message : "Failed to mark book as out of print");
+            toast.error("Failed to mark book as out of print");
+        } finally {
+
+        }
+    }
     const formatPrice = (rate: number, currency: string) => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
@@ -228,6 +263,13 @@ export default function BookDetailPage() {
                                 Edit Book
                             </Button>
                             <Button
+                                onClick={() => markAsOutOfPrint()}
+                                className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white"
+                            >
+                                <Edit className="w-4 h-4 mr-2" />
+                                Mark out of print
+                            </Button>
+                            <Button
                                 onClick={() => router.push("/books/insert")}
                                 className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
                             >
@@ -347,6 +389,34 @@ export default function BookDetailPage() {
                             </div>
                         </div>
                     </section>
+                    {/* --- PASTE THE NEW SECTION HERE --- */}
+                    {/* Last Purchase Information */}
+                    <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-8">
+                        <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                            <ShoppingCart className="w-5 h-5 text-amber-600" />
+                            Last Purchase Information
+                        </h2>
+
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-8">
+                            <div>
+                                <p className="text-sm text-slate-500 flex items-center gap-2"><Calendar className="w-4 h-4" /> Purchase Date</p>
+                                <p className="font-medium text-slate-800 mt-1">{formatDate(lastPurchaseData.date)}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-slate-500 flex items-center gap-2"><User className="w-4 h-4" /> Customer</p>
+                                <p className="font-medium text-slate-800 mt-1">{lastPurchaseData.customer}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-slate-500 flex items-center gap-2"><Tag className="w-4 h-4" /> Purchased Edition</p>
+                                <p className="font-medium text-slate-800 mt-1">{lastPurchaseData.edition}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-slate-500 flex items-center gap-2"><DollarSign className="w-4 h-4" /> Purchase Price</p>
+                                <p className="font-medium text-slate-800 mt-1">{formatPrice(lastPurchaseData.price, lastPurchaseData.currency)}</p>
+                            </div>
+                        </div>
+                    </section>
+                    {/* --- END OF NEW SECTION --- */}
                 </div>
             </main>
         </div>

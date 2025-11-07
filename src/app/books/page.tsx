@@ -10,17 +10,21 @@ import { Plus, Trash2, X } from "lucide-react";
 import { useAuth } from "../components/auth-context";
 import { toast } from "sonner";
 import ExcelImport from "../components/excel-import";
+import ViewOnAmazonButton from "../components/ViewOnAmazonButton";
+import SearchBookOnlineButton from "../components/ViewOnAmazonButton";
+import { ApiError, apiFunctions } from "@/services/api.service";
+import { set } from "lodash";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
-console.log("API_URL", API_URL);
 // Define the data type based on API response
 interface Book {
   _id: string;
   title: string;
   author: string;
   year: number;
+  publisher: { name: string } | null;
   publisher_name: string;
   isbn?: string;
+  edition?: string;
   binding_type: string;
   classification: string;
   price?: number | null;
@@ -60,71 +64,6 @@ type Filters = {
   publisher_name?: string;
 };
 
-// Fetch data from the API
-const fetchData = async (page: number = 1, limit: number = 10, filters: Filters = {}): Promise<ApiResponse> => {
-  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
-  if (filters.title) params.set('title', filters.title);
-  if (filters.author) params.set('author', filters.author);
-  if (filters.isbn) params.set('isbn', filters.isbn);
-  if (filters.year) params.set('year', filters.year);
-  if (filters.classification) params.set('classification', filters.classification);
-  if (filters.publisher_name) params.set('publisher_name', filters.publisher_name);
-
-  const response = await fetch(`${API_URL}/api/books?${params.toString()}`);
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch books: ${response.status} ${response.statusText}`);
-  }
-
-  const data = await response.json();
-
-  if (!data.success) {
-    throw new Error(data.message || 'Failed to fetch books');
-  }
-
-  return data;
-};
-
-// --- NEW --- Function to delete books
-const deleteBooks = async (bookIds: string[]): Promise<{ success: boolean; message?: string }> => {
-  console.log("Deleting books with IDs:", bookIds);
-
-  try {
-    const response = await fetch(`${API_URL}/api/books/bulk`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      // Correctly format the body by stringifying the object
-      body: JSON.stringify({ "bookIds": bookIds })
-    });
-    console.log("Response", response);
-    if (!response.ok) {
-      // Try to get a more specific error message from the API response body
-      const errorData = await response.json().catch(() => ({
-        message: `API error: ${response.status} ${response.statusText}`
-      }));
-      throw new Error(errorData.message);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("Failed to delete books:", error);
-    // Re-throw a user-friendly error
-    throw new Error(error instanceof Error ? error.message : "An unknown network error occurred.");
-  }
-
-
-  // Simulate deleting from our mock data source
-  // allMockBooks = allMockBooks.filter(book => !bookIds.includes(book._id));
-
-  // Simulating a successful API call for demonstration purposes
-  // return new Promise((resolve) => {
-  //   setTimeout(() => {
-  //     resolve({ success: true, message: "Books deleted successfully" });
-  //   }, 500);
-  // });
-};
 export default function Home() {
   const { session, pending } = useAuth();
   const router = useRouter();
@@ -141,24 +80,7 @@ export default function Home() {
   const headerCheckboxRef = useRef<HTMLInputElement>(null);
 
 
-  // Fetch data on page or appliedFilters change
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await fetchData(page, limit, appliedFilters);
-        setData(response);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        setError(error instanceof Error ? error.message : "Failed to fetch books");
-        toast.error("Failed to load books");
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
-  }, [page, limit, appliedFilters]);
+
 
   useEffect(() => {
     if (selectionMode && headerCheckboxRef.current && data?.books) {
@@ -169,24 +91,49 @@ export default function Home() {
     }
   }, [selectedBooks, data?.books, selectionMode]);
 
-  // Place this alongside your other functions like applyFilters, clearFilters, etc.
-
+  // --- UPDATE loadData ---
   const loadData = useCallback(async () => {
     console.log('🔄 Refreshing books data...');
     setLoading(true);
     setError(null);
     try {
-      const response = await fetchData(page, limit, appliedFilters);
+      // Create URLSearchParams like before
+      const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+      if (appliedFilters.title) params.set('title', appliedFilters.title);
+      if (appliedFilters.author) params.set('author', appliedFilters.author);
+      if (appliedFilters.isbn) params.set('isbn', appliedFilters.isbn);
+      if (appliedFilters.year) params.set('year', appliedFilters.year);
+      if (appliedFilters.classification) params.set('classification', appliedFilters.classification);
+      if (appliedFilters.publisher_name) params.set('publisher_name', appliedFilters.publisher_name);
+
+      // Call the API function directly
+      const response = await apiFunctions.getBooks(params); // <-- 2. Use the imported function
+
+      console.log('📊 Books API response:', response); // Axios gives you the JSON directly
+
+      // Optional: Check for application-specific success flags if your backend sends them
+      if (!response.success) { // Assuming your API returns { success: boolean, ... }
+        throw new Error(response.message || 'Failed to fetch books');
+      }
+
       setData(response);
       console.log('✅ Books data refreshed successfully:', response.pagination.totalBooks, 'total books');
-    } catch (error) {
+    } catch (error) { // Catch ApiError or generic Error from the api-service
       console.error("Error fetching data:", error);
-      setError(error instanceof Error ? error.message : "Failed to fetch books");
-      toast.error("Failed to load books");
+      const message = error instanceof ApiError ? error.message : "Failed to fetch books";
+      setError(message);
+      toast.error(message);
+      // NOTE: Retry logic is removed here. Axios can be configured with interceptors for retries if needed.
+      // NOTE: Timeout logic is removed. Axios has a 'timeout' config option if needed.
     } finally {
       setLoading(false);
     }
-  }, [page, limit, appliedFilters]); // <-- Add dependencies here
+  }, [page, limit, appliedFilters]); // <-- Dependencies
+
+  // --- useEffect hook remains the same, calling the new loadData ---
+  useEffect(() => {
+    loadData();
+  }, [loadData]); // Dependency is the useCallback function
   // Apply filters
   const applyFilters = () => {
     setPage(1);
@@ -230,11 +177,11 @@ export default function Home() {
     if (window.confirm(`Are you sure you want to delete ${selectedBooks.length} book(s)?`)) {
       try {
         setLoading(true);
-        const result = await deleteBooks(selectedBooks);
+        const result = await apiFunctions.deleteBooks(selectedBooks);
         if (result.success) {
           toast.success(result.message || "Books deleted successfully!");
           setSelectedBooks([]);
-          setSelectionMode(false); // --- NEW --- Exit selection mode after deletion
+          setSelectionMode(false);
           if (data && data.books.length === selectedBooks.length && page > 1) {
             setPage(page - 1);
           } else {
@@ -251,6 +198,25 @@ export default function Home() {
         setLoading(false);
       }
     }
+  };
+
+  const handleGenerateQuotes = () => {
+    if (selectedBooks.length === 0) {
+      toast.warning("No books selected to generate quotes for.");
+      return;
+    }
+    try {
+      // pass data to the preview page
+      const params = new URLSearchParams();
+      selectedBooks.forEach(id => {
+        params.append('id', id); // We add the key 'id' for *each* item
+      });
+      router.push(`/quotation/preview?${params.toString()}`);
+    } catch (error) {
+      console.error("Error generating quotes:", error);
+      toast.error(error instanceof Error ? error.message : "An unknown error occurred.");
+    }
+
   };
   // Handle view pricing - navigate to book detail page
   const handleViewPricing = (bookId: string) => {
@@ -378,6 +344,26 @@ export default function Home() {
                   />
                 </div>
                 <div>
+                  <Label htmlFor="filter-isbn" className="text-gray-700 font-medium">ISBN</Label>
+                  <Input
+                    id="filter-isbn"
+                    placeholder="Search by isbn..."
+                    value={pendingFilters.isbn || ''}
+                    onChange={(e) => setPendingFilters((f) => ({ ...f, isbn: e.target.value }))}
+                    className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="filter-publisher_name" className="text-gray-700 font-medium">Publisher</Label>
+                  <Input
+                    id="filter-publisher_name"
+                    placeholder="Search by publisher..."
+                    value={pendingFilters.publisher_name || ''}
+                    onChange={(e) => setPendingFilters((f) => ({ ...f, publisher_name: e.target.value }))}
+                    className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                  />
+                </div>
+                <div>
                   <Label htmlFor="filter-author" className="text-gray-700 font-medium">Author</Label>
                   <Input
                     id="filter-author"
@@ -484,10 +470,13 @@ export default function Home() {
                         </th>
                       )}
                       <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Title</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">ISBN</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Author</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Year</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Edition</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Publisher</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Price</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Price Source</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
@@ -508,12 +497,16 @@ export default function Home() {
                           <div className="text-sm font-medium text-gray-900">{book.title}</div>
                           <div className="text-sm text-gray-500">{book.classification}</div>
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.isbn || 'N/A'}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.author}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.year}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.publisher_name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.edition || 'N/A'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.publisher?.name || 'N/A'}</td>
+
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
                           {book.price && typeof book.price === 'number' ? `$${book.price.toFixed(2)}` : 'N/A'}
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.pricing && book.pricing.length > 0 ? book.pricing[0].source : 'N/A'}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <Button
                             onClick={() => handleViewPricing(book._id)}
@@ -523,6 +516,8 @@ export default function Home() {
                           >
                             View Details
                           </Button>
+                          {/* The new button that searches on Google */}
+                          <SearchBookOnlineButton book={book} />
                         </td>
                       </tr>
                     ))}

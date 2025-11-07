@@ -6,30 +6,36 @@ import { usePathname } from "next/navigation";
 import { Button } from "./ui/button";
 import { BookOpen, Home, Mail, FileText, Menu, X, LogOut, Building } from "lucide-react";
 import { useAuth } from "./auth-context";
+import { admin } from "better-auth/plugins/admin";
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const { session, logout } = useAuth();
 
-  // Hide navbar on auth pages
-  const isAuthPage = pathname.startsWith('/login') || 
-                    pathname.startsWith('/signup') || 
-                    pathname.startsWith('/forget-password') || 
-                    pathname.startsWith('/reset-password');
+  // Hide navbar on auth pages and admin panel
+  const isAuthPage = pathname.startsWith('/login') ||
+    pathname.startsWith('/signup') ||
+    pathname.startsWith('/forget-password') ||
+    pathname.startsWith('/reset-password') ||
+    pathname.startsWith('/admin');
 
   if (isAuthPage) {
     return null;
   }
+  // Check if the user has the 'ADMIN' role
+  const isAdmin = "ADMIN";
+  console.log("isadmin", isAdmin);
 
   const navigation = [
-    { name: "Home", href: "/", icon: Home },
-    { name: "Books", href: "/books", icon: BookOpen },
-    { name: "Emails", href: "/emails", icon: Mail },
-    { name: "Quotation", href: "/quotation", icon: FileText },
-    { name: "Management", href: "/management", icon: Building },
+    { name: "Home", href: "/", icon: Home, adminOnly: false },
+    { name: "Books", href: "/books", icon: BookOpen, adminOnly: false },
+    { name: "Emails", href: "/emails", icon: Mail, adminOnly: false },
+    { name: "Quotation", href: "/quotation", icon: FileText, adminOnly: false },
+    { name: "Management", href: "/management", icon: Building, adminOnly: false },
   ];
-
+  // Filter the navigation items based on the user's role
+  const filteredNavigation = navigation.filter(item => !item.adminOnly || isAdmin);
   const isActive = (href: string) => {
     if (href === "/") {
       return pathname === "/";
@@ -61,17 +67,16 @@ export default function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            {navigation.map((item) => {
+            {filteredNavigation.map((item) => {
               const Icon = item.icon;
               return (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
-                    isActive(item.href)
-                      ? "text-amber-600 bg-amber-50"
-                      : "text-gray-700 hover:text-amber-600 hover:bg-gray-50"
-                  }`}
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${isActive(item.href)
+                    ? "text-amber-600 bg-amber-50"
+                    : "text-gray-700 hover:text-amber-600 hover:bg-gray-50"
+                    }`}
                 >
                   <Icon className="w-4 h-4" />
                   <span>{item.name}</span>
@@ -141,11 +146,10 @@ export default function Navbar() {
                     key={item.name}
                     href={item.href}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 ${
-                      isActive(item.href)
-                        ? "text-amber-600 bg-amber-50"
-                        : "text-gray-700 hover:text-amber-600 hover:bg-gray-50"
-                    }`}
+                    className={`flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 ${isActive(item.href)
+                      ? "text-amber-600 bg-amber-50"
+                      : "text-gray-700 hover:text-amber-600 hover:bg-gray-50"
+                      }`}
                   >
                     <Icon className="w-5 h-5" />
                     <span>{item.name}</span>
@@ -153,7 +157,7 @@ export default function Navbar() {
                 );
               })}
             </div>
-            
+
             {/* Mobile User Menu */}
             <div className="mt-4 pt-4 border-t border-gray-200">
               {session ? (

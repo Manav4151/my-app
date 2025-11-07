@@ -1,26 +1,28 @@
-
 "use client";
 
-import { useState, useEffect, useCallback, use, useRef } from "react"; // Ensure useRef is imported
+import { useState, useEffect, useCallback, use, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Mail, Paperclip, Download, ArrowLeft, User, Calendar, FileText } from "lucide-react";
+import { Mail, Paperclip, Download, ArrowLeft, FileText } from "lucide-react";
 import { Button } from "../../components/ui/button";
+import { apiFunctions } from "@/services/api.service";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
 
 interface EmailDetail {
-    uid: string;
-    from: string;
-    to: string;
+    messageId: string;
+    fromEmail: string;
+    fromName: string;
+    to?: string;
     subject: string;
-    date: string;
+    dateOfMessage: string;
     status?: string;
-    html?: string;
+    body?: string;
     text?: string;
     attachments: Array<{
         filename: string;
-        contentType: string;
-        size: number;
+        mimeType: string;
+        size?: number;
+        attachmentId: string;
     }>;
 }
 
@@ -30,8 +32,6 @@ export default function EmailDetailPage({ params }: { params: Promise<{ id: stri
     const [email, setEmail] = useState<EmailDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
-    // FIX: Added the missing useRef declaration here
     const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
     const adjustIframeHeight = useCallback(() => {
@@ -48,14 +48,9 @@ export default function EmailDetailPage({ params }: { params: Promise<{ id: stri
     const fetchEmailDetail = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await fetch(`${API_URL}/api/emails/${resolvedParams.id}`);
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch email details');
-            }
-
-            const data = await response.json();
-            setEmail(data.data);
+            const response = await apiFunctions.getGoogleEmailDetail(resolvedParams.id);
+            console.log("Response details", response);
+            setEmail(response);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred');
             console.error('Error fetching email detail:', err);
@@ -72,13 +67,7 @@ export default function EmailDetailPage({ params }: { params: Promise<{ id: stri
 
     const downloadAttachment = async (filename: string) => {
         try {
-            const response = await fetch(`${API_URL}/api/emails/${resolvedParams.id}/attachments/${filename}`);
-
-            if (!response.ok) {
-                throw new Error('Failed to download attachment');
-            }
-
-            const blob = await response.blob();
+            const blob = await apiFunctions.downloadEmailAttachment(resolvedParams.id, filename);
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -179,55 +168,56 @@ export default function EmailDetailPage({ params }: { params: Promise<{ id: stri
             {/* Main Content */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                 <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                    {/* Email Header */}
+
+                    {/* === MODIFIED EMAIL HEADER START === */}
                     <div className="p-4">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="flex-1">
-                                <div className="flex items-center justify-between mb-1">
-                                    <h2 className="text-lg font-semibold text-gray-900">
-                                        {email.subject || '(No Subject)'}
-                                    </h2>
-                                    {email.status && (
-                                        <div
-                                            className={`inline-flex items-center text-xs px-3 py-1 rounded-full border ${getStatusColor(email.status)}`}
-                                        >
-                                            <span className="capitalize">{email.status}</span>
-                                        </div>
-                                    )}
+                        {/* Subject & Status */}
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+                            <h2 className="text-2xl font-semibold text-gray-900 break-words flex-1">
+                                {email.subject || '(No Subject)'}
+                            </h2>
+                            {email.status && (
+                                <div
+                                    className={`flex-shrink-0 inline-flex items-center text-xs px-3 py-1 rounded-full border ${getStatusColor(email.status)}`}
+                                >
+                                    <span className="capitalize">{email.status}</span>
                                 </div>
-                                <div className="flex items-center gap-2 text-sm text-gray-500">
-                                    <Calendar className="w-3 h-3" />
-                                    <span>{formatDate(email.date)}</span>
-                                </div>
-                            </div>
+                            )}
                         </div>
 
-                        <div className="grid md:grid-cols-2 gap-3">
-                            <div className="bg-gray-50 rounded-lg p-3">
-                                <div className="flex items-center gap-2">
-                                    <User className="w-4 h-4 text-gray-500" />
-                                    <div>
-                                        <p className="text-xs text-gray-500">From</p>
-                                        <p className="text-sm font-medium text-gray-900">{email.from}</p>
-                                    </div>
+                        {/* Metadata (From, To, Date) */}
+                        <div className="space-y-3 border-t border-gray-100 pt-4">
+                            <div className="flex items-start gap-3">
+                                <div className="flex-shrink-0 w-12 text-xs font-medium text-gray-500">From:</div>
+                                <div className="text-sm font-medium text-gray-900">
+                                    {email.fromName}
+                                    <span className="text-gray-600 font-normal ml-1">
+                                        &lt;{email.fromEmail}&gt;
+                                    </span>
                                 </div>
                             </div>
 
-                            <div className="bg-gray-50 rounded-lg p-3">
-                                <div className="flex items-center gap-2">
-                                    <User className="w-4 h-4 text-gray-500" />
-                                    <div>
-                                        <p className="text-xs text-gray-500">To</p>
-                                        <p className="text-sm font-medium text-gray-900">{email.to}</p>
-                                    </div>
+                            {email.to && (
+                                <div className="flex items-start gap-3">
+                                    <div className="flex-shrink-0 w-12 text-xs font-medium text-gray-500">To:</div>
+                                    <div className="text-sm font-medium text-gray-900">{email.to}</div>
+                                </div>
+                            )}
+
+                            <div className="flex items-start gap-3">
+                                <div className="flex-shrink-0 w-12 text-xs font-medium text-gray-500">Date:</div>
+                                <div className="text-sm text-gray-700">
+                                    {formatDate(email.dateOfMessage)}
                                 </div>
                             </div>
                         </div>
                     </div>
+                    {/* === MODIFIED EMAIL HEADER END === */}
+
 
                     {/* Email Content */}
                     <div className="flex-1 p-4 overflow-auto border-t border-gray-200 ">
-                        {email.html ? (
+                        {email.body ? (
                             <iframe
                                 ref={iframeRef}
                                 onLoad={adjustIframeHeight}
@@ -242,7 +232,6 @@ export default function EmailDetailPage({ params }: { params: Promise<{ id: stri
                                                 margin: 0;
                                                 padding: 0;
                                                 overflow: hidden;
-                                              
                                             }
                                             body {
                                                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -250,18 +239,16 @@ export default function EmailDetailPage({ params }: { params: Promise<{ id: stri
                                                 color: #333;
                                             }
                                             * {
-                                                
                                                 box-sizing: border-box !important;
                                             }
-                                            img { height: auto !important; }
+                                            img { max-width: 100% !important; height: auto !important; }
                                             table {
-                                              
                                                 border-collapse: collapse !important;
                                             }
                                         </style>
                                     </head>
                                     <body>
-                                        ${email.html}
+                                        ${email.body}
                                     </body>
                                     </html>
                                 `}
@@ -295,7 +282,10 @@ export default function EmailDetailPage({ params }: { params: Promise<{ id: stri
                                                 {attachment.filename}
                                             </p>
                                             <p className="text-xs text-gray-500">
-                                                {formatFileSize(attachment.size)}
+                                                {attachment.mimeType}
+                                                {attachment.size ? (
+                                                    <span className="ml-2">({formatFileSize(attachment.size)})</span>
+                                                ) : null}
                                             </p>
                                         </div>
                                         <Button
