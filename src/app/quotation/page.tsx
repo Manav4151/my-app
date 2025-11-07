@@ -265,7 +265,7 @@ export default function QuotationPage() {
   const [bookDialogOpen, setBookDialogOpen] = useState(false);
   const [bookData, setBookData] = useState<BooksApiResponse | null>(null);
   const [bookPage, setBookPage] = useState(1);
-  const [bookLimit] = useState(10);
+  const [bookLimit] = useState(25);
   const [pendingBookFilters, setPendingBookFilters] = useState<BookFilters>({});
   const [appliedBookFilters, setAppliedBookFilters] = useState<BookFilters>({});
   const [bookLoading, setBookLoading] = useState(false);
@@ -319,7 +319,17 @@ export default function QuotationPage() {
 
   const applyBookFilters = () => {
     setBookPage(1);
-    setAppliedBookFilters({ ...pendingBookFilters });
+    // Trim whitespace from all filter values
+    const trimmedFilters: BookFilters = {};
+    if (pendingBookFilters.title?.trim()) trimmedFilters.title = pendingBookFilters.title.trim();
+    if (pendingBookFilters.author?.trim()) trimmedFilters.author = pendingBookFilters.author.trim();
+    if (pendingBookFilters.isbn?.trim()) trimmedFilters.isbn = pendingBookFilters.isbn.trim();
+    if (pendingBookFilters.year?.trim()) trimmedFilters.year = pendingBookFilters.year.trim();
+    if (pendingBookFilters.classification?.trim()) trimmedFilters.classification = pendingBookFilters.classification.trim();
+    if (pendingBookFilters.publisher_name?.trim()) trimmedFilters.publisher_name = pendingBookFilters.publisher_name.trim();
+    setAppliedBookFilters(trimmedFilters);
+    // Also update pending filters to show trimmed values in inputs
+    setPendingBookFilters(trimmedFilters);
   };
   const clearBookFilters = () => {
     setPendingBookFilters({});
@@ -509,15 +519,15 @@ export default function QuotationPage() {
 
       {/* Book Selection Dialog for Creating Quotation */}
       <Dialog open={bookDialogOpen} onOpenChange={setBookDialogOpen}>
-        <DialogContent className="max-w-5xl h-[85vh] flex flex-col overflow-hidden">
+        <DialogContent className="max-w-7xl w-[95vw] h-[85vh] flex flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle>Select Books for Quotation</DialogTitle>
           </DialogHeader>
 
           {/* Scrollable Content */}
-          <div className="flex-1 overflow-auto overflow-x-auto pr-1">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden pr-1">
           {/* Filters */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
+          <div className="bg-white rounded-2xl border border-amber-100 p-4 mb-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="q-filter-title" className="text-gray-700 font-medium">Title</Label>
@@ -526,7 +536,7 @@ export default function QuotationPage() {
                   placeholder="Search by title..."
                   value={pendingBookFilters.title || ''}
                   onChange={(e) => setPendingBookFilters((f) => ({ ...f, title: e.target.value }))}
-                  className="mt-1 h-10"
+                  className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
                 />
               </div>
               <div>
@@ -536,7 +546,7 @@ export default function QuotationPage() {
                   placeholder="Search by isbn..."
                   value={pendingBookFilters.isbn || ''}
                   onChange={(e) => setPendingBookFilters((f) => ({ ...f, isbn: e.target.value }))}
-                  className="mt-1 h-10"
+                  className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
                 />
               </div>
               <div>
@@ -546,7 +556,7 @@ export default function QuotationPage() {
                   placeholder="Search by publisher..."
                   value={pendingBookFilters.publisher_name || ''}
                   onChange={(e) => setPendingBookFilters((f) => ({ ...f, publisher_name: e.target.value }))}
-                  className="mt-1 h-10"
+                  className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
                 />
               </div>
               <div>
@@ -556,7 +566,7 @@ export default function QuotationPage() {
                   placeholder="Search by author..."
                   value={pendingBookFilters.author || ''}
                   onChange={(e) => setPendingBookFilters((f) => ({ ...f, author: e.target.value }))}
-                  className="mt-1 h-10"
+                  className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
                 />
               </div>
               <div>
@@ -566,7 +576,7 @@ export default function QuotationPage() {
                   placeholder="Search by year"
                   value={pendingBookFilters.year || ''}
                   onChange={(e) => setPendingBookFilters((f) => ({ ...f, year: e.target.value }))}
-                  className="mt-1 h-10"
+                  className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
                 />
               </div>
               <div>
@@ -575,64 +585,65 @@ export default function QuotationPage() {
                   value={pendingBookFilters.classification || ''}
                   onValueChange={(v) => setPendingBookFilters((f) => ({ ...f, classification: v === 'all' ? undefined : v }))}
                 >
-                  <SelectTrigger className="mt-1 h-10">
+                  <SelectTrigger className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl text-gray-900">
                     <SelectValue placeholder="Select classification" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="Fantasy">Fantasy</SelectItem>
-                    <SelectItem value="Classic Literature">Classic Literature</SelectItem>
-                    <SelectItem value="Science Fiction">Science Fiction</SelectItem>
-                    <SelectItem value="Mystery">Mystery</SelectItem>
-                    <SelectItem value="Non-Fiction">Non-Fiction</SelectItem>
+                  <SelectContent className="bg-white border-2 border-gray-200 rounded-xl shadow-lg">
+                    <SelectItem value="all" className="text-gray-900 hover:bg-amber-50">All</SelectItem>
+                    <SelectItem value="Fantasy" className="text-gray-900 hover:bg-amber-50">Fantasy</SelectItem>
+                    <SelectItem value="Classic Literature" className="text-gray-900 hover:bg-amber-50">Classic Literature</SelectItem>
+                    <SelectItem value="Science Fiction" className="text-gray-900 hover:bg-amber-50">Science Fiction</SelectItem>
+                    <SelectItem value="Mystery" className="text-gray-900 hover:bg-amber-50">Mystery</SelectItem>
+                    <SelectItem value="Non-Fiction" className="text-gray-900 hover:bg-amber-50">Non-Fiction</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="flex gap-3 mt-4">
-              <Button onClick={applyBookFilters} disabled={bookLoading}>Apply Filters</Button>
+              <Button onClick={applyBookFilters} disabled={bookLoading} className="bg-amber-600 hover:bg-amber-700">Apply Filters</Button>
               <Button onClick={clearBookFilters} variant="outline" disabled={bookLoading}>Clear</Button>
             </div>
           </div>
 
           {/* Books Table */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-4 py-3 border-b flex items-center justify-between">
-              <h3 className="text-base font-semibold">Books</h3>
+          <div className="bg-white rounded-2xl border border-amber-100 overflow-hidden">
+            <div className="px-4 py-3 border-b border-amber-200 flex items-center justify-between">
+              <h3 className="text-base font-semibold text-gray-900">Books</h3>
               <div className="text-sm text-gray-600">{bookData?.pagination.showing.from}-{bookData?.pagination.showing.to} of {bookData?.pagination.showing.total}</div>
             </div>
             {bookLoading ? (
-              <div className="p-6 text-center">Loading...</div>
+              <div className="p-6 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600 mx-auto"></div>
+              </div>
             ) : (bookData && bookData.books.length > 0 ? (
               <>
                 <div className="overflow-x-auto">
-                  <table className="w-max min-w-full divide-y">
-                    <thead className="bg-gray-50">
+                  <table className="w-full divide-y divide-amber-100 table-fixed">
+                    <thead className="bg-amber-50">
                       <tr>
-                        <th className="px-4 py-2 text-left">
+                        <th className="w-10 px-2 py-2 text-left">
                           <Input type="checkbox" ref={headerCheckboxRef} onChange={handleSelectAllBooks} className="h-4 w-4" />
                         </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Title</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">ISBN</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Author</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Year</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Publisher</th>
+                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider w-[32%]">Title</th>
+                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider w-[15%]">ISBN</th>
+                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider w-[20%]">Author</th>
+                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider w-[10%]">Year</th>
+                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider w-[15%]">Publisher</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y">
+                    <tbody className="bg-white divide-y divide-amber-100">
                       {bookData.books.map((book) => (
-                        <tr key={book._id} className="hover:bg-gray-50">
-                          <td className="px-4 py-2">
+                        <tr key={book._id} className="hover:bg-amber-50/50">
+                          <td className="px-2 py-2">
                             <Input type="checkbox" className="h-4 w-4" checked={selectedBookIds.includes(book._id)} onChange={() => toggleSelectBook(book._id)} />
                           </td>
-                          <td className="px-4 py-2">
-                            <div className="text-sm font-medium text-gray-900">{book.title}</div>
-                            <div className="text-xs text-gray-500">{book.classification}</div>
+                          <td className="px-2 py-2">
+                            <div className="text-sm font-medium text-gray-900 line-clamp-2 leading-tight">{book.title}</div>
                           </td>
-                          <td className="px-4 py-2 text-sm text-gray-700">{book.isbn || 'N/A'}</td>
-                          <td className="px-4 py-2 text-sm text-gray-700">{book.author}</td>
-                          <td className="px-4 py-2 text-sm text-gray-700">{book.year}</td>
-                          <td className="px-4 py-2 text-sm text-gray-700">{book.publisher?.name || 'N/A'}</td>
+                          <td className="px-2 py-2 text-sm text-gray-700 truncate" title={book.isbn || 'N/A'}>{book.isbn || 'N/A'}</td>
+                          <td className="px-2 py-2 text-sm text-gray-700 truncate" title={book.author}>{book.author}</td>
+                          <td className="px-2 py-2 text-sm text-gray-700">{book.year}</td>
+                          <td className="px-2 py-2 text-sm text-gray-700 truncate" title={book.publisher?.name || 'N/A'}>{book.publisher?.name || 'N/A'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -640,9 +651,9 @@ export default function QuotationPage() {
                 </div>
                 {/* Pagination */}
                 {bookData.pagination.totalPages > 1 && (
-                  <div className="px-4 py-3 border-t flex items-center justify-between">
+                  <div className="px-4 py-3 border-t border-amber-200 flex items-center justify-between">
                     <Button variant="outline" size="sm" disabled={!bookData.pagination.hasPrevPage} onClick={() => setBookPage(p => Math.max(1, p - 1))}>Previous</Button>
-                    <span className="text-sm">Page {bookData.pagination.currentPage} of {bookData.pagination.totalPages}</span>
+                    <span className="text-sm text-gray-600">Page {bookData.pagination.currentPage} of {bookData.pagination.totalPages}</span>
                     <Button variant="outline" size="sm" disabled={!bookData.pagination.hasNextPage} onClick={() => setBookPage(p => p + 1)}>Next</Button>
                   </div>
                 )}

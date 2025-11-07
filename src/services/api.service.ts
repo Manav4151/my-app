@@ -124,6 +124,13 @@ export const apiFunctions = { // Renamed to avoid conflict with axios instance n
 
     getBookDetails: async (bookId: string) => {
         try {
+            const response = await api.get(`/api/books/${bookId}/details`);
+            return response.data;
+        } catch (error) { throw handleError(error); }
+    },
+
+    getBookPricing: async (bookId: string) => {
+        try {
             const response = await api.get(`/api/books/${bookId}/pricing`);
             return response.data;
         } catch (error) { throw handleError(error); }

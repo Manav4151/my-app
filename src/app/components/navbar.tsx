@@ -13,11 +13,12 @@ export default function Navbar() {
   const pathname = usePathname();
   const { session, logout } = useAuth();
 
-  // Hide navbar on auth pages
+  // Hide navbar on auth pages and admin panel
   const isAuthPage = pathname.startsWith('/login') ||
     pathname.startsWith('/signup') ||
     pathname.startsWith('/forget-password') ||
-    pathname.startsWith('/reset-password');
+    pathname.startsWith('/reset-password') ||
+    pathname.startsWith('/admin');
 
   if (isAuthPage) {
     return null;

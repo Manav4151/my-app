@@ -36,7 +36,6 @@ export function useRole() {
   }, [session]);
 
   const hasRole = (required: Role | Role[]) => {
-    console.log('hasRole', { role, required });
     if (!role) return false;
     const list = (Array.isArray(required) ? required : [required]).map(r => r.toUpperCase()) as Role[];
     return list.includes(role);
@@ -55,7 +54,6 @@ type RoleGateProps = {
 
 export function RoleGate({ allow, fallback = null, children }: RoleGateProps): React.ReactElement | null {
   const { loading, hasRole } = useRole();
-  console.log('RoleGate', { allow, fallback, loading, hasRole });
   if (loading) return null;
   return hasRole(allow) ? React.createElement(React.Fragment, null, children) : React.createElement(React.Fragment, null, fallback);
 }
