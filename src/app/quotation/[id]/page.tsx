@@ -15,6 +15,7 @@ import {
   XCircle,
   Send,
   Clock,
+  Edit,
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
@@ -123,8 +124,6 @@ export default function QuotationDetailPage() {
   const [selectedProfileId, setSelectedProfileId] = useState<string>("");
   const [loadingProfiles, setLoadingProfiles] = useState(false);
 
-  const API_URL = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5050";
-
   useEffect(() => {
     if (quotationId) {
       fetchQuotationDetails();
@@ -173,6 +172,7 @@ export default function QuotationDetailPage() {
       toast.error("Please select a profile first");
       return;
     }
+    const API_URL = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5050";
     const previewUrl = `${API_URL}/api/quotations/${quotationId}/preview?profileId=${selectedProfileId}`;
     window.open(previewUrl, '_blank');
   };
@@ -180,16 +180,8 @@ export default function QuotationDetailPage() {
   const handleDownloadPDF = async () => {
     try {
       setDownloading(true);
-      const response = await fetch(`${API_URL}/api/quotations/${quotationId}/download`, {
-        method: "GET",
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to download PDF");
-      }
-
-      const blob = await response.blob();
+      const blob = await apiFunctions.downloadQuotationPDF(quotationId ,selectedProfileId);
+      
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -206,8 +198,6 @@ export default function QuotationDetailPage() {
       setDownloading(false);
     }
   };
-
-  const pdfPreviewUrl = `${API_URL}/api/quotations/${quotationId}/preview`;
 
   if (loading) {
     return (
@@ -274,9 +264,19 @@ export default function QuotationDetailPage() {
               <p className="text-gray-600">Quotation ID: {quotation.quotationId}</p>
             </div>
             <div className="flex gap-3">
+              {(quotation.status === "Draft" || quotation.status === "Sent") && (
+                <Button
+                  onClick={() => router.push(`/quotation/${quotationId}/edit`)}
+                  variant="outline"
+                  className="border-purple-600 text-purple-600 hover:bg-purple-50"
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit Quotation
+                </Button>
+              )}
               <Button
                 onClick={handleDownloadPDF}
-                disabled={downloading}
+                disabled={downloading || !selectedProfileId}
                 className="bg-purple-600 hover:bg-purple-700 text-white"
               >
                 <Download className="w-4 h-4 mr-2" />

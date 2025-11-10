@@ -9,7 +9,7 @@ import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { Button } from '@/app/components/ui/button';
 import { toast } from 'sonner';
-import { Plus, Minus } from 'lucide-react';
+import { Plus, Minus, ArrowLeft } from 'lucide-react';
 
 // A map to store quantities: { "bookId": quantity }
 type Quantities = {
@@ -63,6 +63,7 @@ function QuotationPage() {
     const [books, setBooks] = useState<QuotationPreviewBook[]>([]);
     const [quantities, setQuantities] = useState<Quantities>({});
     const [customerId, setCustomerId] = useState("");
+    const [validUntil, setValidUntil] = useState("");
     const [loading, setLoading] = useState(true);
     const [isGenerating, setIsGenerating] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -73,6 +74,13 @@ function QuotationPage() {
     
     // State for custom prices
     const [customPrices, setCustomPrices] = useState<CustomPrices>({});
+
+    // Initialize validUntil to 30 days from now
+    useEffect(() => {
+        const date = new Date();
+        date.setDate(date.getDate() + 30);
+        setValidUntil(date.toISOString().split('T')[0]);
+    }, []);
 
     // 1. Fetch book data when the page loads
     useEffect(() => {
@@ -239,9 +247,14 @@ function QuotationPage() {
         const generalDiscountAmount = subTotalAfterItemDiscounts * (generalDiscountPercent / 100);
         const totalDiscountAmount = totalItemDiscountAmount + generalDiscountAmount;
 
-        // Set validity for 30 days from now
-        const validUntilDate = new Date();
-        validUntilDate.setDate(validUntilDate.getDate() + 30);
+        // Use provided validUntil or default to 30 days from now
+        const validUntilDate = validUntil 
+            ? new Date(validUntil)
+            : (() => {
+                const date = new Date();
+                date.setDate(date.getDate() + 30);
+                return date;
+            })();
 
         // Assemble final payload
         const payload: QuotationPayload = {
@@ -314,22 +327,33 @@ function QuotationPage() {
     // --- This is the JSX for your page ---
     return (
         <div className="max-w-7xl mx-auto p-8">
-            <h1 className="text-3xl font-bold mb-6">Create Quotation</h1>
+            <div className="mb-6">
+                <Button
+                    variant="ghost"
+                    onClick={() => router.push("/quotation")}
+                    className="mb-4 text-gray-600 hover:text-gray-900"
+                >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back to Quotations
+                </Button>
+                <h1 className="text-3xl font-bold mb-2">Create Quotation</h1>
+                <p className="text-gray-600">Fill in the details to create a new quotation</p>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 {/* === CUSTOMER ID FIELD === */}
                 <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6">
-                    <Label htmlFor="customer-id" className="text-lg font-medium">Customer ID / Name</Label>
+                    <Label htmlFor="customer-id" className="text-lg font-medium">Customer ID</Label>
                     <Input
                         id="customer-id"
-                        placeholder="Enter customer identifier..."
+                        placeholder="Enter customer ID..."
                         value={customerId}
                         onChange={(e: InputChangeEvent) => setCustomerId(e.target.value)}
                         className="mt-2 text-lg h-12"
                     />
                 </div>
 
-                {/* === NEW: GENERAL DISCOUNT FIELD === */}
+                {/* === GENERAL DISCOUNT FIELD === */}
                 <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6">
                     <Label htmlFor="general-discount" className="text-lg font-medium">General Discount (%)</Label>
                     <Input
@@ -342,21 +366,36 @@ function QuotationPage() {
                         min="0"
                     />
                 </div>
+
+                {/* === VALID UNTIL DATE FIELD === */}
+                <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6">
+                    <Label htmlFor="valid-until" className="text-lg font-medium">Valid Until</Label>
+                    <Input
+                        id="valid-until"
+                        type="date"
+                        value={validUntil}
+                        onChange={(e: InputChangeEvent) => setValidUntil(e.target.value)}
+                        className="mt-2 text-lg h-12"
+                    />
+                </div>
             </div>
 
             {/* === DISPLAY SELECTED BOOKS === */}
-            <div className="bg-white rounded-2xl shadow-sm border border-amber-100 overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-sm border border-amber-100 overflow-hidden mb-6">
+                <div className="px-6 py-4 border-b border-amber-200">
+                    <h2 className="text-xl font-semibold text-gray-900">Books</h2>
+                </div>
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-amber-100" style={{ minWidth: '1000px', tableLayout: 'fixed' }}>
                     <thead className="bg-amber-50">
                         <tr>
-                            <th className="px-3 py-3 text-left" style={{ width: '30%' }}>Title & ISBN</th>
-                            <th className="px-3 py-3 text-left" style={{ width: '12%' }}>Publisher</th>
-                            <th className="px-3 py-3 text-left" style={{ width: '10%' }}>Original Price</th>
-                            <th className="px-3 py-3 text-left" style={{ width: '11%' }}>Custom Price</th>
-                            <th className="px-3 py-3 text-left" style={{ width: '9%' }}>Discount (%)</th>
-                            <th className="px-3 py-3 text-left" style={{ width: '11%' }}>Quantity</th>
-                            <th className="px-3 py-3 text-right" style={{ width: '17%' }}>Total</th>
+                            <th className="px-3 py-3 text-left" style={{ width: '25%' }}>Title & ISBN</th>
+                            <th className="px-3 py-3 text-left" style={{ width: '10%' }}>Publisher</th>
+                            <th className="px-3 py-3 text-left" style={{ width: '9%' }}>Original Price</th>
+                            <th className="px-3 py-3 text-left" style={{ width: '10%' }}>Custom Price</th>
+                            <th className="px-3 py-3 text-left" style={{ width: '8%' }}>Discount (%)</th>
+                            <th className="px-3 py-3 text-left" style={{ width: '10%' }}>Quantity</th>
+                            <th className="px-3 py-3 text-right" style={{ width: '15%' }}>Total</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-amber-100">
@@ -486,13 +525,19 @@ function QuotationPage() {
             </div>
 
             {/* === SAVE BUTTON === */}
-            <div className="mt-8 text-right">
+            <div className="mt-8 flex gap-3 justify-end">
+                <Button
+                    onClick={() => router.push("/quotation")}
+                    variant="outline"
+                >
+                    Cancel
+                </Button>
                 <Button
                     onClick={handleGeneratePdf}
                     disabled={isGenerating || books.length === 0}
-                    className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 text-lg"
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 text-lg"
                 >
-                    {isGenerating ? "Generating..." : "Generate & Download PDF"}
+                    {isGenerating ? "Creating..." : "Create Quotation"}
                 </Button>
             </div>
         </div>

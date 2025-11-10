@@ -304,6 +304,22 @@ export const apiFunctions = { // Renamed to avoid conflict with axios instance n
         } catch (error) { throw handleError(error); }
     },
 
+    downloadQuotationPDF: async (quotationId: string, selectedProfileId: string): Promise<Blob> => {
+        try {
+            const response = await api.get(`/api/quotations/${quotationId}/download?profileId=${selectedProfileId}`, {
+                responseType: 'blob', // Tell axios to expect binary data
+            });
+            return response.data; // The data is already a Blob
+        } catch (error) { throw handleError(error); }
+    },
+
+    updateQuotation: async (id: string, payload: any) => {
+        try {
+            const response = await api.put(`/api/quotations/${id}`, payload);
+            return response.data;
+        } catch (error) { throw handleError(error); }
+    },
+
     // company profile
     createCompanyProfile: async (payload: any) => {
         try {
