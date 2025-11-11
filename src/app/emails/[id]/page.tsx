@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, use, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Mail, Paperclip, Download, ArrowLeft, FileText } from "lucide-react";
+import { Mail, Paperclip, Download, ArrowLeft, FileText, Eye } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { apiFunctions } from "@/services/api.service";
 
@@ -23,6 +23,7 @@ interface EmailDetail {
         mimeType: string;
         size?: number;
         attachmentId: string;
+        dataUrl?: string | null; // Base64 data URL for direct use
     }>;
 }
 
@@ -65,21 +66,85 @@ export default function EmailDetailPage({ params }: { params: Promise<{ id: stri
         }
     }, [resolvedParams.id, fetchEmailDetail]);
 
-    const downloadAttachment = async (filename: string) => {
+    const downloadAttachment = (filename: string) => {
         try {
-            const blob = await apiFunctions.downloadEmailAttachment(resolvedParams.id, filename);
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
+            // Find attachment in email data
+            const attachment = email?.attachments?.find(att => att.filename === filename);
+            
+            if (attachment?.dataUrl) {
+                // Use dataUrl directly from email response
+                const link = document.createElement('a');
+                link.href = attachment.dataUrl;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                // Fallback to API call if dataUrl not available
+                apiFunctions.downloadEmailAttachment(resolvedParams.id, filename)
+                    .then(blob => {
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                    })
+                    .catch(err => {
+                        console.error('Error downloading attachment:', err);
+                        alert('Failed to download attachment');
+                    });
+            }
         } catch (err) {
             console.error('Error downloading attachment:', err);
             alert('Failed to download attachment');
         }
+    };
+
+    const previewPdfAttachment = (filename: string) => {
+        try {
+            // Find attachment in email data
+            const attachment = email?.attachments?.find(att => att.filename === filename);
+            
+            if (attachment?.dataUrl) {
+                // Convert data URL to Blob and open as blob URL for better compatibility
+                const [meta, b64] = attachment.dataUrl.split(',');
+                const mimeMatch = meta.match(/data:(.*?);base64/);
+                const mime = mimeMatch ? mimeMatch[1] : 'application/pdf';
+                const byteString = atob(b64);
+                const len = byteString.length;
+                const bytes = new Uint8Array(len);
+                for (let i = 0; i < len; i++) {
+                    bytes[i] = byteString.charCodeAt(i);
+                }
+                const blob = new Blob([bytes], { type: mime });
+                const url = window.URL.createObjectURL(blob);
+                window.open(url, '_blank');
+                // Do not revoke immediately; the new tab needs the URL
+            } else {
+                // Fallback to API call if dataUrl not available
+                apiFunctions.downloadEmailAttachment(resolvedParams.id, filename)
+                    .then(blob => {
+                        const url = window.URL.createObjectURL(blob);
+                        window.open(url, '_blank');
+                        // Note: We don't revoke the URL immediately as the new tab needs it
+                        // The browser will clean it up when the tab is closed
+                    })
+                    .catch(err => {
+                        console.error('Error loading PDF for preview:', err);
+                        alert('Failed to load PDF for preview');
+                    });
+            }
+        } catch (err) {
+            console.error('Error loading PDF for preview:', err);
+            alert('Failed to load PDF for preview');
+        }
+    };
+
+    const isPdfFile = (mimeType: string, filename: string) => {
+        return mimeType === 'application/pdf' || filename.toLowerCase().endsWith('.pdf');
     };
 
     const formatFileSize = (bytes: number) => {
@@ -288,14 +353,28 @@ export default function EmailDetailPage({ params }: { params: Promise<{ id: stri
                                                 ) : null}
                                             </p>
                                         </div>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="h-8 w-8 p-0"
-                                            onClick={() => downloadAttachment(attachment.filename)}
-                                        >
-                                            <Download className="w-4 h-4 text-gray-600" />
-                                        </Button>
+                                        <div className="flex items-center gap-1">
+                                            {isPdfFile(attachment.mimeType, attachment.filename) && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-8 w-8 p-0"
+                                                    onClick={() => previewPdfAttachment(attachment.filename)}
+                                                    title="Preview PDF"
+                                                >
+                                                    <Eye className="w-4 h-4 text-blue-600" />
+                                                </Button>
+                                            )}
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-8 w-8 p-0"
+                                                onClick={() => downloadAttachment(attachment.filename)}
+                                                title="Download"
+                                            >
+                                                <Download className="w-4 h-4 text-gray-600" />
+                                            </Button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>

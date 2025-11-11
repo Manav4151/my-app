@@ -221,10 +221,19 @@ export const apiFunctions = { // Renamed to avoid conflict with axios instance n
     // === Special File Download ===
     downloadEmailAttachment: async (id: string, filename: string): Promise<Blob> => {
         try {
-            const response = await api.get(`/api/emails/${id}/attachments/${filename}`, {
-                responseType: 'blob', // Tell axios to expect binary data
-            });
-            return response.data; // The data is already a Blob
+            // Try Google API endpoint first (for Gmail API), fallback to IMAP endpoint
+            try {
+                const response = await api.get(`/api/google/emails/${id}/attachments/${encodeURIComponent(filename)}`, {
+                    responseType: 'blob', // Tell axios to expect binary data
+                });
+                return response.data; // The data is already a Blob
+            } catch (googleError) {
+                // Fallback to IMAP endpoint if Google API fails
+                const response = await api.get(`/api/emails/${id}/attachments/${encodeURIComponent(filename)}`, {
+                    responseType: 'blob', // Tell axios to expect binary data
+                });
+                return response.data; // The data is already a Blob
+            }
         } catch (error) { throw handleError(error); }
     },
 
