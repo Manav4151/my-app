@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback, use, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Mail, Paperclip, Download, ArrowLeft, FileText, Eye } from "lucide-react";
+import { Mail, Paperclip, Download, ArrowLeft, FileText, Eye, Plus } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { apiFunctions } from "@/services/api.service";
+import { BookSelectionDialog } from "../../components/BookSelectionDialog";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
 
@@ -34,6 +35,7 @@ export default function EmailDetailPage({ params }: { params: Promise<{ id: stri
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const iframeRef = useRef<HTMLIFrameElement | null>(null);
+    const [bookDialogOpen, setBookDialogOpen] = useState(false);
 
     const adjustIframeHeight = useCallback(() => {
         const iframe = iframeRef.current;
@@ -173,6 +175,26 @@ export default function EmailDetailPage({ params }: { params: Promise<{ id: stri
         }
     };
 
+    const handleBooksSelected = (bookIds: string[]) => {
+        const params = new URLSearchParams();
+        bookIds.forEach(id => params.append("id", id));
+        
+        // Add email info to query params
+        if (email) {
+            params.append("emailMessageId", email.messageId);
+            params.append("emailSender", email.fromEmail);
+            params.append("emailSubject", email.subject);
+            params.append("emailReceivedAt", email.dateOfMessage);
+            // Use text or body for snippet, limit to 200 chars
+            const snippetText = email.text || (email.body ? email.body.replace(/<[^>]*>/g, '').substring(0, 200) : '');
+            if (snippetText) {
+                params.append("emailSnippet", snippetText.substring(0, 200));
+            }
+        }
+        
+        router.push(`/quotation/preview?${params.toString()}`);
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 flex items-center justify-center">
@@ -226,6 +248,13 @@ export default function EmailDetailPage({ params }: { params: Promise<{ id: stri
                             </Button>
                             <h1 className="text-lg font-semibold text-gray-900">Email Detail</h1>
                         </div>
+                        <Button 
+                            className="bg-purple-600 hover:bg-purple-700 text-white flex items-center space-x-2" 
+                            onClick={() => setBookDialogOpen(true)}
+                        >
+                            <Plus className="w-4 h-4" />
+                            <span>Create Quotation</span>
+                        </Button>
                     </div>
                 </div>
             </div>
@@ -382,6 +411,15 @@ export default function EmailDetailPage({ params }: { params: Promise<{ id: stri
                     )}
                 </div>
             </div>
+
+            {/* Book Selection Dialog for Creating Quotation */}
+            <BookSelectionDialog
+                open={bookDialogOpen}
+                onOpenChange={setBookDialogOpen}
+                onBooksSelected={handleBooksSelected}
+                mode="create"
+                buttonText="Generate Quotation"
+            />
         </div>
     );
 }

@@ -55,6 +55,13 @@ type QuotationPayload = {
     grandTotal: number; // Final payable amount (after discounts and tax)
     status: 'Draft' | 'Sent' | 'Accepted' | 'Rejected';
     validUntil: string; // ISO date string
+    emailInfo?: {
+        messageId: string;
+        sender: string;
+        subject: string;
+        receivedAt: string;
+        snippet?: string;
+    };
 };
 function QuotationPage() {
     const router = useRouter();
@@ -256,6 +263,13 @@ function QuotationPage() {
                 return date;
             })();
 
+        // Check for email info in query params
+        const emailMessageId = searchParams.get('emailMessageId');
+        const emailSender = searchParams.get('emailSender');
+        const emailSubject = searchParams.get('emailSubject');
+        const emailReceivedAt = searchParams.get('emailReceivedAt');
+        const emailSnippet = searchParams.get('emailSnippet');
+
         // Assemble final payload
         const payload: QuotationPayload = {
             customer: customerId,
@@ -266,6 +280,17 @@ function QuotationPage() {
             status: "Draft",
             validUntil: validUntilDate.toISOString()
         };
+
+        // Add email info if present
+        if (emailMessageId && emailSender && emailSubject && emailReceivedAt) {
+            payload.emailInfo = {
+                messageId: emailMessageId,
+                sender: emailSender,
+                subject: emailSubject,
+                receivedAt: emailReceivedAt,
+                snippet: emailSnippet || undefined
+            };
+        }
 
         return payload;
     };
