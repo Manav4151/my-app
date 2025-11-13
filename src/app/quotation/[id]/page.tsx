@@ -16,6 +16,7 @@ import {
   Send,
   Clock,
   Edit,
+  Mail,
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
@@ -56,6 +57,14 @@ type QuotationItem = {
   totalPrice: number;
 };
 
+type EmailInfo = {
+  messageId: string;
+  sender: string;
+  subject: string;
+  receivedAt: string;
+  snippet?: string;
+};
+
 type Quotation = {
   _id: string;
   quotationId: string;
@@ -68,6 +77,7 @@ type Quotation = {
   validUntil: string;
   createdAt: string;
   updatedAt: string;
+  emailInfo?: EmailInfo;
 };
 
 // Helper Functions
@@ -325,6 +335,51 @@ export default function QuotationDetailPage() {
                 )}
               </div>
             </div>
+
+            {/* Email Information */}
+            {quotation.emailInfo && (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Mail className="w-5 h-5 text-purple-600" />
+                  Email Information
+                </h2>
+                <div className="space-y-3">
+                  {quotation.emailInfo.sender && (
+                    <div>
+                      <p className="text-sm text-gray-500">Sender</p>
+                      <p className="font-medium text-gray-900">{quotation.emailInfo.sender}</p>
+                    </div>
+                  )}
+                  {quotation.emailInfo.subject && (
+                    <div>
+                      <p className="text-sm text-gray-500">Subject</p>
+                      <p className="font-medium text-gray-900">{quotation.emailInfo.subject}</p>
+                    </div>
+                  )}
+                  {quotation.emailInfo.receivedAt && (
+                    <div>
+                      <p className="text-sm text-gray-500">Received At</p>
+                      <p className="font-medium text-gray-900 flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        {formatDate(quotation.emailInfo.receivedAt)}
+                      </p>
+                    </div>
+                  )}
+                  {quotation.emailInfo.snippet && (
+                    <div>
+                      <p className="text-sm text-gray-500">Snippet</p>
+                      <p className="font-medium text-gray-900 text-sm">{quotation.emailInfo.snippet}</p>
+                    </div>
+                  )}
+                  {quotation.emailInfo.messageId && (
+                    <div>
+                      <p className="text-sm text-gray-500">Message ID</p>
+                      <p className="font-medium text-gray-900 text-xs font-mono break-all">{quotation.emailInfo.messageId}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Items Table */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
