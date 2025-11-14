@@ -167,22 +167,22 @@ export default function AdminPage() {
 
   return (
     <RoleGate allow="ADMIN" fallback={<div>Not authorized</div>}>
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100">
+      <div className="min-h-screen bg-[var(--background)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header Section */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center shadow-md">
+                <div className="w-12 h-12 bg-[var(--primary)] rounded-xl flex items-center justify-center shadow-md">
                   <Settings className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-                  <p className="text-gray-700">Manage users and system settings</p>
+                  <h1 className="text-3xl font-bold text-[var(--text-primary)]">Admin Dashboard</h1>
+                  <p className="text-[var(--text-secondary)]">Manage users and system settings</p>
                 </div>
               </div>
               <Link href="/">
-                <Button variant="outline" className="flex items-center gap-2 border-amber-300 text-amber-700 hover:bg-amber-50">
+                <Button variant="outline" className="flex items-center gap-2 border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)]/10">
                   <ArrowLeft className="w-4 h-4" />
                   <span className="hidden sm:inline">Back to App</span>
                   <Home className="w-4 h-4 sm:hidden" />
@@ -193,50 +193,50 @@ export default function AdminPage() {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white rounded-xl p-6 shadow-md border border-amber-200 hover:shadow-lg transition-shadow">
+            <div className="bg-[var(--surface)] rounded-xl p-6 shadow-md border border-[var(--border)] hover:shadow-lg transition-shadow">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Total Users</p>
-                  <p className="text-2xl font-bold text-gray-900">{total}</p>
+                  <p className="text-sm text-[var(--text-secondary)] mb-1">Total Users</p>
+                  <p className="text-2xl font-bold text-[var(--text-primary)]">{total}</p>
                 </div>
-                <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-                  <Users className="w-6 h-6 text-amber-600" />
+                <div className="w-12 h-12 bg-[var(--primary)]/10 rounded-lg flex items-center justify-center">
+                  <Users className="w-6 h-6 text-[var(--primary)]" />
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded-xl p-6 shadow-md border border-amber-200 hover:shadow-lg transition-shadow">
+            <div className="bg-[var(--surface)] rounded-xl p-6 shadow-md border border-[var(--border)] hover:shadow-lg transition-shadow">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Admins</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm text-[var(--text-secondary)] mb-1">Admins</p>
+                  <p className="text-2xl font-bold text-[var(--text-primary)]">
                     {users.filter((u) => (u.role || "").toString().toLowerCase() === "admin").length}
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <ShieldCheck className="w-6 h-6 text-orange-600" />
+                <div className="w-12 h-12 bg-[var(--primary)]/10 rounded-lg flex items-center justify-center">
+                  <ShieldCheck className="w-6 h-6 text-[var(--primary)]" />
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded-xl p-6 shadow-md border border-amber-200 hover:shadow-lg transition-shadow">
+            <div className="bg-[var(--surface)] rounded-xl p-6 shadow-md border border-[var(--border)] hover:shadow-lg transition-shadow">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Banned Users</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm text-[var(--text-secondary)] mb-1">Banned Users</p>
+                  <p className="text-2xl font-bold text-[var(--text-primary)]">
                     {users.filter((u) => u.banned).length}
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                  <Ban className="w-6 h-6 text-red-600" />
+                <div className="w-12 h-12 bg-[var(--error)]/10 rounded-lg flex items-center justify-center">
+                  <Ban className="w-6 h-6 text-[var(--error)]" />
                 </div>
               </div>
             </div>
           </div>
 
           {/* Create User Card */}
-          <div className="bg-white rounded-xl p-6 shadow-md border border-amber-200 mb-8">
+          <div className="bg-[var(--surface)] rounded-xl p-6 shadow-md border border-[var(--border)] mb-8">
             <div className="flex items-center gap-2 mb-6">
-              <UserPlus className="w-5 h-5 text-amber-600" />
-              <h2 className="text-xl font-semibold text-gray-900">Create New User</h2>
+              <UserPlus className="w-5 h-5 text-[var(--primary)]" />
+              <h2 className="text-xl font-semibold text-[var(--text-primary)]">Create New User</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
               <div className="space-y-2">
@@ -301,7 +301,7 @@ export default function AdminPage() {
             <Button
               onClick={createUser}
               disabled={creating || !newEmail || !newPassword}
-              className="w-full md:w-auto bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
+              className="w-full md:w-auto bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white"
             >
               {creating ? (
                 <>
@@ -318,12 +318,12 @@ export default function AdminPage() {
           </div>
 
           {/* Users Table Card */}
-          <div className="bg-white rounded-xl shadow-md border border-amber-200 overflow-hidden">
+          <div className="bg-[var(--surface)] rounded-xl shadow-md border border-[var(--border)] overflow-hidden">
             {/* Table Controls */}
-            <div className="p-6 border-b border-amber-200 bg-amber-50/50">
+            <div className="p-6 border-b border-[var(--border)] bg-[var(--surface-hover)]">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex items-center gap-4">
-                  <Label htmlFor="page-size" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor="page-size" className="text-sm font-medium text-[var(--text-primary)]">
                     Page size:
                   </Label>
                   <Select value={limit.toString()} onValueChange={(value) => setLimit(Number(value))}>
@@ -338,10 +338,10 @@ export default function AdminPage() {
                   </Select>
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="text-sm text-gray-700">
-                    Page <span className="font-semibold text-gray-900">{page}</span> of{" "}
-                    <span className="font-semibold text-gray-900">{totalPages}</span> (
-                    <span className="font-semibold text-gray-900">{total}</span> total)
+                  <div className="text-sm text-[var(--text-primary)]">
+                    Page <span className="font-semibold text-[var(--text-primary)]">{page}</span> of{" "}
+                    <span className="font-semibold text-[var(--text-primary)]">{totalPages}</span> (
+                    <span className="font-semibold text-[var(--text-primary)]">{total}</span> total)
                   </div>
                   <div className="flex gap-2">
                     <Button
@@ -368,49 +368,49 @@ export default function AdminPage() {
             {/* Table */}
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-amber-600" />
+                <Loader2 className="w-8 h-8 animate-spin text-[var(--primary)]" />
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-amber-50">
+                  <thead className="bg-[var(--surface-hover)]">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                         Name
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                         Email
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                         Role
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-amber-100">
+                  <tbody className="bg-[var(--surface)] divide-y divide-[var(--border)]">
                     {users.map((u) => (
                       <tr
                         key={u.id}
-                        className="hover:bg-amber-50/50 transition-colors"
+                        className="hover:bg-[var(--surface-hover)] transition-colors"
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white text-sm font-medium shadow-sm">
+                            <div className="w-8 h-8 rounded-full bg-[var(--primary)] flex items-center justify-center text-white text-sm font-medium shadow-sm">
                               {(u.name || u.email || "U").charAt(0).toUpperCase()}
                             </div>
-                            <span className="text-sm font-medium text-gray-900">
+                            <span className="text-sm font-medium text-[var(--text-primary)]">
                               {u.name ?? "-"}
                             </span>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-2 text-sm text-gray-700">
-                            <Mail className="w-4 h-4 text-amber-600" />
+                          <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+                            <Mail className="w-4 h-4 text-[var(--primary)]" />
                             {u.email}
                           </div>
                         </td>
@@ -445,7 +445,7 @@ export default function AdminPage() {
                               Banned
                             </Badge>
                           ) : (
-                            <Badge variant="outline" className="flex items-center gap-1 w-fit text-green-700 border-green-300 bg-green-50">
+                            <Badge variant="outline" className="flex items-center gap-1 w-fit text-[var(--success)] border-[var(--success)]/30 bg-[var(--success)]/10">
                               <Unlock className="w-3 h-3" />
                               Active
                             </Badge>
@@ -459,7 +459,7 @@ export default function AdminPage() {
                                 size="sm"
                                 onClick={() => ban(u.id)}
                                 disabled={banningUserId === u.id}
-                                className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 border-orange-300"
+                                className="text-[var(--warning)] hover:text-[var(--warning)] hover:bg-[var(--warning)]/10 border-[var(--warning)]/30"
                               >
                                 {banningUserId === u.id ? (
                                   <>
@@ -479,7 +479,7 @@ export default function AdminPage() {
                                 size="sm"
                                 onClick={() => unban(u.id)}
                                 disabled={banningUserId === u.id}
-                                className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-300"
+                                className="text-[var(--success)] hover:text-[var(--success)] hover:bg-[var(--success)]/10 border-[var(--success)]/30"
                               >
                                 {banningUserId === u.id ? (
                                   <>
@@ -510,8 +510,8 @@ export default function AdminPage() {
                       <tr>
                         <td colSpan={5} className="px-6 py-12 text-center">
                           <div className="flex flex-col items-center gap-2">
-                            <Users className="w-12 h-12 text-gray-400" />
-                            <p className="text-gray-600">No users found</p>
+                            <Users className="w-12 h-12 text-[var(--text-secondary)]" />
+                            <p className="text-[var(--text-secondary)]">No users found</p>
                           </div>
                         </td>
                       </tr>

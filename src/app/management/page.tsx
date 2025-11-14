@@ -113,33 +113,33 @@ function ManagementPageContent() {
         return cn(
             "relative px-4 py-2 text-sm font-medium transition-colors duration-200",
             activeTab === tabName
-                ? "text-gray-900 font-semibold"
-                : "text-gray-600 hover:text-gray-900"
+                ? "text-[var(--text-primary)] font-semibold"
+                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
         );
     };
 
     const getUnderlineClassName = (tabName: ActiveTab) => {
         return cn(
-            "absolute bottom-0 left-0 h-0.5 w-full bg-amber-600 transition-transform duration-300 ease-out",
+            "absolute bottom-0 left-0 h-0.5 w-full bg-[var(--primary)] transition-transform duration-300 ease-out",
             activeTab === tabName ? "scale-x-100" : "scale-x-0"
         );
     };
 
     return (
-        <div className="min-h-screen bg-gray-50/50">
+        <div className="min-h-screen bg-[var(--background)]">
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
                 {/* Header */}
                 <div className="text-center mb-10">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                    <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2">
                         Customer and Publisher Management
                     </h1>
-                    <p className="text-gray-600">
+                    <p className="text-[var(--text-secondary)]">
                         Easily add and manage customer and publisher information.
                     </p>
                 </div>
 
                 {/* Tab Switcher */}
-                <div className="relative mb-8 border-b border-gray-200">
+                <div className="relative mb-8 border-b border-[var(--border)]">
                     <div className="flex justify-start max-w-md">
                         <button onClick={() => setActiveTab("customer")} className="flex-1 text-center relative focus:outline-none py-2">
                             <span className={getTabItemClassName("customer")}>
@@ -163,7 +163,7 @@ function ManagementPageContent() {
                 </div>
 
                 {/* Form Display Area */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+                <div className="bg-[var(--surface)] rounded-2xl shadow-sm border border-[var(--border)] p-8">
                     {activeTab === "publisher" && <AddPublisherForm />}
                     {activeTab === "customer" && <AddCustomerForm />}
                     {activeTab === "company" && <AddCompanyProfileForm />}
@@ -177,8 +177,8 @@ function ManagementPageContent() {
 export default function ManagementPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-gray-50/50 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
+            <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary)]"></div>
             </div>
         }>
             <ManagementPageContent />

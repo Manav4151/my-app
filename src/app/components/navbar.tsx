@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTheme } from "next-themes";
 import { Button } from "./ui/button";
-import { BookOpen, Home, Mail, FileText, Menu, X, LogOut, Building } from "lucide-react";
+import { BookOpen, Home, Mail, FileText, Menu, X, LogOut, Building, Sun, Moon } from "lucide-react";
 import { useAuth } from "./auth-context";
 import { admin } from "better-auth/plugins/admin";
 
@@ -12,6 +13,13 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const { session, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Hide navbar on auth pages and admin panel
   const isAuthPage = pathname.startsWith('/login') ||
@@ -52,16 +60,16 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-white shadow-lg border-b border-gray-200">
+    <nav className="bg-[var(--background)] shadow-lg border-b border-[var(--border)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-[var(--primary)] rounded-lg flex items-center justify-center">
                 <BookOpen className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-gray-900">BookManager</span>
+              <span className="text-xl font-bold text-[var(--foreground)]">BookManager</span>
             </Link>
           </div>
 
@@ -74,8 +82,8 @@ export default function Navbar() {
                   key={item.name}
                   href={item.href}
                   className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${isActive(item.href)
-                    ? "text-amber-600 bg-amber-50"
-                    : "text-gray-700 hover:text-amber-600 hover:bg-gray-50"
+                    ? "text-[var(--primary)] bg-[var(--muted)]"
+                    : "text-[var(--muted-foreground)] hover:text-[var(--primary)] hover:bg-[var(--muted)]"
                     }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -87,9 +95,24 @@ export default function Navbar() {
 
           {/* User Menu */}
           <div className="hidden md:flex items-center space-x-4">
+            {/* Theme Toggle Button */}
+            {mounted && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="flex items-center space-x-2"
+              >
+                {theme === "dark" ? (
+                  <Sun className="w-4 h-4" />
+                ) : (
+                  <Moon className="w-4 h-4" />
+                )}
+              </Button>
+            )}
             {session ? (
               <div className="flex items-center space-x-3">
-                <span className="text-sm text-gray-700">
+                <span className="text-sm text-[var(--muted-foreground)]">
                   Welcome, {session.user.name || session.user.email}
                 </span>
                 <Button
@@ -110,7 +133,7 @@ export default function Navbar() {
                   </Button>
                 </Link>
                 <Link href="/signup">
-                  <Button size="sm" className="bg-amber-600 hover:bg-amber-700">
+                  <Button size="sm" className="bg-[var(--primary)] hover:opacity-90">
                     Sign Up
                   </Button>
                 </Link>
@@ -137,7 +160,7 @@ export default function Navbar() {
 
         {/* Mobile Navigation */}
         {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 py-4">
+          <div className="md:hidden border-t border-[var(--border)] py-4">
             <div className="space-y-2">
               {navigation.map((item) => {
                 const Icon = item.icon;
@@ -147,8 +170,8 @@ export default function Navbar() {
                     href={item.href}
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={`flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 ${isActive(item.href)
-                      ? "text-amber-600 bg-amber-50"
-                      : "text-gray-700 hover:text-amber-600 hover:bg-gray-50"
+                      ? "text-[var(--primary)] bg-[var(--muted)]"
+                      : "text-[var(--muted-foreground)] hover:text-[var(--primary)] hover:bg-[var(--muted)]"
                       }`}
                   >
                     <Icon className="w-5 h-5" />
@@ -159,10 +182,35 @@ export default function Navbar() {
             </div>
 
             {/* Mobile User Menu */}
-            <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="mt-4 pt-4 border-t border-[var(--border)]">
+              {mounted && (
+                <div className="mb-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setTheme(theme === "dark" ? "light" : "dark");
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full flex items-center justify-center space-x-2"
+                  >
+                    {theme === "dark" ? (
+                      <>
+                        <Sun className="w-4 h-4" />
+                        <span>Light Mode</span>
+                      </>
+                    ) : (
+                      <>
+                        <Moon className="w-4 h-4" />
+                        <span>Dark Mode</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
               {session ? (
                 <div className="space-y-2">
-                  <div className="px-3 py-2 text-sm text-gray-700">
+                  <div className="px-3 py-2 text-sm text-[var(--muted-foreground)]">
                     Welcome, {session.user.name || session.user.email}
                   </div>
                   <Button
@@ -183,7 +231,7 @@ export default function Navbar() {
                     </Button>
                   </Link>
                   <Link href="/signup" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Button size="sm" className="w-full bg-amber-600 hover:bg-amber-700">
+                    <Button size="sm" className="w-full bg-[var(--primary)] hover:opacity-90">
                       Sign Up
                     </Button>
                   </Link>

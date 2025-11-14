@@ -40,22 +40,22 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="min-h-screen ">
+    <div className="min-h-screen bg-[var(--background)]">
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center">
-          <div className="w-20 h-20 bg-gradient-to-br from-amber-500 to-orange-600 rounded-3xl flex items-center justify-center mx-auto mb-6">
+          <div className="w-20 h-20 bg-[var(--primary)] rounded-3xl flex items-center justify-center mx-auto mb-6">
             <BookOpen className="w-10 h-10 text-white" />
           </div>
 
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+          <h1 className="text-4xl md:text-6xl font-bold text-[var(--foreground)] mb-6">
             Welcome to{" "}
-            <span className="bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+            <span className="text-[var(--primary)]">
               BookManager
             </span>
           </h1>
 
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          <p className="text-xl text-[var(--muted-foreground)] mb-8 max-w-3xl mx-auto">
             A comprehensive book management system designed to streamline your inventory,
             track pricing, and manage your book collection with ease.
           </p>
@@ -63,13 +63,13 @@ export default function HomePage() {
           {session ? (
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/books">
-                <Button size="lg" className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white px-8 py-3 text-lg">
+                <Button size="lg" className="bg-[var(--primary)] hover:opacity-90 text-white px-8 py-3 text-lg">
                   <BookOpen className="w-5 h-5 mr-2" />
                   Manage Books
                 </Button>
               </Link>
               <Link href="/books/insert">
-                <Button size="lg" variant="outline" className="border-amber-300 text-amber-700 hover:bg-amber-50 px-8 py-3 text-lg">
+                <Button size="lg" variant="outline" className="border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--muted)] px-8 py-3 text-lg">
                   Add New Book
                 </Button>
               </Link>
@@ -77,12 +77,12 @@ export default function HomePage() {
           ) : (
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/login">
-                <Button size="lg" className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white px-8 py-3 text-lg">
+                <Button size="lg" className="bg-[var(--primary)] hover:opacity-90 text-white px-8 py-3 text-lg">
                   Get Started
                 </Button>
               </Link>
               <Link href="/signup">
-                <Button size="lg" variant="outline" className="border-amber-300 text-amber-700 hover:bg-amber-50 px-8 py-3 text-lg">
+                <Button size="lg" variant="outline" className="border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--muted)] px-8 py-3 text-lg">
                   Sign Up
                 </Button>
               </Link>
@@ -97,12 +97,12 @@ export default function HomePage() {
           {stats.map((stat, index) => {
             const Icon = stat.icon;
             return (
-              <div key={index} className="bg-white rounded-2xl p-6 shadow-sm border border-amber-100 text-center">
-                <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <div key={index} className="bg-[var(--input)] rounded-2xl p-6 shadow-sm border border-[var(--border)] text-center">
+                <div className="w-12 h-12 bg-[var(--primary)] rounded-xl flex items-center justify-center mx-auto mb-4">
                   <Icon className="w-6 h-6 text-white" />
                 </div>
-                <div className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</div>
-                <div className="text-sm text-gray-600">{stat.label}</div>
+                <div className="text-2xl font-bold text-[var(--foreground)] mb-1">{stat.value}</div>
+                <div className="text-sm text-[var(--muted-foreground)]">{stat.label}</div>
               </div>
             );
           })}
@@ -112,8 +112,8 @@ export default function HomePage() {
       {/* Features Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Key Features</h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <h2 className="text-3xl font-bold text-[var(--foreground)] mb-4">Key Features</h2>
+          <p className="text-lg text-[var(--muted-foreground)] max-w-2xl mx-auto">
             Discover the powerful tools and features that make BookManager the perfect solution for your book management needs.
           </p>
         </div>
@@ -123,12 +123,12 @@ export default function HomePage() {
             const Icon = feature.icon;
             return (
               <Link key={index} href={feature.href}>
-                <div className="bg-white rounded-2xl p-8 shadow-sm border border-amber-100 hover:shadow-lg transition-shadow duration-300 cursor-pointer group">
-                  <div className={`w-16 h-16 bg-gradient-to-br ${feature.color} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
+                <div className="bg-[var(--input)] rounded-2xl p-8 shadow-sm border border-[var(--border)] hover:shadow-lg transition-shadow duration-300 cursor-pointer group">
+                  <div className="w-16 h-16 bg-[var(--primary)] rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                     <Icon className="w-8 h-8 text-white" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">{feature.title}</h3>
-                  <p className="text-gray-600 leading-relaxed">{feature.description}</p>
+                  <h3 className="text-xl font-semibold text-[var(--foreground)] mb-3">{feature.title}</h3>
+                  <p className="text-[var(--muted-foreground)] leading-relaxed">{feature.description}</p>
                 </div>
               </Link>
             );
@@ -138,7 +138,7 @@ export default function HomePage() {
 
       {/* CTA Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-gradient-to-r from-amber-500 to-orange-600 rounded-3xl p-8 md:p-12 text-center text-white">
+        <div className="bg-[var(--primary)] rounded-3xl p-8 md:p-12 text-center text-white">
           <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
           <p className="text-xl mb-8 opacity-90">
             Join thousands of users who trust BookManager for their book inventory needs.
@@ -146,12 +146,12 @@ export default function HomePage() {
           {!session && (
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/signup">
-                <Button size="lg" className="bg-white text-amber-600 hover:bg-gray-50 px-8 py-3 text-lg font-semibold">
+                <Button size="lg" className="bg-white text-[var(--primary)] hover:bg-gray-50 px-8 py-3 text-lg font-semibold">
                   Start Free Trial
                 </Button>
               </Link>
               <Link href="/login">
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-amber-600 px-8 py-3 text-lg">
+                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-[var(--primary)] px-8 py-3 text-lg">
                   Sign In
                 </Button>
               </Link>

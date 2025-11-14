@@ -80,10 +80,10 @@ function QuotationStatusBadge({
   status: string;
 }) {
   const statusStyles: { [key: string]: string } = {
-    Draft: "bg-gray-100 text-gray-800",
-    Sent: "bg-blue-100 text-blue-800",
-    Accepted: "bg-green-100 text-green-800",
-    Rejected: "bg-red-100 text-red-800",
+    Draft: "bg-[var(--muted)] text-[var(--muted-foreground)]",
+    Sent: "bg-[var(--primary)]/20 text-[var(--primary)]",
+    Accepted: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+    Rejected: "bg-[var(--destructive)]/20 text-[var(--destructive)]",
   };
 
   const statusIcons: { [key: string]: React.ReactNode } = {
@@ -119,29 +119,29 @@ function QuotationStats({
 }) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-      <div className="bg-blue-50 rounded-xl p-4 text-center border border-blue-200">
-        <FileText className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-        <div className="text-2xl font-bold text-blue-900">{stats.total}</div>
-        <div className="text-sm text-blue-700">Total Quotes</div>
+      <div className="bg-[var(--primary)]/10 rounded-xl p-4 text-center border border-[var(--primary)]/20">
+        <FileText className="w-8 h-8 text-[var(--primary)] mx-auto mb-2" />
+        <div className="text-2xl font-bold text-[var(--foreground)]">{stats.total}</div>
+        <div className="text-sm text-[var(--muted-foreground)]">Total Quotes</div>
       </div>
-      <div className="bg-green-50 rounded-xl p-4 text-center border border-green-200">
-        <DollarSign className="w-8 h-8 text-green-600 mx-auto mb-2" />
-        <div className="text-2xl font-bold text-green-900">
+      <div className="bg-[var(--success)]/10 rounded-xl p-4 text-center border border-[var(--success)]/20">
+        <DollarSign className="w-8 h-8 text-[var(--success)] mx-auto mb-2" />
+        <div className="text-2xl font-bold text-[var(--text-primary)]">
           {formatCurrency(stats.totalValue)}
         </div>
-        <div className="text-sm text-green-700">Total Value</div>
+        <div className="text-sm text-[var(--text-secondary)]">Total Value</div>
       </div>
-      <div className="bg-yellow-50 rounded-xl p-4 text-center border border-yellow-200">
-        <Clock className="w-8 h-8 text-yellow-600 mx-auto mb-2" />
-        <div className="text-2xl font-bold text-yellow-900">{stats.draft}</div>
-        <div className="text-sm text-yellow-700">Draft</div>
+      <div className="bg-[var(--warning)]/10 rounded-xl p-4 text-center border border-[var(--warning)]/20">
+        <Clock className="w-8 h-8 text-[var(--warning)] mx-auto mb-2" />
+        <div className="text-2xl font-bold text-[var(--text-primary)]">{stats.draft}</div>
+        <div className="text-sm text-[var(--text-secondary)]">Draft</div>
       </div>
-      <div className="bg-purple-50 rounded-xl p-4 text-center border border-purple-200">
-        <CheckCircle className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-        <div className="text-2xl font-bold text-purple-900">
+      <div className="bg-[var(--primary)]/10 rounded-xl p-4 text-center border border-[var(--primary)]/20">
+        <CheckCircle className="w-8 h-8 text-[var(--primary)] mx-auto mb-2" />
+        <div className="text-2xl font-bold text-[var(--foreground)]">
           {stats.accepted}
         </div>
-        <div className="text-sm text-purple-700">Accepted</div>
+        <div className="text-sm text-[var(--muted-foreground)]">Accepted</div>
       </div>
     </div>
   );
@@ -160,39 +160,39 @@ function QuotationCard({ quotation }: { quotation: Quotation }) {
   return (
     <div 
       onClick={handleCardClick}
-      className="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 bg-white rounded-xl shadow-sm border border-transparent hover:border-purple-200 hover:shadow-lg transition-all duration-300 cursor-pointer"
+      className="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 bg-[var(--input)] rounded-xl shadow-sm border border-[var(--border)] hover:border-[var(--primary)]/50 hover:shadow-lg transition-all duration-300 cursor-pointer"
     >
 
       {/* Main Info Grid */}
       <div className="flex-1 flex flex-wrap justify-between gap-4 w-full">
 
         <div className="flex flex-col gap-1">
-          <p className="text-sm text-gray-500">Quote ID</p>
-          <p className="font-semibold text-gray-800">{quotation.quotationId}</p>
+          <p className="text-sm text-[var(--muted-foreground)]">Quote ID</p>
+          <p className="font-semibold text-[var(--foreground)]">{quotation.quotationId}</p>
         </div>
 
         <div className="flex flex-col gap-1">
-          <p className="text-sm text-gray-500">Customer</p>
-          <p className="font-medium text-gray-800">{quotation.customer.name}</p>
+          <p className="text-sm text-[var(--muted-foreground)]">Customer</p>
+          <p className="font-medium text-[var(--foreground)]">{quotation.customer.name}</p>
         </div>
 
         <div className="flex flex-col gap-1">
-          <p className="text-sm text-gray-500">Created</p>
-          <p className="font-medium text-gray-800">
+          <p className="text-sm text-[var(--muted-foreground)]">Created</p>
+          <p className="font-medium text-[var(--foreground)]">
             {formatDate(quotation.createdAt)}
           </p>
         </div>
 
 
         <div className="flex flex-col gap-1">
-          <p className="text-sm text-gray-500">Valid Until</p>
-          <p className="font-medium text-gray-800">
+          <p className="text-sm text-[var(--muted-foreground)]">Valid Until</p>
+          <p className="font-medium text-[var(--foreground)]">
             {formatDate(quotation.validUntil)}
           </p>
         </div>
         <div className="flex flex-col gap-1 text-right sm:text-left">
-          <p className="text-sm text-gray-500">Grand Total</p>
-          <p className="font-bold text-lg text-gray-900">
+          <p className="text-sm text-[var(--muted-foreground)]">Grand Total</p>
+          <p className="font-bold text-lg text-[var(--foreground)]">
             {formatCurrency(quotation.grandTotal)}
           </p>
         </div>
@@ -206,7 +206,7 @@ function QuotationCard({ quotation }: { quotation: Quotation }) {
       <Button 
         variant="ghost" 
         size="icon" 
-        className="text-gray-500 hover:text-purple-600 ml-auto md:ml-0 flex-shrink-0"
+        className="text-[var(--muted-foreground)] hover:text-[var(--primary)] ml-auto md:ml-0 flex-shrink-0"
         onClick={(e) => {
           e.stopPropagation(); // Prevent card click when clicking button
         }}
@@ -315,7 +315,7 @@ export default function QuotationPage() {
   if (loading) {
     return (
       <div className="p-6 lg:p-8 max-w-7xl mx-auto text-center">
-        <h1 className="text-2xl font-semibold">Loading...</h1>
+        <h1 className="text-2xl font-semibold text-[var(--foreground)]">Loading...</h1>
       </div>
     );
   }
@@ -323,7 +323,7 @@ export default function QuotationPage() {
   if (error) {
     return (
       <div className="p-6 lg:p-8 max-w-7xl mx-auto text-center">
-        <h1 className="text-2xl font-semibold text-red-600">Error: {error}</h1>
+        <h1 className="text-2xl font-semibold text-[var(--destructive)]">Error: {error}</h1>
       </div>
     );
   }
@@ -342,15 +342,15 @@ export default function QuotationPage() {
       {/* ======================================================== */}
       <header className="flex flex-wrap justify-between items-center gap-4 mb-6">
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-[var(--foreground)]">
             Quotations
           </h1>
-          <p className="text-gray-600 text-base">
+          <p className="text-[var(--muted-foreground)] text-base">
             Manage and track all your quotations.
           </p>
         </div>
         <RoleGate allow={["ADMIN", "MANAGER"]}>
-          <Button className="bg-purple-600 hover:bg-purple-700 text-white flex items-center space-x-2" onClick={() => setBookDialogOpen(true)}>
+          <Button className="bg-[var(--primary)] hover:opacity-90 text-white flex items-center space-x-2" onClick={() => setBookDialogOpen(true)}>
             <Plus className="w-4 h-4" />
             <span>Create New Quotation</span>
           </Button>
@@ -360,16 +360,16 @@ export default function QuotationPage() {
       {/* ======================================================== */}
       {/* === CHANGED: New Filter/Search Bar from HTML reference === */}
       {/* ======================================================== */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 p-4 bg-white rounded-xl shadow-sm mb-6">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 p-4 bg-[var(--input)] rounded-xl shadow-sm mb-6 border border-[var(--border)]">
         {/* Search Input */}
         <div className="flex-1 w-full md:w-auto">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--muted-foreground)] w-4 h-4" />
             <Input
               placeholder="Search by quotation ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-10 bg-gray-50 border-gray-200 focus:border-purple-500 focus:ring-purple-500 rounded-lg"
+              className="pl-10 h-10 bg-[var(--background)] border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-lg"
             />
           </div>
         </div>
@@ -377,7 +377,7 @@ export default function QuotationPage() {
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
-            className="text-gray-600"
+            className="text-[var(--muted-foreground)]"
             onClick={() => setSortOrder(sortOrder === "newest" ? "oldest" : "newest")}
           >
             {sortOrder === "newest" ? (
@@ -395,7 +395,7 @@ export default function QuotationPage() {
 
       {/* Quotation List */}
       <div className="mt-8">
-        <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+        <h2 className="text-2xl font-semibold text-[var(--foreground)] mb-6">
           {searchQuery.trim() 
             ? `Search Results (${quotations.length})` 
             : `All Quotations (${pagination?.totalItems || 0})`}
@@ -413,17 +413,17 @@ export default function QuotationPage() {
         ) : (
           // (Empty state placeholder is unchanged)
           <div className="text-center py-12">
-            <div className="w-24 h-24 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <FileText className="w-12 h-12 text-purple-600" />
+            <div className="w-24 h-24 bg-[var(--primary)]/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <FileText className="w-12 h-12 text-[var(--primary)]" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-3">
+            <h3 className="text-xl font-semibold text-[var(--foreground)] mb-3">
               No Quotations Found
             </h3>
-            <p className="text-gray-600 mb-6 max-w-md mx-auto">
+            <p className="text-[var(--muted-foreground)] mb-6 max-w-md mx-auto">
               Get started by creating your first quotation.
             </p>
             <RoleGate allow={["ADMIN", "MANAGER"]}>
-              <Button className="bg-purple-600 hover:bg-purple-700 text-white">
+              <Button className="bg-[var(--primary)] hover:opacity-90 text-white">
                 <Plus className="w-4 h-4 mr-2" />
                 Create New Quotation
               </Button>

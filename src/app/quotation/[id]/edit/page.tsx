@@ -435,9 +435,9 @@ export default function EditQuotationPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
+            <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
                 <div className="text-center">
-                    <p className="text-gray-600">Loading quotation...</p>
+                    <p className="text-[var(--text-secondary)]">Loading quotation...</p>
                 </div>
             </div>
         );
@@ -445,10 +445,10 @@ export default function EditQuotationPage() {
 
     if (error || !quotation) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="bg-white shadow-lg rounded-2xl p-8 max-w-md">
+            <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
+                <div className="bg-[var(--surface)] shadow-lg rounded-2xl p-8 max-w-md border border-[var(--border)]">
                     <div className="text-center">
-                        <p className="text-red-600 mb-4">Error: {error || "Quotation not found"}</p>
+                        <p className="text-[var(--error)] mb-4">Error: {error || "Quotation not found"}</p>
                         <div className="flex gap-3 justify-center">
                             <Button onClick={() => router.push("/quotation")} variant="outline">
                                 Back to List
@@ -461,23 +461,23 @@ export default function EditQuotationPage() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto p-8">
+        <div className="max-w-7xl mx-auto p-8 bg-[var(--background)]">
             <div className="mb-6">
                 <Button
                     variant="ghost"
                     onClick={() => router.push(`/quotation/${quotationId}`)}
-                    className="mb-4 text-gray-600 hover:text-gray-900"
+                    className="mb-4 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                 >
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back to Quotation
                 </Button>
-                <h1 className="text-3xl font-bold mb-2">Edit Quotation</h1>
-                <p className="text-gray-600">Quotation ID: {quotation.quotationId}</p>
+                <h1 className="text-3xl font-bold mb-2 text-[var(--text-primary)]">Edit Quotation</h1>
+                <p className="text-[var(--text-secondary)]">Quotation ID: {quotation.quotationId}</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6">
-                    <Label htmlFor="customer-id" className="text-lg font-medium">Customer ID</Label>
+                <div className="bg-[var(--surface)] rounded-2xl shadow-sm border border-[var(--border)] p-6">
+                    <Label htmlFor="customer-id" className="text-lg font-medium text-[var(--text-primary)]">Customer ID</Label>
                     <Input
                         id="customer-id"
                         placeholder="Enter customer ID..."
@@ -487,8 +487,8 @@ export default function EditQuotationPage() {
                     />
                 </div>
 
-                <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6">
-                    <Label htmlFor="general-discount" className="text-lg font-medium">General Discount (%)</Label>
+                <div className="bg-[var(--surface)] rounded-2xl shadow-sm border border-[var(--border)] p-6">
+                    <Label htmlFor="general-discount" className="text-lg font-medium text-[var(--text-primary)]">General Discount (%)</Label>
                     <Input
                         id="general-discount"
                         type="number"
@@ -500,8 +500,8 @@ export default function EditQuotationPage() {
                     />
                 </div>
 
-                <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6">
-                    <Label htmlFor="status" className="text-lg font-medium">Status</Label>
+                <div className="bg-[var(--surface)] rounded-2xl shadow-sm border border-[var(--border)] p-6">
+                    <Label htmlFor="status" className="text-lg font-medium text-[var(--text-primary)]">Status</Label>
                     <Select value={status} onValueChange={(value) => setStatus(value as typeof status)}>
                         <SelectTrigger id="status" className="mt-2 text-lg h-12">
                             <SelectValue />
@@ -515,8 +515,8 @@ export default function EditQuotationPage() {
                     </Select>
                 </div>
 
-                <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6">
-                    <Label htmlFor="valid-until" className="text-lg font-medium">Valid Until</Label>
+                <div className="bg-[var(--surface)] rounded-2xl shadow-sm border border-[var(--border)] p-6">
+                    <Label htmlFor="valid-until" className="text-lg font-medium text-[var(--text-primary)]">Valid Until</Label>
                     <Input
                         id="valid-until"
                         type="date"
@@ -528,32 +528,32 @@ export default function EditQuotationPage() {
             </div>
 
             {/* Books Table */}
-            <div className="bg-white rounded-2xl shadow-sm border border-amber-100 overflow-hidden mb-6">
-                <div className="px-6 py-4 border-b border-amber-200 flex items-center justify-between">
-                    <h2 className="text-xl font-semibold text-gray-900">Books</h2>
+            <div className="bg-[var(--surface)] rounded-2xl shadow-sm border border-[var(--border)] overflow-hidden mb-6">
+                <div className="px-6 py-4 border-b border-[var(--border)] flex items-center justify-between">
+                    <h2 className="text-xl font-semibold text-[var(--text-primary)]">Books</h2>
                     <Button
                         onClick={() => setBookDialogOpen(true)}
-                        className="bg-purple-600 hover:bg-purple-700 text-white"
+                        className="bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white"
                     >
                         <Plus className="w-4 h-4 mr-2" />
                         Add Books
                     </Button>
                 </div>
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-amber-100" style={{ minWidth: '1000px', tableLayout: 'fixed' }}>
-                        <thead className="bg-amber-50">
+                    <table className="min-w-full divide-y divide-[var(--border)]" style={{ minWidth: '1000px', tableLayout: 'fixed' }}>
+                        <thead className="bg-[var(--surface-hover)]">
                             <tr>
-                                <th className="px-3 py-3 text-left" style={{ width: '25%' }}>Title & ISBN</th>
-                                <th className="px-3 py-3 text-left" style={{ width: '10%' }}>Publisher</th>
-                                <th className="px-3 py-3 text-left" style={{ width: '9%' }}>Original Price</th>
-                                <th className="px-3 py-3 text-left" style={{ width: '10%' }}>Custom Price</th>
-                                <th className="px-3 py-3 text-left" style={{ width: '8%' }}>Discount (%)</th>
-                                <th className="px-3 py-3 text-left" style={{ width: '10%' }}>Quantity</th>
-                                <th className="px-3 py-3 text-right" style={{ width: '15%' }}>Total</th>
-                                <th className="px-3 py-3 text-center" style={{ width: '5%' }}>Action</th>
+                                <th className="px-3 py-3 text-left text-[var(--text-secondary)]" style={{ width: '25%' }}>Title & ISBN</th>
+                                <th className="px-3 py-3 text-left text-[var(--text-secondary)]" style={{ width: '10%' }}>Publisher</th>
+                                <th className="px-3 py-3 text-left text-[var(--text-secondary)]" style={{ width: '9%' }}>Original Price</th>
+                                <th className="px-3 py-3 text-left text-[var(--text-secondary)]" style={{ width: '10%' }}>Custom Price</th>
+                                <th className="px-3 py-3 text-left text-[var(--text-secondary)]" style={{ width: '8%' }}>Discount (%)</th>
+                                <th className="px-3 py-3 text-left text-[var(--text-secondary)]" style={{ width: '10%' }}>Quantity</th>
+                                <th className="px-3 py-3 text-right text-[var(--text-secondary)]" style={{ width: '15%' }}>Total</th>
+                                <th className="px-3 py-3 text-center text-[var(--text-secondary)]" style={{ width: '5%' }}>Action</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-amber-100">
+                        <tbody className="bg-[var(--surface)] divide-y divide-[var(--border)]">
                             {books.map((book) => {
                                 const customPrice = customPrices[book.bookId] !== undefined ? customPrices[book.bookId] : book.lowestPrice;
                                 const quantity = quantities[book.bookId] || 1;
@@ -562,18 +562,18 @@ export default function EditQuotationPage() {
                                 const lineTotal = discountedPrice * quantity;
 
                                 return (
-                                    <tr key={book.bookId}>
+                                    <tr key={book.bookId} className="hover:bg-[var(--surface-hover)]">
                                         <td className="px-3 py-4">
                                             <div className="break-words whitespace-normal">
-                                                <div className="font-medium">{book.title}</div>
-                                                <div className="text-xs text-gray-500 mt-1">ISBN: {book.isbn}</div>
+                                                <div className="font-medium text-[var(--text-primary)]">{book.title}</div>
+                                                <div className="text-xs text-[var(--text-secondary)] mt-1">ISBN: {book.isbn}</div>
                                             </div>
                                         </td>
-                                        <td className="px-3 py-4 truncate">{book.publisher_name}</td>
-                                        <td className="px-3 py-4 text-gray-500">
+                                        <td className="px-3 py-4 truncate text-[var(--text-primary)]">{book.publisher_name}</td>
+                                        <td className="px-3 py-4 text-[var(--text-secondary)]">
                                             <div className="flex flex-col">
                                                 <span className="text-xs">{book.currency}</span>
-                                                <span className="font-medium">${book.lowestPrice.toFixed(2)}</span>
+                                                <span className="font-medium text-[var(--text-primary)]">${book.lowestPrice.toFixed(2)}</span>
                                             </div>
                                         </td>
                                         <td className="px-3 py-4">
@@ -637,7 +637,7 @@ export default function EditQuotationPage() {
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={() => handleRemoveBook(book.bookId)}
-                                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                className="text-[var(--error)] hover:text-[var(--error)] hover:bg-[var(--error)]/10"
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
@@ -654,29 +654,29 @@ export default function EditQuotationPage() {
             <div className="mt-6 flex justify-end">
                 <div className="w-full max-w-sm space-y-2">
                     <div className="flex justify-between">
-                        <span className="text-gray-600">Subtotal:</span>
-                        <span className="font-medium">${quotationSummary.subtotal.toFixed(2)}</span>
+                        <span className="text-[var(--text-secondary)]">Subtotal:</span>
+                        <span className="font-medium text-[var(--text-primary)]">${quotationSummary.subtotal.toFixed(2)}</span>
                     </div>
 
                     {quotationSummary.generalDiscountPercent > 0 && (
                         <>
-                            <div className="flex justify-between text-red-600">
-                                <span className="text-gray-600">General Discount ({quotationSummary.generalDiscountPercent}%)</span>
+                            <div className="flex justify-between text-[var(--error)]">
+                                <span className="text-[var(--text-secondary)]">General Discount ({quotationSummary.generalDiscountPercent}%)</span>
                                 <span className="font-medium">-${quotationSummary.discountAmount.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between font-semibold">
-                                <span className="text-gray-800">Subtotal (After Discount)</span>
-                                <span className="font-medium">${quotationSummary.subtotalAfterGeneralDiscount.toFixed(2)}</span>
+                                <span className="text-[var(--text-primary)]">Subtotal (After Discount)</span>
+                                <span className="font-medium text-[var(--text-primary)]">${quotationSummary.subtotalAfterGeneralDiscount.toFixed(2)}</span>
                             </div>
                         </>
                     )}
 
-                    <div className="flex justify-between border-t border-gray-200 pt-2 mt-2">
-                        <span className="text-gray-600">Tax (5%):</span>
-                        <span className="font-medium">${quotationSummary.tax.toFixed(2)}</span>
+                    <div className="flex justify-between border-t border-[var(--border)] pt-2 mt-2">
+                        <span className="text-[var(--text-secondary)]">Tax (5%):</span>
+                        <span className="font-medium text-[var(--text-primary)]">${quotationSummary.tax.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between text-xl font-bold border-t border-gray-300 pt-2 mt-2">
-                        <span>Total:</span>
+                    <div className="flex justify-between text-xl font-bold border-t border-[var(--border)] pt-2 mt-2">
+                        <span className="text-[var(--text-primary)]">Total:</span>
                         <span>${quotationSummary.total.toFixed(2)}</span>
                     </div>
                 </div>
@@ -693,7 +693,7 @@ export default function EditQuotationPage() {
                 <Button
                     onClick={handleSave}
                     disabled={isSaving || books.length === 0}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 text-lg"
+                    className="bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white px-6 py-3 text-lg"
                 >
                     {isSaving ? "Saving..." : "Save Changes"}
                 </Button>

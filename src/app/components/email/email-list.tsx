@@ -117,19 +117,19 @@ export default function EmailList({ onEmailSelect, selectedEmailUid }: EmailList
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-            case 'done': return 'bg-green-100 text-green-800 border-green-200';
-            case 'in-progress': return 'bg-blue-100 text-blue-800 border-blue-200';
-            default: return 'bg-gray-100 text-gray-800 border-gray-200';
+            case 'pending': return 'bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)]/20';
+            case 'done': return 'bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/20';
+            case 'in-progress': return 'bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20';
+            default: return 'bg-[var(--surface-hover)] text-[var(--text-secondary)] border-[var(--border)]';
         }
     };
 
     const getStatusDotColor = (status: string) => {
         switch (status) {
-            case 'pending': return 'bg-yellow-500';
-            case 'done': return 'bg-green-500';
-            case 'in-progress': return 'bg-blue-500';
-            default: return 'bg-gray-500';
+            case 'pending': return 'bg-[var(--warning)]';
+            case 'done': return 'bg-[var(--success)]';
+            case 'in-progress': return 'bg-[var(--primary)]';
+            default: return 'bg-[var(--text-secondary)]';
         }
     };
 
@@ -217,7 +217,7 @@ export default function EmailList({ onEmailSelect, selectedEmailUid }: EmailList
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-600"></div>
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--primary)]"></div>
             </div>
         );
     }
@@ -226,10 +226,10 @@ export default function EmailList({ onEmailSelect, selectedEmailUid }: EmailList
     if (error) {
         return (
             <div className="text-center py-8">
-                <Mail className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Failed to load emails</h3>
-                <p className="text-gray-600 mb-4">{error}</p>
-                <Button onClick={() => fetchEmails(mainSearchText || undefined)} size="sm" className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white">
+                <Mail className="w-12 h-12 text-[var(--text-secondary)] mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">Failed to load emails</h3>
+                <p className="text-[var(--text-secondary)] mb-4">{error}</p>
+                <Button onClick={() => fetchEmails(mainSearchText || undefined)} size="sm" className="bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white">
                     Try Again
                 </Button>
             </div>
@@ -239,10 +239,10 @@ export default function EmailList({ onEmailSelect, selectedEmailUid }: EmailList
     return (
         <div className="space-y-4">
             {/* Search Bar and Advanced Filter Toggle */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="bg-[var(--surface)] rounded-lg border border-[var(--border)] p-4">
                 <div className="flex items-center gap-2">
                     <div className="flex-1 relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--text-secondary)] w-4 h-4" />
                         <Input
                             type="text"
                             placeholder="Search mail"
@@ -275,7 +275,7 @@ export default function EmailList({ onEmailSelect, selectedEmailUid }: EmailList
                     <Button
                         onClick={handleMainSearch}
                         size="sm"
-                        className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
+                        className="bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white"
                     >
                         Search
                     </Button>
@@ -283,10 +283,10 @@ export default function EmailList({ onEmailSelect, selectedEmailUid }: EmailList
 
                 {/* Advanced Filter Dropdown */}
                 {isDropdownOpen && (
-                    <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="mt-4 p-4 bg-[var(--surface-hover)] rounded-lg border border-[var(--border)]">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                                     From
                                 </label>
                                 <Input
@@ -301,7 +301,7 @@ export default function EmailList({ onEmailSelect, selectedEmailUid }: EmailList
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                                     Has the words
                                 </label>
                                 <Input
@@ -316,7 +316,7 @@ export default function EmailList({ onEmailSelect, selectedEmailUid }: EmailList
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                                     Date within
                                 </label>
                                 <Select
@@ -338,7 +338,7 @@ export default function EmailList({ onEmailSelect, selectedEmailUid }: EmailList
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                                     Status
                                 </label>
                                 <Select
@@ -370,7 +370,7 @@ export default function EmailList({ onEmailSelect, selectedEmailUid }: EmailList
                             <Button
                                 onClick={handleAdvancedSearch}
                                 size="sm"
-                                className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
+                                className="bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white"
                             >
                                 Apply Filters
                             </Button>
@@ -381,28 +381,28 @@ export default function EmailList({ onEmailSelect, selectedEmailUid }: EmailList
 
             {/* Email List or No Results Message */}
             {emails.length === 0 ? (
-                <div className="bg-white rounded-lg border border-gray-200 p-8">
+                <div className="bg-[var(--surface)] rounded-lg border border-[var(--border)] p-8">
                     <div className="text-center">
-                        <Mail className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">No emails found</h3>
-                        <p className="text-gray-600 mb-4">
+                        <Mail className="w-12 h-12 text-[var(--text-secondary)] mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">No emails found</h3>
+                        <p className="text-[var(--text-secondary)] mb-4">
                             {mainSearchText || Object.values(advancedFilters).some(v => v !== "" && v !== "all") 
                                 ? "No emails match your search criteria" 
                                 : "Your inbox is empty"}
                         </p>
                         {(mainSearchText || Object.values(advancedFilters).some(v => v !== "" && v !== "all")) && (
-                            <Button onClick={handleClearFilters} size="sm" className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white">
+                            <Button onClick={handleClearFilters} size="sm" className="bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white">
                                 Clear Filters
                             </Button>
                         )}
                     </div>
                 </div>
             ) : (
-                <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                <div className="bg-[var(--surface)] rounded-lg border border-[var(--border)] overflow-hidden">
                     {emails.map((email) => (
                         <div
                             key={email.id}
-                            className={`flex items-center p-3 border-b border-gray-100 hover:bg-gray-50 transition-colors ${selectedEmailUid === email.id ? 'bg-purple-50 border-l-4 border-l-purple-500' : ''}`}
+                            className={`flex items-center p-3 border-b border-[var(--border)] hover:bg-[var(--surface-hover)] transition-colors ${selectedEmailUid === email.id ? 'bg-[var(--primary)]/10 border-l-4 border-l-[var(--primary)]' : ''}`}
                         >
                             <div
                                 className="flex-1 min-w-0 cursor-pointer"
@@ -414,20 +414,20 @@ export default function EmailList({ onEmailSelect, selectedEmailUid }: EmailList
                                 <div className="flex items-center justify-between">
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center space-x-2">
-                                            <span className="font-medium text-gray-900 truncate">
+                                            <span className="font-medium text-[var(--text-primary)] truncate">
                                                 {getSenderName(email.from)}
                                             </span>
-                                            <span className="text-gray-500">•</span>
-                                            <span className="text-gray-600 truncate">
+                                            <span className="text-[var(--text-secondary)]">•</span>
+                                            <span className="text-[var(--text-secondary)] truncate">
                                                 {email.subject || '(No Subject)'}
                                             </span>
                                         </div>
-                                        <p className="text-sm text-gray-500 truncate mt-1">
+                                        <p className="text-sm text-[var(--text-secondary)] truncate mt-1">
                                             {email.from}
                                         </p>
                                     </div>
                                     <div className="flex items-center space-x-2 ml-4">
-                                        <span className="text-sm text-gray-500 whitespace-nowrap">
+                                        <span className="text-sm text-[var(--text-secondary)] whitespace-nowrap">
                                             {formatDate(email.date)}
                                         </span>
                                     </div>
@@ -444,9 +444,9 @@ export default function EmailList({ onEmailSelect, selectedEmailUid }: EmailList
                                     <SelectTrigger className={`h-8 text-xs px-3 py-1 rounded-full border transition-all duration-100 ${getStatusColor(email.status || 'pending')} ${recentlyUpdated === email.id ? "" : ''}`}>
                                         <SelectValue placeholder="Set status" />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-white border-gray-200 rounded-lg shadow-lg">
+                                    <SelectContent className="bg-[var(--surface)] border-[var(--border)] rounded-lg shadow-lg">
                                         {statusOptions.map((status) => (
-                                            <SelectItem key={status} value={status} className="text-sm hover:bg-gray-50 cursor-pointer">
+                                            <SelectItem key={status} value={status} className="text-sm hover:bg-[var(--surface-hover)] cursor-pointer">
                                                 <div className="flex items-center space-x-2">
                                                     <div className={`w-2 h-2 rounded-full ${getStatusDotColor(status)}`} />
                                                     <span className="capitalize">{status}</span>

@@ -98,10 +98,10 @@ function formatDate(dateString: string) {
 
 function QuotationStatusBadge({ status }: { status: string }) {
   const statusStyles: { [key: string]: string } = {
-    Draft: "bg-gray-100 text-gray-800",
-    Sent: "bg-blue-100 text-blue-800",
-    Accepted: "bg-green-100 text-green-800",
-    Rejected: "bg-red-100 text-red-800",
+    Draft: "bg-[var(--muted)] text-[var(--muted-foreground)]",
+    Sent: "bg-[var(--primary)]/20 text-[var(--primary)]",
+    Accepted: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+    Rejected: "bg-[var(--destructive)]/20 text-[var(--destructive)]",
   };
 
   const statusIcons: { [key: string]: React.ReactNode } = {
@@ -211,10 +211,10 @@ export default function QuotationDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
         <div className="text-center">
-          <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4 animate-pulse" />
-          <p className="text-gray-600">Loading quotation details...</p>
+          <FileText className="w-12 h-12 text-[var(--muted-foreground)] mx-auto mb-4 animate-pulse" />
+          <p className="text-[var(--muted-foreground)]">Loading quotation details...</p>
         </div>
       </div>
     );
@@ -222,15 +222,15 @@ export default function QuotationDetailPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="bg-white shadow-lg rounded-2xl p-8 max-w-md">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
+        <div className="bg-[var(--input)] shadow-lg rounded-2xl p-8 max-w-md border border-[var(--border)]">
           <div className="text-center">
-            <p className="text-red-600 mb-4">Error: {error}</p>
+            <p className="text-[var(--destructive)] mb-4">Error: {error}</p>
             <div className="flex gap-3 justify-center">
               <Button onClick={() => router.push("/quotation")} variant="outline">
                 Back to List
               </Button>
-              <Button onClick={fetchQuotationDetails} className="bg-purple-600 hover:bg-purple-700">
+              <Button onClick={fetchQuotationDetails} className="bg-[var(--primary)] hover:opacity-90">
                 Retry
               </Button>
             </div>
@@ -242,9 +242,9 @@ export default function QuotationDetailPage() {
 
   if (!quotation) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="bg-white shadow-lg rounded-2xl p-8">
-          <p className="text-gray-500">No quotation data available</p>
+      <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
+        <div className="bg-[var(--input)] shadow-lg rounded-2xl p-8 border border-[var(--border)]">
+          <p className="text-[var(--muted-foreground)]">No quotation data available</p>
         </div>
       </div>
     );
@@ -254,31 +254,31 @@ export default function QuotationDetailPage() {
   const customerAddress = quotation.customer?.address;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[var(--background)]">
       <div className="max-w-7xl mx-auto p-6 lg:p-8">
         {/* Header */}
         <div className="mb-6">
           <Button
             variant="ghost"
             onClick={() => router.push("/quotation")}
-            className="mb-4 text-gray-600 hover:text-gray-900"
+            className="mb-4 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Quotations
           </Button>
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              <h1 className="text-3xl font-bold text-[var(--foreground)] mb-2">
                 Quotation Details
               </h1>
-              <p className="text-gray-600">Quotation ID: {quotation.quotationId}</p>
+              <p className="text-[var(--muted-foreground)]">Quotation ID: {quotation.quotationId}</p>
             </div>
             <div className="flex gap-3">
               {(quotation.status === "Draft" || quotation.status === "Sent") && (
                 <Button
                   onClick={() => router.push(`/quotation/${quotationId}/edit`)}
                   variant="outline"
-                  className="border-purple-600 text-purple-600 hover:bg-purple-50"
+                  className="border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--muted)]"
                 >
                   <Edit className="w-4 h-4 mr-2" />
                   Edit Quotation
@@ -287,7 +287,7 @@ export default function QuotationDetailPage() {
               <Button
                 onClick={handleDownloadPDF}
                 disabled={downloading || !selectedProfileId}
-                className="bg-purple-600 hover:bg-purple-700 text-white"
+                className="bg-[var(--primary)] hover:opacity-90 text-white"
               >
                 <Download className="w-4 h-4 mr-2" />
                 {downloading ? "Downloading..." : "Download PDF"}
@@ -300,32 +300,32 @@ export default function QuotationDetailPage() {
           {/* Left Column: Quotation Information */}
           <div className="lg:col-span-2 space-y-6">
             {/* Customer Information */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <User className="w-5 h-5 text-purple-600" />
+            <div className="bg-[var(--input)] rounded-xl shadow-sm border border-[var(--border)] p-6">
+              <h2 className="text-xl font-semibold text-[var(--foreground)] mb-4 flex items-center gap-2">
+                <User className="w-5 h-5 text-[var(--primary)]" />
                 Customer Information
               </h2>
               <div className="space-y-3">
                 <div>
-                  <p className="text-sm text-gray-500">Name</p>
-                  <p className="font-medium text-gray-900">{customerName}</p>
+                  <p className="text-sm text-[var(--muted-foreground)]">Name</p>
+                  <p className="font-medium text-[var(--foreground)]">{customerName}</p>
                 </div>
                 {quotation.customer?.email && (
                   <div>
-                    <p className="text-sm text-gray-500">Email</p>
-                    <p className="font-medium text-gray-900">{quotation.customer.email}</p>
+                    <p className="text-sm text-[var(--muted-foreground)]">Email</p>
+                    <p className="font-medium text-[var(--foreground)]">{quotation.customer.email}</p>
                   </div>
                 )}
                 {quotation.customer?.phone && (
                   <div>
-                    <p className="text-sm text-gray-500">Phone</p>
-                    <p className="font-medium text-gray-900">{quotation.customer.phone}</p>
+                    <p className="text-sm text-[var(--muted-foreground)]">Phone</p>
+                    <p className="font-medium text-[var(--foreground)]">{quotation.customer.phone}</p>
                   </div>
                 )}
                 {customerAddress && (
                   <div>
-                    <p className="text-sm text-gray-500">Address</p>
-                    <p className="font-medium text-gray-900">
+                    <p className="text-sm text-[var(--muted-foreground)]">Address</p>
+                    <p className="font-medium text-[var(--foreground)]">
                       {customerAddress.street && `${customerAddress.street}, `}
                       {customerAddress.city && `${customerAddress.city}, `}
                       {customerAddress.state && `${customerAddress.state}`}
@@ -338,28 +338,28 @@ export default function QuotationDetailPage() {
 
             {/* Email Information */}
             {quotation.emailInfo && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Mail className="w-5 h-5 text-purple-600" />
+              <div className="bg-[var(--input)] rounded-xl shadow-sm border border-[var(--border)] p-6">
+                <h2 className="text-xl font-semibold text-[var(--foreground)] mb-4 flex items-center gap-2">
+                  <Mail className="w-5 h-5 text-[var(--primary)]" />
                   Email Information
                 </h2>
                 <div className="space-y-3">
                   {quotation.emailInfo.sender && (
                     <div>
-                      <p className="text-sm text-gray-500">Sender</p>
-                      <p className="font-medium text-gray-900">{quotation.emailInfo.sender}</p>
+                      <p className="text-sm text-[var(--muted-foreground)]">Sender</p>
+                      <p className="font-medium text-[var(--foreground)]">{quotation.emailInfo.sender}</p>
                     </div>
                   )}
                   {quotation.emailInfo.subject && (
                     <div>
-                      <p className="text-sm text-gray-500">Subject</p>
-                      <p className="font-medium text-gray-900">{quotation.emailInfo.subject}</p>
+                      <p className="text-sm text-[var(--muted-foreground)]">Subject</p>
+                      <p className="font-medium text-[var(--foreground)]">{quotation.emailInfo.subject}</p>
                     </div>
                   )}
                   {quotation.emailInfo.receivedAt && (
                     <div>
-                      <p className="text-sm text-gray-500">Received At</p>
-                      <p className="font-medium text-gray-900 flex items-center gap-1">
+                      <p className="text-sm text-[var(--muted-foreground)]">Received At</p>
+                      <p className="font-medium text-[var(--foreground)] flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
                         {formatDate(quotation.emailInfo.receivedAt)}
                       </p>
@@ -367,14 +367,14 @@ export default function QuotationDetailPage() {
                   )}
                   {quotation.emailInfo.snippet && (
                     <div>
-                      <p className="text-sm text-gray-500">Snippet</p>
-                      <p className="font-medium text-gray-900 text-sm">{quotation.emailInfo.snippet}</p>
+                      <p className="text-sm text-[var(--muted-foreground)]">Snippet</p>
+                      <p className="font-medium text-[var(--foreground)] text-sm">{quotation.emailInfo.snippet}</p>
                     </div>
                   )}
                   {quotation.emailInfo.messageId && (
                     <div>
-                      <p className="text-sm text-gray-500">Message ID</p>
-                      <p className="font-medium text-gray-900 text-xs font-mono break-all">{quotation.emailInfo.messageId}</p>
+                      <p className="text-sm text-[var(--muted-foreground)]">Message ID</p>
+                      <p className="font-medium text-[var(--foreground)] text-xs font-mono break-all">{quotation.emailInfo.messageId}</p>
                     </div>
                   )}
                 </div>
@@ -382,59 +382,59 @@ export default function QuotationDetailPage() {
             )}
 
             {/* Items Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                  <ShoppingCart className="w-5 h-5 text-purple-600" />
+            <div className="bg-[var(--input)] rounded-xl shadow-sm border border-[var(--border)] overflow-hidden">
+              <div className="p-6 border-b border-[var(--border)]">
+                <h2 className="text-xl font-semibold text-[var(--foreground)] flex items-center gap-2">
+                  <ShoppingCart className="w-5 h-5 text-[var(--primary)]" />
                   Items
                 </h2>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-[var(--muted)]">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider">
                         Item
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider">
                         Quantity
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider">
                         Unit Price
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider">
                         Discount
                       </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-right text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider">
                         Total
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-[var(--input)] divide-y divide-[var(--border)]">
                     {quotation.items.map((item, index) => {
                       const book = typeof item.book === "object" ? item.book : null;
                       return (
-                        <tr key={item._id || index} className="hover:bg-gray-50">
+                        <tr key={item._id || index} className="hover:bg-[var(--muted)]">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div>
-                              <p className="font-medium text-gray-900">
+                              <p className="font-medium text-[var(--foreground)]">
                                 {book?.title || "Unknown Book"}
                               </p>
                               {book?.isbn && (
-                                <p className="text-sm text-gray-500">ISBN: {book.isbn}</p>
+                                <p className="text-sm text-[var(--muted-foreground)]">ISBN: {book.isbn}</p>
                               )}
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-gray-900">
+                          <td className="px-6 py-4 whitespace-nowrap text-[var(--foreground)]">
                             {item.quantity}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-gray-900">
+                          <td className="px-6 py-4 whitespace-nowrap text-[var(--foreground)]">
                             {formatCurrency(item.unitPrice)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-gray-900">
+                          <td className="px-6 py-4 whitespace-nowrap text-[var(--foreground)]">
                             {item.discount}%
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right font-medium text-gray-900">
+                          <td className="px-6 py-4 whitespace-nowrap text-right font-medium text-[var(--foreground)]">
                             {formatCurrency(item.totalPrice)}
                           </td>
                         </tr>
@@ -449,48 +449,48 @@ export default function QuotationDetailPage() {
           {/* Right Column: Summary and Preview */}
           <div className="space-y-6">
             {/* Summary Card */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-purple-600" />
+            <div className="bg-[var(--input)] rounded-xl shadow-sm border border-[var(--border)] p-6">
+              <h2 className="text-xl font-semibold text-[var(--foreground)] mb-4 flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-[var(--primary)]" />
                 Summary
               </h2>
               <div className="space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-gray-200">
-                  <span className="text-gray-600">Status</span>
+                <div className="flex items-center justify-between pb-2 border-b border-[var(--border)]">
+                  <span className="text-[var(--muted-foreground)]">Status</span>
                   <QuotationStatusBadge status={quotation.status} />
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Created</span>
-                  <span className="font-medium text-gray-900 flex items-center gap-1">
+                  <span className="text-[var(--muted-foreground)]">Created</span>
+                  <span className="font-medium text-[var(--foreground)] flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
                     {formatDate(quotation.createdAt)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Valid Until</span>
-                  <span className="font-medium text-gray-900 flex items-center gap-1">
+                  <span className="text-[var(--muted-foreground)]">Valid Until</span>
+                  <span className="font-medium text-[var(--foreground)] flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
                     {formatDate(quotation.validUntil)}
                   </span>
                 </div>
-                <div className="pt-3 border-t border-gray-200 space-y-2">
+                <div className="pt-3 border-t border-[var(--border)] space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Subtotal</span>
-                    <span className="font-medium text-gray-900">
+                    <span className="text-[var(--muted-foreground)]">Subtotal</span>
+                    <span className="font-medium text-[var(--foreground)]">
                       {formatCurrency(quotation.subTotal)}
                     </span>
                   </div>
                   {quotation.totalDiscount > 0 && (
-                    <div className="flex items-center justify-between text-red-600">
+                    <div className="flex items-center justify-between text-[var(--destructive)]">
                       <span>Discount</span>
                       <span className="font-medium">
                         -{formatCurrency(quotation.totalDiscount)}
                       </span>
                     </div>
                   )}
-                  <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-                    <span className="text-lg font-semibold text-gray-900">Grand Total</span>
-                    <span className="text-xl font-bold text-purple-600">
+                  <div className="flex items-center justify-between pt-2 border-t border-[var(--border)]">
+                    <span className="text-lg font-semibold text-[var(--foreground)]">Grand Total</span>
+                    <span className="text-xl font-bold text-[var(--primary)]">
                       {formatCurrency(quotation.grandTotal)}
                     </span>
                   </div>
@@ -499,16 +499,16 @@ export default function QuotationDetailPage() {
             </div>
 
             {/* PDF Preview */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <Eye className="w-5 h-5 text-purple-600" />
+            <div className="bg-[var(--input)] rounded-xl shadow-sm border border-[var(--border)] p-6">
+              <h2 className="text-xl font-semibold text-[var(--foreground)] mb-4 flex items-center gap-2">
+                <Eye className="w-5 h-5 text-[var(--primary)]" />
                 PDF Preview
               </h2>
               
               {/* Profile Selection */}
               <div className="mb-4 space-y-3">
                 <div>
-                  <label htmlFor="profile-select" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="profile-select" className="block text-sm font-medium text-[var(--foreground)] mb-2">
                     Select Company Profile
                   </label>
                   <Select
@@ -519,7 +519,7 @@ export default function QuotationDetailPage() {
                     <SelectTrigger id="profile-select" className="w-full">
                       <SelectValue placeholder={loadingProfiles ? "Loading profiles..." : "Select a profile"} />
                     </SelectTrigger>
-                    <SelectContent className="max-h-[200px] overflow-y-auto bg-white">
+                    <SelectContent className="max-h-[200px] overflow-y-auto bg-[var(--input)]">
                       {profiles.map((profile) => (
                         <SelectItem key={profile._id} value={profile._id}>
                           {profile.profileName}
@@ -531,7 +531,7 @@ export default function QuotationDetailPage() {
                 <Button
                   onClick={handlePreviewPDF}
                   disabled={!selectedProfileId || loadingProfiles}
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                  className="w-full bg-[var(--primary)] hover:opacity-90 text-white"
                 >
                   <Eye className="w-4 h-4 mr-2" />
                   Preview PDF

@@ -233,10 +233,10 @@ export default function Home() {
   // Render loading state
   if (loading || pending) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="bg-white shadow-lg rounded-2xl p-8">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
+        <div className="bg-[var(--surface)] shadow-lg rounded-2xl p-8 border border-[var(--border)]">
           <div className="flex justify-center items-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary)]"></div>
           </div>
         </div>
       </div>
@@ -245,11 +245,11 @@ export default function Home() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="bg-white shadow-lg rounded-2xl p-8 max-w-md">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
+        <div className="bg-[var(--surface)] shadow-lg rounded-2xl p-8 max-w-md border border-[var(--border)]">
           <div className="text-center">
-            <p className="text-red-600 mb-4">Error: {error}</p>
-            <Button onClick={() => window.location.reload()} className="bg-amber-600 hover:bg-amber-700">
+            <p className="text-[var(--error)] mb-4">Error: {error}</p>
+            <Button onClick={() => window.location.reload()} className="bg-[var(--primary)] hover:bg-[var(--primary-dark)]">
               Retry
             </Button>
           </div>
@@ -260,31 +260,31 @@ export default function Home() {
 
   if (!data) {
     return (
-      <div className="min-h-screen bflex items-center justify-center">
-        <div className="bg-white shadow-lg rounded-2xl p-8">
-          <p className="text-gray-500">No data available</p>
+      <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
+        <div className="bg-[var(--surface)] shadow-lg rounded-2xl p-8 border border-[var(--border)]">
+          <p className="text-[var(--text-secondary)]">No data available</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen ">
+    <div className="min-h-screen bg-[var(--background)]">
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Book Inventory</h1>
-              <p className="text-gray-600">Manage your digital library and book collection</p>
+              <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2">Book Inventory</h1>
+              <p className="text-[var(--text-secondary)]">Manage your digital library and book collection</p>
             </div>
             {session && (
               <div className="flex gap-3">
                 <ExcelImport onImportComplete={loadData} />
                 <Button
                   onClick={() => router.push('/books/insert')}
-                  className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
+                  className="bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Insert Book
@@ -295,30 +295,30 @@ export default function Home() {
         </div>
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6">
+          <div className="bg-[var(--surface)] rounded-2xl shadow-sm border border-[var(--border)] p-6">
             <div className="text-center">
-              <p className="text-sm text-gray-600 mb-2">Total Books</p>
-              <p className="text-3xl font-bold text-amber-600">{data.pagination.totalBooks}</p>
+              <p className="text-sm text-[var(--text-secondary)] mb-2">Total Books</p>
+              <p className="text-3xl font-bold text-[var(--primary)]">{data.pagination.totalBooks}</p>
             </div>
           </div>
-          <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6">
+          <div className="bg-[var(--surface)] rounded-2xl shadow-sm border border-[var(--border)] p-6">
             <div className="text-center">
-              <p className="text-sm text-gray-600 mb-2">Current Page</p>
-              <p className="text-3xl font-bold text-orange-600">{data.pagination.currentPage} / {data.pagination.totalPages}</p>
+              <p className="text-sm text-[var(--text-secondary)] mb-2">Current Page</p>
+              <p className="text-3xl font-bold text-[var(--secondary)]">{data.pagination.currentPage} / {data.pagination.totalPages}</p>
             </div>
           </div>
-          <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6">
+          <div className="bg-[var(--surface)] rounded-2xl shadow-sm border border-[var(--border)] p-6">
             <div className="text-center">
-              <p className="text-sm text-gray-600 mb-2">Showing</p>
-              <p className="text-3xl font-bold text-green-600">{data.pagination.showing.from}-{data.pagination.showing.to}</p>
+              <p className="text-sm text-[var(--text-secondary)] mb-2">Showing</p>
+              <p className="text-3xl font-bold text-[var(--success)]">{data.pagination.showing.from}-{data.pagination.showing.to}</p>
             </div>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6 mb-8">
+        <div className="bg-[var(--surface)] rounded-2xl shadow-sm border border-[var(--border)] p-6 mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-[var(--text-primary)]">
               Filters
             </h2>
             <Button
@@ -334,77 +334,77 @@ export default function Home() {
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="filter-title" className="text-gray-700 font-medium">Title</Label>
+                  <Label htmlFor="filter-title" className="text-[var(--text-primary)] font-medium">Title</Label>
                   <Input
                     id="filter-title"
                     placeholder="Search by title..."
                     value={pendingFilters.title || ''}
                     onChange={(e) => setPendingFilters((f) => ({ ...f, title: e.target.value }))}
-                    className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                    className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="filter-isbn" className="text-gray-700 font-medium">ISBN</Label>
+                  <Label htmlFor="filter-isbn" className="text-[var(--text-primary)] font-medium">ISBN</Label>
                   <Input
                     id="filter-isbn"
                     placeholder="Search by isbn..."
                     value={pendingFilters.isbn || ''}
                     onChange={(e) => setPendingFilters((f) => ({ ...f, isbn: e.target.value }))}
-                    className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                    className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="filter-publisher_name" className="text-gray-700 font-medium">Publisher</Label>
+                  <Label htmlFor="filter-publisher_name" className="text-[var(--text-primary)] font-medium">Publisher</Label>
                   <Input
                     id="filter-publisher_name"
                     placeholder="Search by publisher..."
                     value={pendingFilters.publisher_name || ''}
                     onChange={(e) => setPendingFilters((f) => ({ ...f, publisher_name: e.target.value }))}
-                    className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                    className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="filter-author" className="text-gray-700 font-medium">Author</Label>
+                  <Label htmlFor="filter-author" className="text-[var(--text-primary)] font-medium">Author</Label>
                   <Input
                     id="filter-author"
                     placeholder="Search by author..."
                     value={pendingFilters.author || ''}
                     onChange={(e) => setPendingFilters((f) => ({ ...f, author: e.target.value }))}
-                    className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                    className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="filter-year" className="text-gray-700 font-medium">Year</Label>
+                  <Label htmlFor="filter-year" className="text-[var(--text-primary)] font-medium">Year</Label>
                   <Input
                     id="filter-year"
                     placeholder="Search by year"
                     value={pendingFilters.year || ''}
                     onChange={(e) => setPendingFilters((f) => ({ ...f, year: e.target.value }))}
-                    className="mt-1 h-12 w-40 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                    className="mt-1 h-12 w-40 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="filter-classification" className="text-gray-700 font-medium">Classification</Label>
+                  <Label htmlFor="filter-classification" className="text-[var(--text-primary)] font-medium">Classification</Label>
                   <Select
                     value={pendingFilters.classification || ''}
                     onValueChange={(v) => setPendingFilters((f) => ({ ...f, classification: v === 'all' ? undefined : v }))}
                   >
-                    <SelectTrigger className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl text-gray-900">
+                    <SelectTrigger className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl text-[var(--text-primary)]">
                       <SelectValue placeholder="Select classification" />
                     </SelectTrigger>
-                    <SelectContent className="bg-white border-2 border-gray-200 rounded-xl shadow-lg">
-                      <SelectItem value="all" className="text-gray-900 hover:bg-amber-50">All</SelectItem>
-                      <SelectItem value="Fantasy" className="text-gray-900 hover:bg-amber-50">Fantasy</SelectItem>
-                      <SelectItem value="Classic Literature" className="text-gray-900 hover:bg-amber-50">Classic Literature</SelectItem>
-                      <SelectItem value="Science Fiction" className="text-gray-900 hover:bg-amber-50">Science Fiction</SelectItem>
-                      <SelectItem value="Mystery" className="text-gray-900 hover:bg-amber-50">Mystery</SelectItem>
-                      <SelectItem value="Non-Fiction" className="text-gray-900 hover:bg-amber-50">Non-Fiction</SelectItem>
+                    <SelectContent className="bg-[var(--surface)] border-2 border-[var(--border)] rounded-xl shadow-lg">
+                      <SelectItem value="all" className="text-[var(--text-primary)] hover:bg-[var(--surface-hover)]">All</SelectItem>
+                      <SelectItem value="Fantasy" className="text-[var(--text-primary)] hover:bg-[var(--surface-hover)]">Fantasy</SelectItem>
+                      <SelectItem value="Classic Literature" className="text-[var(--text-primary)] hover:bg-[var(--surface-hover)]">Classic Literature</SelectItem>
+                      <SelectItem value="Science Fiction" className="text-[var(--text-primary)] hover:bg-[var(--surface-hover)]">Science Fiction</SelectItem>
+                      <SelectItem value="Mystery" className="text-[var(--text-primary)] hover:bg-[var(--surface-hover)]">Mystery</SelectItem>
+                      <SelectItem value="Non-Fiction" className="text-[var(--text-primary)] hover:bg-[var(--surface-hover)]">Non-Fiction</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               <div className="flex gap-3">
-                <Button onClick={applyFilters} className="bg-amber-600 hover:bg-amber-700">
+                <Button onClick={applyFilters} className="bg-[var(--primary)] hover:bg-[var(--primary-dark)]">
                   Apply Filters
                 </Button>
                 <Button onClick={clearFilters} variant="outline">
@@ -417,22 +417,22 @@ export default function Home() {
 
         {/* Contextual Action Bar for Deleting */}
         {selectionMode && selectedBooks.length > 0 && (
-          <div className="bg-amber-100/60 border border-amber-200 rounded-2xl p-4 flex items-center justify-between mb-8 transition-all duration-300 ease-in-out">
-            <p className="text-amber-800 font-semibold">{selectedBooks.length} book(s) selected</p>
-            <Button onClick={handleDeleteSelected} variant="destructive" className="bg-red-600 hover:bg-red-700">
+          <div className="bg-[var(--primary)]/10 border border-[var(--primary)]/20 rounded-2xl p-4 flex items-center justify-between mb-8 transition-all duration-300 ease-in-out">
+            <p className="text-[var(--primary)] font-semibold">{selectedBooks.length} book(s) selected</p>
+            <Button onClick={handleDeleteSelected} variant="destructive" className="bg-[var(--error)] hover:opacity-90">
               <Trash2 className="w-4 h-4 mr-2" />
               Delete Selected
             </Button>
           </div>
         )}
         {/* Books Table */}
-        <div className="bg-white rounded-2xl shadow-sm border border-amber-100 overflow-hidden">
-          <div className="px-6 py-4 border-b border-amber-100 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">Books</h2>
+        <div className="bg-[var(--surface)] rounded-2xl shadow-sm border border-[var(--border)] overflow-hidden">
+          <div className="px-6 py-4 border-b border-[var(--border)] flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-[var(--text-primary)]">Books</h2>
             {/* --- NEW --- Toggle Selection Mode Button --- */}
             {data.books.length > 0 && (
               selectionMode ? (
-                <Button variant="ghost" size="sm" onClick={handleCancelSelection} className="text-gray-600 hover:bg-gray-100">
+                <Button variant="ghost" size="sm" onClick={handleCancelSelection} className="text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]">
                   <X className="w-4 h-4 mr-2" />
                   Cancel
                 </Button>
@@ -446,9 +446,9 @@ export default function Home() {
 
           {data.books.length === 0 ? (
             <div className="p-12 text-center">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No books found</h3>
-              <p className="text-gray-600 mb-4">Try adjusting your filters or add a new book.</p>
-              <Button onClick={() => router.push('/books/insert')} className="bg-amber-600 hover:bg-amber-700">
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">No books found</h3>
+              <p className="text-[var(--text-secondary)] mb-4">Try adjusting your filters or add a new book.</p>
+              <Button onClick={() => router.push('/books/insert')} className="bg-[var(--primary)] hover:bg-[var(--primary-dark)]">
                 <Plus className="w-4 h-4 mr-2" />
                 Insert Book
               </Button>
@@ -456,8 +456,8 @@ export default function Home() {
           ) : (
             <>
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-amber-100">
-                  <thead className="bg-amber-50">
+                <table className="min-w-full divide-y divide-[var(--border)]">
+                  <thead className="bg-[var(--surface-hover)]">
                     <tr>
                       {selectionMode && (
                         <th className="px-6 py-3 text-left">
@@ -465,54 +465,54 @@ export default function Home() {
                             type="checkbox"
                             ref={headerCheckboxRef}
                             onChange={handleSelectAll}
-                            className="h-4 w-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                            className="h-4 w-4 rounded border-[var(--border)] text-[var(--primary)] focus:ring-[var(--primary)]"
                           />
                         </th>
                       )}
-                      <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Title</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">ISBN</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Author</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Year</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Edition</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Publisher</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Price</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Price Source</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">Actions</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Title</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">ISBN</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Author</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Year</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Edition</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Publisher</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Price</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Price Source</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-amber-100">
+                  <tbody className="bg-[var(--surface)] divide-y divide-[var(--border)]">
                     {data.books.map((book) => (
-                      <tr key={book._id} className="hover:bg-amber-50 transition-colors">
+                      <tr key={book._id} className="hover:bg-[var(--surface-hover)] transition-colors">
                         {selectionMode && (
                           <td className="px-6 py-4">
                             <Input
                               type="checkbox"
                               checked={selectedBooks.includes(book._id)}
                               onChange={() => handleSelectBook(book._id)}
-                              className="h-4 w-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                              className="h-4 w-4 rounded border-[var(--border)] text-[var(--primary)] focus:ring-[var(--primary)]"
                             />
                           </td>
                         )}
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{book.title}</div>
-                          <div className="text-sm text-gray-500">{book.classification}</div>
+                          <div className="text-sm font-medium text-[var(--text-primary)]">{book.title}</div>
+                          <div className="text-sm text-[var(--text-secondary)]">{book.classification}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.isbn || 'N/A'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.author}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.year}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.edition || 'N/A'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.publisher?.name || 'N/A'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-primary)]">{book.isbn || 'N/A'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-primary)]">{book.author}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-primary)]">{book.year}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-primary)]">{book.edition || 'N/A'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-primary)]">{book.publisher?.name || 'N/A'}</td>
 
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[var(--success)]">
                           {book.price && typeof book.price === 'number' ? `$${book.price.toFixed(2)}` : 'N/A'}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{book.pricing && book.pricing.length > 0 ? book.pricing[0].source : 'N/A'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-primary)]">{book.pricing && book.pricing.length > 0 ? book.pricing[0].source : 'N/A'}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <Button
                             onClick={() => handleViewPricing(book._id)}
                             variant="outline"
                             size="sm"
-                            className="border-amber-200 text-amber-700 hover:bg-amber-50"
+                            className="border-[var(--border)] text-[var(--primary)] hover:bg-[var(--surface-hover)]"
                           >
                             View Details
                           </Button>
@@ -527,8 +527,8 @@ export default function Home() {
 
               {/* Pagination */}
               {data.pagination.totalPages > 1 && (
-                <div className="px-6 py-4 border-t border-amber-100 flex items-center justify-between">
-                  <p className="text-sm text-gray-700">
+                <div className="px-6 py-4 border-t border-[var(--border)] flex items-center justify-between">
+                  <p className="text-sm text-[var(--text-secondary)]">
                     Showing {data.pagination.showing.from} to {data.pagination.showing.to} of {data.pagination.showing.total} books
                   </p>
                   <div className="flex gap-2">
@@ -540,7 +540,7 @@ export default function Home() {
                     >
                       Previous
                     </Button>
-                    <span className="flex items-center px-3 py-2 text-sm text-gray-700">
+                    <span className="flex items-center px-3 py-2 text-sm text-[var(--text-secondary)]">
                       Page {data.pagination.currentPage} of {data.pagination.totalPages}
                     </span>
                     <Button

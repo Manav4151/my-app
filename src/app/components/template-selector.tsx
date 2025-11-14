@@ -79,23 +79,23 @@ export default function TemplateSelector({ onTemplateSelect, onClose }: Template
                 Loading templates...
               </div>
             ) : filteredTemplates.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-[var(--text-secondary)]">
                 {searchTerm ? 'No templates match your search' : 'No templates found'}
               </div>
             ) : (
               filteredTemplates.map((template) => (
                 <div
                   key={template._id}
-                  className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                  className="border border-[var(--border)] rounded-lg p-4 hover:bg-[var(--surface-hover)] cursor-pointer transition-colors"
                   onClick={() => onTemplateSelect(template)}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <h3 className="font-medium text-gray-900">{template.name}</h3>
+                      <h3 className="font-medium text-[var(--text-primary)]">{template.name}</h3>
                       {template.description && (
-                        <p className="text-sm text-gray-600 mt-1">{template.description}</p>
+                        <p className="text-sm text-[var(--text-secondary)] mt-1">{template.description}</p>
                       )}
-                      <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                      <div className="flex items-center gap-4 mt-2 text-xs text-[var(--text-secondary)]">
                         <span className="flex items-center gap-1">
                           <User className="w-3 h-3" />
                           {template.userId}
