@@ -261,13 +261,21 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { apiFunctions } from "@/services/api.service";
+import { profile } from "console";
 
 interface ComposeEmailProps {
   onClose: () => void;
   onEmailSent?: () => void;
+  attachmentInfo?: {
+    type: "quotation";
+    quotationId: string;
+    profileId: string;
+    fileName: string;
+  };
+
 }
 
-export default function ComposeEmail({ onClose, onEmailSent }: ComposeEmailProps) {
+export default function ComposeEmail({ onClose, onEmailSent, attachmentInfo }: ComposeEmailProps) {
   const [formData, setFormData] = useState({
     to: '',
     subject: '',
@@ -277,7 +285,6 @@ export default function ComposeEmail({ onClose, onEmailSent }: ComposeEmailProps
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isMinimized, setIsMinimized] = useState(false);
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -313,11 +320,13 @@ export default function ComposeEmail({ onClose, onEmailSent }: ComposeEmailProps
       formDataToSend.append('to', formData.to);
       formDataToSend.append('subject', formData.subject);
       formDataToSend.append('text', formData.text);
+      formDataToSend.append('profileId', attachmentInfo?.profileId || '');
+      formDataToSend.append('quotationId', attachmentInfo?.quotationId || '');
       if (attachment) {
         formDataToSend.append('attachment', attachment);
       }
 
-      const response = await apiFunctions.sendEmail(formDataToSend);
+      const response = await apiFunctions.sendQuotation(formDataToSend);
 
       if (!response.success) {
         throw new Error(response.message || 'Failed to send email.');
@@ -386,11 +395,18 @@ export default function ComposeEmail({ onClose, onEmailSent }: ComposeEmailProps
                 required
                 className="flex-1 border-none focus-visible:ring-0 resize-none p-0 text-sm bg-transparent h-50"
               />
+              {attachmentInfo && (<div className="flex items-center justify-between p-2 bg-[var(--surface-hover)] rounded-lg text-xs">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-[var(--text-secondary)]" />
+                  <span className="text-[var(--text-primary)]">{attachmentInfo?.fileName}</span>
+                </div>
+              </div>)}
+              
               {attachment && (
                 <div className="flex items-center justify-between p-2 bg-[var(--surface-hover)] rounded-lg text-xs">
                   <div className="flex items-center gap-2">
                     <FileText className="w-4 h-4 text-[var(--text-secondary)]" />
-                    <span className="text-[var(--text-primary)]">{attachment.name} ({(attachment.size / 1024).toFixed(1)} KB)</span>
+                    <span className="text-[var(--text-primary)]">{attachment.name} ({(attachment.size / 1024).toFixed(1)} KB) ({(attachment.size / 1024).toFixed(1)} KB)</span>
                   </div>
                   <Button type="button" variant="ghost" size="icon" onClick={removeAttachment} className="w-5 h-5 text-[var(--error)] rounded-full hover:bg-[var(--error)]/10">
                     <X className="w-3 h-3" />

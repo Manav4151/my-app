@@ -17,6 +17,7 @@ import {
   MoreVertical, // New icon for card menu
   ArrowDown,
   ArrowUp,
+  Mail,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -44,6 +45,13 @@ type Quotation = {
   validUntil: string;
   quotationId: string;
   createdAt: string;
+  emailInfo?: {
+    messageId: string;
+    sender: string;
+    subject: string;
+    receivedAt: string;
+    snippet?: string;
+  };
 };
 type Pagination = {
   currentPage: number;
@@ -158,7 +166,7 @@ function QuotationCard({ quotation }: { quotation: Quotation }) {
   };
 
   return (
-    <div 
+    <div
       onClick={handleCardClick}
       className="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 bg-[var(--input)] rounded-xl shadow-sm border border-[var(--border)] hover:border-[var(--primary)]/50 hover:shadow-lg transition-all duration-300 cursor-pointer"
     >
@@ -183,7 +191,6 @@ function QuotationCard({ quotation }: { quotation: Quotation }) {
           </p>
         </div>
 
-
         <div className="flex flex-col gap-1">
           <p className="text-sm text-[var(--muted-foreground)]">Valid Until</p>
           <p className="font-medium text-[var(--foreground)]">
@@ -196,16 +203,22 @@ function QuotationCard({ quotation }: { quotation: Quotation }) {
             {formatCurrency(quotation.grandTotal)}
           </p>
         </div>
+        <div className="flex items-center gap-1">
+          {/* Show email icon only if emailInfo is NOT empty */}
+          {quotation.emailInfo && Object.keys(quotation.emailInfo).length > 0 && (
+            <Mail size={20} className="text-blue-500" />
+          )}
 
+        </div>
         <div className="flex col-span-2 sm:col-span-1 sm:justify-start justify-end items-center">
           <QuotationStatusBadge status={quotation.status} />
         </div>
       </div>
 
       {/* Action Button */}
-      <Button 
-        variant="ghost" 
-        size="icon" 
+      <Button
+        variant="ghost"
+        size="icon"
         className="text-[var(--muted-foreground)] hover:text-[var(--primary)] ml-auto md:ml-0 flex-shrink-0"
         onClick={(e) => {
           e.stopPropagation(); // Prevent card click when clicking button
@@ -396,8 +409,8 @@ export default function QuotationPage() {
       {/* Quotation List */}
       <div className="mt-8">
         <h2 className="text-2xl font-semibold text-[var(--foreground)] mb-6">
-          {searchQuery.trim() 
-            ? `Search Results (${quotations.length})` 
+          {searchQuery.trim()
+            ? `Search Results (${quotations.length})`
             : `All Quotations (${pagination?.totalItems || 0})`}
         </h2>
 

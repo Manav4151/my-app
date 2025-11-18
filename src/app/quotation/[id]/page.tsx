@@ -23,6 +23,7 @@ import { Badge } from "@/app/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
 import { apiFunctions } from "@/services/api.service";
 import { toast } from "sonner";
+import ComposeEmail from "@/app/components/email/compose-email";
 
 // Type Definitions
 type Customer = {
@@ -133,6 +134,7 @@ export default function QuotationDetailPage() {
   const [profiles, setProfiles] = useState<Array<{ _id: string; profileName: string }>>([]);
   const [selectedProfileId, setSelectedProfileId] = useState<string>("");
   const [loadingProfiles, setLoadingProfiles] = useState(false);
+  const [showCompose, setShowCompose] = useState(false);
 
   useEffect(() => {
     if (quotationId) {
@@ -140,7 +142,9 @@ export default function QuotationDetailPage() {
       fetchCompanyProfiles();
     }
   }, [quotationId]);
-
+  const handleComposeClose = () => {
+    setShowCompose(false);
+  };
   const fetchQuotationDetails = async () => {
     try {
       setLoading(true);
@@ -177,21 +181,20 @@ export default function QuotationDetailPage() {
     }
   };
 
-  const handlePreviewPDF = () => {
+  const handlePreviewPDF = async () => {
     if (!selectedProfileId) {
       toast.error("Please select a profile first");
       return;
     }
-    const API_URL = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5050";
-    const previewUrl = `${API_URL}/api/quotations/${quotationId}/preview?profileId=${selectedProfileId}`;
+    const previewUrl = await apiFunctions.previewQuotationPDF(quotationId, selectedProfileId);
     window.open(previewUrl, '_blank');
   };
 
   const handleDownloadPDF = async () => {
     try {
       setDownloading(true);
-      const blob = await apiFunctions.downloadQuotationPDF(quotationId ,selectedProfileId);
-      
+      const blob = await apiFunctions.downloadQuotationPDF(quotationId, selectedProfileId);
+
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -504,7 +507,7 @@ export default function QuotationDetailPage() {
                 <Eye className="w-5 h-5 text-[var(--primary)]" />
                 PDF Preview
               </h2>
-              
+
               {/* Profile Selection */}
               <div className="mb-4 space-y-3">
                 <div>
@@ -536,8 +539,28 @@ export default function QuotationDetailPage() {
                   <Eye className="w-4 h-4 mr-2" />
                   Preview PDF
                 </Button>
-              </div>
 
+                <Button
+                  onClick={() => setShowCompose(true)}
+                  disabled={!selectedProfileId || loadingProfiles}
+                  className="w-full bg-[var(--primary)] hover:opacity-90 text-white"
+                >
+                  Share PDF
+                </Button>
+              </div>
+              {/* Compose Email Modal */}
+              {showCompose && (
+                <ComposeEmail
+                  onClose={handleComposeClose}
+                  onEmailSent={handleComposeClose}
+                  attachmentInfo={{
+                    type: "quotation",
+                    fileName: `quotation-${quotation.quotationId}.pdf`,
+                    quotationId: quotationId,     // your variable
+                    profileId: selectedProfileId          // another variable you must provide
+                  }}
+                />
+              )}
               {/* <div className="border border-gray-200 rounded-lg overflow-hidden">
                 <iframe
                   src={pdfPreviewUrl}

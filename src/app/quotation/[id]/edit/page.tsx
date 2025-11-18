@@ -29,10 +29,13 @@ type Book = {
     title: string;
     isbn: string;
     author?: string;
-    publisher?: string;
+    publisher?: Publisher; 
     edition?: string;
 };
-
+type Publisher = {
+    _id: string;
+    name: string;
+}
 type QuotationItem = {
     _id: string;
     book: Book | string;
@@ -142,7 +145,7 @@ export default function EditQuotationPage() {
                         bookId: typeof item.book === "object" ? item.book._id : item.book,
                         title: book?.title || "Unknown Book",
                         isbn: book?.isbn || "",
-                        publisher_name: book?.publisher || "Unknown Publisher",
+                        publisher_name: book?.publisher?.name || "Unknown Publisher",
                         lowestPrice: item.unitPrice,
                         currency: "USD",
                     };

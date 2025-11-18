@@ -222,26 +222,23 @@ export const apiFunctions = { // Renamed to avoid conflict with axios instance n
     downloadEmailAttachment: async (id: string, filename: string): Promise<Blob> => {
         try {
             // Try Google API endpoint first (for Gmail API), fallback to IMAP endpoint
-            try {
-                const response = await api.get(`/api/google/emails/${id}/attachments/${encodeURIComponent(filename)}`, {
-                    responseType: 'blob', // Tell axios to expect binary data
-                });
-                return response.data; // The data is already a Blob
-            } catch (googleError) {
-                // Fallback to IMAP endpoint if Google API fails
-                const response = await api.get(`/api/emails/${id}/attachments/${encodeURIComponent(filename)}`, {
-                    responseType: 'blob', // Tell axios to expect binary data
-                });
-                return response.data; // The data is already a Blob
-            }
+
+            const response = await api.get(`/api/google/emails/${id}/attachments/${encodeURIComponent(filename)}`, {
+                responseType: 'blob', // Tell axios to expect binary data
+            });
+            return response.data; // The data is already a Blob
+
         } catch (error) { throw handleError(error); }
     },
-
-    sendEmail: async (formData: FormData) => {
+    // === Quotation Calls ===
+    /* Use for semd email for quotation pass quotation id and profile id, for normal email pass directly */
+    sendQuotation: async (formData: FormData) => {
         try {
-            const response = await api.post('/api/emails/send', formData);
+            const response = await api.post('/api/quotations/sendQuotation', formData);
             return response.data;
-        } catch (error) { throw handleError(error); }
+        } catch (error) {
+            throw handleError(error);
+        }
     },
 
     // === Management Calls ===
@@ -320,6 +317,14 @@ export const apiFunctions = { // Renamed to avoid conflict with axios instance n
             });
             return response.data; // The data is already a Blob
         } catch (error) { throw handleError(error); }
+    },
+    previewQuotationPDF: async (quotationId: string, selectedProfileId: string) => {
+        try {
+            const response = await api.get(`/api/quotations/${quotationId}/preview?profileId=${selectedProfileId}`);
+            return response.data;
+        } catch (error) {
+            throw handleError(error);
+        }
     },
 
     updateQuotation: async (id: string, payload: any) => {
