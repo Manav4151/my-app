@@ -2,9 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { authClient, type Session } from "./auth-client";
-
-export type Role = "USER" | "ADMIN" | "MANAGER";
-
+import { ROLES, type Role } from "./role";
 export function useRole() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -28,20 +26,20 @@ export function useRole() {
     };
   }, []);
 
-  const role = useMemo(() => {
-    const raw = (session?.user as any)?.role as string | undefined;
+ const role = useMemo<Role | undefined>(() => {
+    const raw = (session?.user as any)?.role;
     if (!raw) return undefined;
-    const upper = raw.toUpperCase();
-    return (upper === "ADMIN" || upper === "MANAGER" || upper === "USER") ? (upper as Role) : undefined;
+
+    return Object.values(ROLES).includes(raw) ? raw : undefined;
   }, [session]);
 
   const hasRole = (required: Role | Role[]) => {
     if (!role) return false;
-    const list = (Array.isArray(required) ? required : [required]).map(r => r.toUpperCase()) as Role[];
+    const list = (Array.isArray(required) ? required : [required]).map(r => r) as Role[];
     return list.includes(role);
   };
 
-  const isAdmin = role === "ADMIN";
+  const isAdmin = role === ROLES.ADMIN;
 
   return { session, role, loading, hasRole, isAdmin };
 }

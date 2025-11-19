@@ -14,6 +14,8 @@ import ViewOnAmazonButton from "../components/ViewOnAmazonButton";
 import SearchBookOnlineButton from "../components/ViewOnAmazonButton";
 import { ApiError, apiFunctions } from "@/services/api.service";
 import { set } from "lodash";
+import { ROLE_GROUPS } from "@/lib/role";
+import { RoleGate } from "@/lib/use-role";
 
 // Define the data type based on API response
 interface Book {
@@ -281,14 +283,16 @@ export default function Home() {
             </div>
             {session && (
               <div className="flex gap-3">
-                <ExcelImport onImportComplete={loadData} />
-                <Button
-                  onClick={() => router.push('/books/insert')}
-                  className="bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Insert Book
-                </Button>
+                <RoleGate allow={ROLE_GROUPS.QUOTATION_MANAGERS}>
+                  <ExcelImport onImportComplete={loadData} />
+                  <Button
+                    onClick={() => router.push('/books/insert')}
+                    className="bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Insert Book
+                  </Button>
+                </RoleGate>
               </div>
             )}
           </div>
@@ -561,3 +565,14 @@ export default function Home() {
     </div>
   );
 }
+
+
+
+
+// Full optimized multi-file structure for Books page (Server + Client components + smaller UI components)
+// Files included below. Copy each section into its corresponding file path under your app or components folder.
+
+// // /*
+// // File: app/books/page.tsx  (Server entry)
+// // */
+// export { default } from "../components/books/server-page";

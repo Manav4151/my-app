@@ -17,7 +17,7 @@ export const authClient = createAuthClient({
 export type Session = typeof authClient.$Infer.Session;
 
 // ---- Role helpers ----
-export type Role = "USER" | "ADMIN" | "MANAGER";
+export type Role = "admin" | "inventory_manager" | "sales_executive";
 
 export function hasRole(session: Session | null, required: Role | Role[]): boolean {
   if (!session || !session.user) return false;
@@ -32,12 +32,8 @@ export function hasAnyRole(session: Session | null, roles: Role[]): boolean {
 }
 
 export function isAdmin(session: Session | null): boolean {
-  return hasRole(session, "ADMIN");
+  return hasRole(session, "admin");
 }
-
-// You can use these helpers in components, e.g.:
-// const session = await authClient.getSession();
-// if (!hasRole(session, ["ADMIN"])) redirect("/not-authorized");
 
 // Password reset helpers for our API
 export async function requestPasswordReset(params: { email: string; redirectTo?: string }) {

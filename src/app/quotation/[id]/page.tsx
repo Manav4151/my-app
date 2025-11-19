@@ -24,6 +24,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { apiFunctions } from "@/services/api.service";
 import { toast } from "sonner";
 import ComposeEmail from "@/app/components/email/compose-email";
+import { RoleGate } from "@/lib/use-role";
+import { ROLE_GROUPS } from "@/lib/role";
 
 // Type Definitions
 type Customer = {
@@ -186,8 +188,9 @@ export default function QuotationDetailPage() {
       toast.error("Please select a profile first");
       return;
     }
-    const previewUrl = await apiFunctions.previewQuotationPDF(quotationId, selectedProfileId);
-    window.open(previewUrl, '_blank');
+    const blob = await apiFunctions.downloadQuotationPDF(quotationId, selectedProfileId);
+    const url = window.URL.createObjectURL(blob);
+    window.open(url, '_blank');
   };
 
   const handleDownloadPDF = async () => {
@@ -278,14 +281,16 @@ export default function QuotationDetailPage() {
             </div>
             <div className="flex gap-3">
               {(quotation.status === "Draft" || quotation.status === "Sent") && (
-                <Button
-                  onClick={() => router.push(`/quotation/${quotationId}/edit`)}
-                  variant="outline"
-                  className="border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--muted)]"
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  Edit Quotation
-                </Button>
+                <RoleGate allow={ROLE_GROUPS.QUOTATION_MANAGERS}>
+                  <Button
+                    onClick={() => router.push(`/quotation/${quotationId}/edit`)}
+                    variant="outline"
+                    className="border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--muted)]"
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Edit Quotation
+                  </Button>
+                </RoleGate>
               )}
               <Button
                 onClick={handleDownloadPDF}
@@ -539,14 +544,15 @@ export default function QuotationDetailPage() {
                   <Eye className="w-4 h-4 mr-2" />
                   Preview PDF
                 </Button>
-
-                <Button
-                  onClick={() => setShowCompose(true)}
-                  disabled={!selectedProfileId || loadingProfiles}
-                  className="w-full bg-[var(--primary)] hover:opacity-90 text-white"
-                >
-                  Share PDF
-                </Button>
+                <RoleGate allow={ROLE_GROUPS.QUOTATION_MANAGERS}>
+                  <Button
+                    onClick={() => setShowCompose(true)}
+                    disabled={!selectedProfileId || loadingProfiles}
+                    className="w-full bg-[var(--primary)] hover:opacity-90 text-white"
+                  >
+                    Share PDF
+                  </Button>
+                </RoleGate>
               </div>
               {/* Compose Email Modal */}
               {showCompose && (

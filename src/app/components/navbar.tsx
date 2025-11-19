@@ -8,6 +8,8 @@ import { Button } from "./ui/button";
 import { BookOpen, Home, Mail, FileText, Menu, X, LogOut, Building, Sun, Moon } from "lucide-react";
 import { useAuth } from "./auth-context";
 import { admin } from "better-auth/plugins/admin";
+import { ROLES } from "@/lib/role";
+
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -32,7 +34,7 @@ export default function Navbar() {
     return null;
   }
   // Check if the user has the 'ADMIN' role
-  const isAdmin = "ADMIN";
+  const isAdmin = ROLES.ADMIN;
   console.log("isadmin", isAdmin);
 
   const navigation = [

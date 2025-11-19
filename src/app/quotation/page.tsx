@@ -28,6 +28,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RoleGate } from "@/lib/use-role";
 import { BookSelectionDialog } from "../components/BookSelectionDialog";
+import { ROLE_GROUPS } from "@/lib/role";
 
 // --- Type Definitions (Unchanged) ---
 type Customer = {
@@ -362,7 +363,7 @@ export default function QuotationPage() {
             Manage and track all your quotations.
           </p>
         </div>
-        <RoleGate allow={["ADMIN", "MANAGER"]}>
+        <RoleGate allow={ROLE_GROUPS.QUOTATION_MANAGERS}>
           <Button className="bg-[var(--primary)] hover:opacity-90 text-white flex items-center space-x-2" onClick={() => setBookDialogOpen(true)}>
             <Plus className="w-4 h-4" />
             <span>Create New Quotation</span>
@@ -435,7 +436,7 @@ export default function QuotationPage() {
             <p className="text-[var(--muted-foreground)] mb-6 max-w-md mx-auto">
               Get started by creating your first quotation.
             </p>
-            <RoleGate allow={["ADMIN", "MANAGER"]}>
+            <RoleGate allow={ROLE_GROUPS.QUOTATION_MANAGERS}>
               <Button className="bg-[var(--primary)] hover:opacity-90 text-white">
                 <Plus className="w-4 h-4 mr-2" />
                 Create New Quotation
