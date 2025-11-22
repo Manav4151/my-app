@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { ResetPasswordForm } from "@/app/components/auth/reset-password-form";
+import { ResetPasswordForm } from "@/components/auth/reset-password-form";
 import { Loader2 } from "lucide-react";
 
 export default function ResetPasswordPage() {

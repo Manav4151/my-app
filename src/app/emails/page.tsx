@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { Send, RefreshCw, Inbox } from "lucide-react";
-import { Button } from "../components/ui/button";
-import EmailList from "../components/email/email-list";
-import ComposeEmail from "../components/email/compose-email";
+import { Button } from "@/components/ui/button";
+import EmailList from "@/components/email/email-list";
+import ComposeEmail from "@/components/email/compose-email";
 import { apiFunctions } from "@/services/api.service";
 import { toast } from "sonner";
 
@@ -36,7 +36,7 @@ export default function EmailsPage() {
       throw error;
     }
   };
-  
+
   const tabs = [
     { id: "inbox", label: "Inbox", icon: Inbox },
     // { id: "favourite", label: "Favourite", icon: Star },

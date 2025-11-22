@@ -3,13 +3,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { apiFunctions, ApiError } from '@/services/api.service';
-import { Input } from '@/app/components/ui/input';
-import { Label } from '@/app/components/ui/label';
-import { Button } from '@/app/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Plus, Minus, ArrowLeft, Trash2 } from 'lucide-react';
-import { BookSelectionDialog } from '@/app/components/BookSelectionDialog';
+import { BookSelectionDialog } from '@/components/BookSelectionDialog';
 
 // Type definitions
 type Quantities = {
@@ -29,7 +29,7 @@ type Book = {
     title: string;
     isbn: string;
     author?: string;
-    publisher?: Publisher; 
+    publisher?: Publisher;
     edition?: string;
 };
 type Publisher = {
@@ -171,7 +171,7 @@ export default function EditQuotationPage() {
 
                 // Calculate general discount percentage
                 // This is an approximation since we don't store it separately
-                const calculatedGeneralDiscount = quotationData.totalDiscount > 0 
+                const calculatedGeneralDiscount = quotationData.totalDiscount > 0
                     ? ((quotationData.totalDiscount / quotationData.subTotal) * 100).toFixed(2)
                     : "0";
                 setGeneralDiscount(calculatedGeneralDiscount);
@@ -297,7 +297,7 @@ export default function EditQuotationPage() {
         const totalDiscountAmount = totalItemDiscountAmount + generalDiscountAmount;
 
         // Use provided validUntil or default to 30 days from now
-        const validUntilDate = validUntil 
+        const validUntilDate = validUntil
             ? new Date(validUntil)
             : (() => {
                 const date = new Date();
@@ -321,13 +321,13 @@ export default function EditQuotationPage() {
         try {
             // Get current book IDs
             const currentBookIds = books.map(b => b.bookId);
-            
+
             // Find newly added books (not in current list)
             const newBookIds = selectedBookIds.filter(id => !currentBookIds.includes(id));
-            
+
             // Find removed books (in current list but not in selected)
             const removedBookIds = currentBookIds.filter(id => !selectedBookIds.includes(id));
-            
+
             // Remove books that were deselected
             if (removedBookIds.length > 0) {
                 setBooks(prev => prev.filter(book => !removedBookIds.includes(book.bookId)));
@@ -347,7 +347,7 @@ export default function EditQuotationPage() {
                     return updated;
                 });
             }
-            
+
             // Fetch preview data for newly added books
             if (newBookIds.length > 0) {
                 const previewResponse = await apiFunctions.getQuotationPreview(newBookIds);
@@ -360,10 +360,10 @@ export default function EditQuotationPage() {
                         lowestPrice: book.lowestPrice || 0,
                         currency: book.currency || "USD",
                     }));
-                    
+
                     // Add new books to the list
                     setBooks(prev => [...prev, ...newBooks]);
-                    
+
                     // Initialize quantities, prices, and discounts for new books
                     newBooks.forEach(book => {
                         setQuantities(prev => ({ ...prev, [book.bookId]: 1 }));
@@ -372,7 +372,7 @@ export default function EditQuotationPage() {
                     });
                 }
             }
-            
+
             toast.success("Books updated successfully");
         } catch (err) {
             console.error("Error updating books:", err);

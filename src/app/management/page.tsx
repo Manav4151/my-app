@@ -2,11 +2,11 @@
 
 import React, { useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/app/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { ArrowLeft, Building, User } from "lucide-react";
-import { AddPublisherForm } from "../components/AddPublisherForm";
-import { AddCustomerForm } from "../components/AddCustomerForm";
-import { AddCompanyProfileForm } from "../components/AddCompanyProfileForm";
+import { AddPublisherForm } from "@/components/AddPublisherForm";
+import { AddCustomerForm } from "@/components/AddCustomerForm";
+import { AddCompanyProfileForm } from "@/components/AddCompanyProfileForm";
 import { cn } from "@/lib/utils";
 
 type ActiveTab = "publisher" | "customer" | "company";

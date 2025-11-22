@@ -5,8 +5,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Link from "next/link";
-import { Button } from "@/app/components/ui/button";
-import { Input } from "@/app/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
     Form,
     FormControl,
@@ -14,7 +14,7 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
-} from "@/app/components/ui/form";
+} from "@/components/ui/form";
 import { toast } from "sonner";
 import { Loader2, Mail } from "lucide-react";
 import { resetPasswordSchema } from "@/lib/zod-schema";

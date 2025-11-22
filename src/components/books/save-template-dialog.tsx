@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Textarea } from "./ui/textarea";
+import { Button } from "../ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Textarea } from "../ui/textarea";
 import { CheckCircle, Loader2 } from "lucide-react";
 import { apiFunctions } from "@/services/api.service";
 

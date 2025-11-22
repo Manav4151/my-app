@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
-import { Input } from "./ui/input";
+import { Button } from "../ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import { Input } from "../ui/input";
 import { FileSpreadsheet, Plus, Search, Clock, User, Loader2 } from "lucide-react";
 import { ImportTemplate } from "@/types/template";
 import { apiFunctions } from "@/services/api.service";

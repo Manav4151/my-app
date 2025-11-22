@@ -5,8 +5,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Link from "next/link";
-import { Button } from "@/app/components/ui/button";
-import { Input } from "@/app/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
     Form,
     FormControl,
@@ -15,7 +15,7 @@ import {
     FormLabel,
     FormMessage,
     FormDescription,
-} from "@/app/components/ui/form";
+} from "@/components/ui/form";
 import { toast } from "sonner";
 import { Loader2, Mail, Lock, User, BookOpen, Eye, EyeOff } from "lucide-react";
 import { signupSchema } from "@/lib/zod-schema";
@@ -45,7 +45,7 @@ export function SignUpForm() {
                 email: values.email,
                 password: values.password,
                 name: values.name,
-            
+
             },
             {
                 onSuccess: async () => {

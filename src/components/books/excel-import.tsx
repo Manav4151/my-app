@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useRef, useMemo } from "react";
-import { Button } from "./ui/button";
-import { Label } from "./ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "./ui/dialog";
+import { Button } from "../ui/button";
+import { Label } from "../ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "../ui/dialog";
 import { Upload, FileSpreadsheet, CheckCircle, AlertCircle, X, Download, Loader2 } from "lucide-react";
 import TemplateSelector from "./template-selector";
 import SaveTemplateDialog from "./save-template-dialog";

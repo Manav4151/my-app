@@ -4,9 +4,9 @@ import { useState, useEffect, Suspense, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
 import { apiFunctions, ApiError } from '@/services/api.service';
-import { Input } from '@/app/components/ui/input';
-import { Label } from '@/app/components/ui/label';
-import { Button } from '@/app/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Plus, Minus, ArrowLeft } from 'lucide-react';
 

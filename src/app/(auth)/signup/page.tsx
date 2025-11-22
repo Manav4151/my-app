@@ -74,7 +74,7 @@
 // export default SignUpPage;
 
 
-import { SignUpForm } from "@/app/components/auth/signup-form";
+import { SignUpForm } from "@/components/auth/signup-form";
 
 export default function SignUpPage() {
   return <SignUpForm />;

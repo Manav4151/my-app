@@ -1,7 +1,7 @@
 "use client";
 
-import { useAuth } from "./components/auth-context";
-import { Button } from "./components/ui/button";
+import { useAuth } from "@/components/auth-context";
+import { Button } from "@/components/ui/button";
 import { BookOpen, Mail, FileText, BarChart3, Users, Database } from "lucide-react";
 import Link from "next/link";
 

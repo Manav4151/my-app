@@ -2,9 +2,9 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/app/components/ui/button";
-import { Input } from "@/app/components/ui/input";
-import { Label } from "@/app/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { CheckCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -41,7 +41,7 @@ const validatePhone = (phone: string): boolean => {
 const initialState: PublisherData = {
     name: "",
     email: "",
-    phone:"",
+    phone: "",
     address: {
         street: "",
         city: "",
@@ -62,7 +62,7 @@ export function AddPublisherForm() {
         email: "",
         contactPersonEmail: "",
         contactPersonPhone: "",
-        phone:""
+        phone: ""
     });
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,13 +70,13 @@ export function AddPublisherForm() {
         setPublisherData(prev => ({ ...prev, [name]: value }));
 
         if (name === "email" || name === "contactPersonEmail") {
-             setErrors(prev => ({ ...prev, [name]: (value && !validateEmail(value)) ? "Please enter a valid email." : "" }));
+            setErrors(prev => ({ ...prev, [name]: (value && !validateEmail(value)) ? "Please enter a valid email." : "" }));
         }
         if (name === "contactPersonPhone") {
             setErrors(prev => ({ ...prev, [name]: (value && !validatePhone(value)) ? "Phone must be 10-15 digits." : "" }));
         }
     };
-    
+
     const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setPublisherData(prev => ({ ...prev, address: { ...prev.address, [name]: value } }));
@@ -113,10 +113,10 @@ export function AddPublisherForm() {
             if (!response.success) {
                 throw new Error(response.message);
             }
-           
+
             toast.success(response.message || "Publisher added successfully!");
             setPublisherData(initialState);
-            setErrors({ email: "", contactPersonEmail: "", contactPersonPhone: "" , phone: ""});
+            setErrors({ email: "", contactPersonEmail: "", contactPersonPhone: "", phone: "" });
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Failed to add publisher.");
         } finally {

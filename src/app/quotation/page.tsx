@@ -19,15 +19,15 @@ import {
   ArrowUp,
   Mail,
 } from "lucide-react";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { Badge } from "../components/ui/badge"; // Assuming you have a Badge component
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge"; // Assuming you have a Badge component
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiFunctions } from "@/services/api.service";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RoleGate } from "@/lib/use-role";
-import { BookSelectionDialog } from "../components/BookSelectionDialog";
+import { BookSelectionDialog } from "@/components/books/BookSelectionDialog";
 import { ROLE_GROUPS } from "@/lib/role";
 
 // --- Type Definitions (Unchanged) ---

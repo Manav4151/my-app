@@ -3,9 +3,9 @@
 import { useState, useEffect, useCallback, use, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Mail, Paperclip, Download, ArrowLeft, FileText, Eye, Plus } from "lucide-react";
-import { Button } from "../../components/ui/button";
+import { Button } from "@/components/ui/button";
 import { apiFunctions } from "@/services/api.service";
-import { BookSelectionDialog } from "../../components/BookSelectionDialog";
+import { BookSelectionDialog } from "@/components/books/BookSelectionDialog";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050";
 
@@ -72,7 +72,7 @@ export default function EmailDetailPage({ params }: { params: Promise<{ id: stri
         try {
             // Find attachment in email data
             const attachment = email?.attachments?.find(att => att.filename === filename);
-            
+
             if (attachment?.dataUrl) {
                 // Use dataUrl directly from email response
                 const link = document.createElement('a');
@@ -109,7 +109,7 @@ export default function EmailDetailPage({ params }: { params: Promise<{ id: stri
         try {
             // Find attachment in email data
             const attachment = email?.attachments?.find(att => att.filename === filename);
-            
+
             if (attachment?.dataUrl) {
                 // Convert data URL to Blob and open as blob URL for better compatibility
                 const [meta, b64] = attachment.dataUrl.split(',');
@@ -178,7 +178,7 @@ export default function EmailDetailPage({ params }: { params: Promise<{ id: stri
     const handleBooksSelected = (bookIds: string[]) => {
         const params = new URLSearchParams();
         bookIds.forEach(id => params.append("id", id));
-        
+
         // Add email info to query params
         if (email) {
             params.append("emailMessageId", email.messageId);
@@ -191,7 +191,7 @@ export default function EmailDetailPage({ params }: { params: Promise<{ id: stri
                 params.append("emailSnippet", snippetText.substring(0, 200));
             }
         }
-        
+
         router.push(`/quotation/preview?${params.toString()}`);
     };
 
@@ -248,8 +248,8 @@ export default function EmailDetailPage({ params }: { params: Promise<{ id: stri
                             </Button>
                             <h1 className="text-lg font-semibold text-[var(--text-primary)]">Email Detail</h1>
                         </div>
-                        <Button 
-                            className="bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white flex items-center space-x-2" 
+                        <Button
+                            className="bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white flex items-center space-x-2"
                             onClick={() => setBookDialogOpen(true)}
                         >
                             <Plus className="w-4 h-4" />

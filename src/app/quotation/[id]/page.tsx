@@ -18,12 +18,12 @@ import {
   Edit,
   Mail,
 } from "lucide-react";
-import { Button } from "@/app/components/ui/button";
-import { Badge } from "@/app/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiFunctions } from "@/services/api.service";
 import { toast } from "sonner";
-import ComposeEmail from "@/app/components/email/compose-email";
+import ComposeEmail from "@/components/email/compose-email";
 import { RoleGate } from "@/lib/use-role";
 import { ROLE_GROUPS } from "@/lib/role";
 

@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Button } from "./ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Button } from "../ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { apiFunctions } from "@/services/api.service";
 import { toast } from "sonner";
 
@@ -71,7 +71,7 @@ export function BookSelectionDialog({
   const [bookLoading, setBookLoading] = useState(false);
   const [selectedBookIds, setSelectedBookIds] = useState<string[]>([]);
   const headerCheckboxRef = useRef<HTMLInputElement>(null);
-  
+
   // Memoize initialSelectedBooks to prevent infinite loops
   // Convert to a stable string for comparison
   const initialSelectedBooksKey = useMemo(() => {
@@ -169,10 +169,10 @@ export function BookSelectionDialog({
 
   const handleSelectAllBooks = () => {
     if (!bookData?.books) return;
-    
+
     const currentPageBookIds = bookData.books.map(b => b._id);
     const allCurrentPageSelected = currentPageBookIds.every(id => selectedBookIds.includes(id));
-    
+
     if (allCurrentPageSelected) {
       // Deselect all books on current page
       setSelectedBookIds(prev => prev.filter(id => !currentPageBookIds.includes(id)));
