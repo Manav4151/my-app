@@ -2,8 +2,7 @@
 
 import { useState, useEffect, Suspense, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-// Make sure this import path is correct for your project
-// I've added downloadFile here, assuming it's in your api.service
+
 import { apiFunctions, ApiError } from '@/services/api.service';
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
@@ -11,17 +10,17 @@ import { Button } from '@/app/components/ui/button';
 import { toast } from 'sonner';
 import { Plus, Minus, ArrowLeft } from 'lucide-react';
 
-// A map to store quantities: { "bookId": quantity }
+
 type Quantities = {
     [bookId: string]: number;
 };
 
-// A map to store per-book discounts: { "bookId": discountPercent }
+
 type BookDiscounts = {
     [bookId: string]: number;
 };
 
-// A map to store custom prices: { "bookId": customPrice }
+
 type CustomPrices = {
     [bookId: string]: number;
 };
@@ -36,8 +35,7 @@ type QuotationPreviewBook = {
 };
 
 type InputChangeEvent = React.ChangeEvent<HTMLInputElement>;
-// === NEW: This is the structure for the API payload ===
-// Based on your quotationItemSchema
+
 type QuotationPayloadItem = {
     book: string;       // bookId
     quantity: number;
@@ -78,7 +76,7 @@ function QuotationPage() {
     // State for discounts
     const [bookDiscounts, setBookDiscounts] = useState<BookDiscounts>({});
     const [generalDiscount, setGeneralDiscount] = useState<string>(""); // Use string for flexible input
-    
+
     // State for custom prices
     const [customPrices, setCustomPrices] = useState<CustomPrices>({});
 
@@ -255,7 +253,7 @@ function QuotationPage() {
         const totalDiscountAmount = totalItemDiscountAmount + generalDiscountAmount;
 
         // Use provided validUntil or default to 30 days from now
-        const validUntilDate = validUntil 
+        const validUntilDate = validUntil
             ? new Date(validUntil)
             : (() => {
                 const date = new Date();
@@ -302,19 +300,19 @@ function QuotationPage() {
 
         try {
 
-          const response = await apiFunctions.createQuotation( payload);
+            const response = await apiFunctions.createQuotation(payload);
 
-          if (!response.success) {
-            throw new Error(response.message);
-          }
-          toast.success(response.message || "Quotation created successfully!");
-          // Reset the form
-          setGeneralDiscount("0");
-          setQuantities({});
-          setBookDiscounts({});
-          setCustomPrices({});
-          setBooks([]);
-          router.push("/quotation");
+            if (!response.success) {
+                throw new Error(response.message);
+            }
+            toast.success(response.message || "Quotation created successfully!");
+            // Reset the form
+            setGeneralDiscount("0");
+            setQuantities({});
+            setBookDiscounts({});
+            setCustomPrices({});
+            setBooks([]);
+            router.push("/quotation");
 
         } catch (err) {
             console.error("Quotation error:", err);
@@ -412,108 +410,108 @@ function QuotationPage() {
                 </div>
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-[var(--border)]" style={{ minWidth: '1000px', tableLayout: 'fixed' }}>
-                    <thead className="bg-[var(--surface-hover)]">
-                        <tr>
-                            <th className="px-3 py-3 text-left text-[var(--text-secondary)]" style={{ width: '25%' }}>Title & ISBN</th>
-                            <th className="px-3 py-3 text-left text-[var(--text-secondary)]" style={{ width: '10%' }}>Publisher</th>
-                            <th className="px-3 py-3 text-left text-[var(--text-secondary)]" style={{ width: '9%' }}>Original Price</th>
-                            <th className="px-3 py-3 text-left text-[var(--text-secondary)]" style={{ width: '10%' }}>Custom Price</th>
-                            <th className="px-3 py-3 text-left text-[var(--text-secondary)]" style={{ width: '8%' }}>Discount (%)</th>
-                            <th className="px-3 py-3 text-left text-[var(--text-secondary)]" style={{ width: '10%' }}>Quantity</th>
-                            <th className="px-3 py-3 text-right text-[var(--text-secondary)]" style={{ width: '15%' }}>Total</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-[var(--surface)] divide-y divide-[var(--border)]">
-                        {books.map((book) => {
-                            const customPrice = customPrices[book.bookId] !== undefined ? customPrices[book.bookId] : book.lowestPrice;
-                            const quantity = quantities[book.bookId] || 1;
-                            const discountPercent = bookDiscounts[book.bookId] || 0;
-                            const discountedPrice = customPrice * (1 - discountPercent / 100);
-                            const lineTotal = discountedPrice * quantity;
-                            
-                            return (
-                                <tr key={book.bookId} className="hover:bg-[var(--surface-hover)]">
-                                    <td className="px-3 py-4">
-                                        <div className="break-words whitespace-normal">
-                                            <div className="font-medium text-[var(--text-primary)]">{book.title}</div>
-                                            <div className="text-xs text-[var(--text-secondary)] mt-1">ISBN: {book.isbn}</div>
-                                        </div>
-                                    </td>
-                                    <td className="px-3 py-4 truncate text-[var(--text-primary)]">{book.publisher_name}</td>
-                                    <td className="px-3 py-4 text-[var(--text-secondary)]">
-                                        <div className="flex flex-col">
-                                            <span className="text-xs">{book.currency}</span>
-                                            <span className="font-medium text-[var(--text-primary)]">${book.lowestPrice.toFixed(2)}</span>
-                                        </div>
-                                    </td>
-                                    
-                                    {/* === NEW: CUSTOM PRICE FIELD === */}
-                                    <td className="px-3 py-4">
-                                        <Input
-                                            type="number"
-                                            min="0"
-                                            step="0.01"
-                                            value={customPrices[book.bookId] !== undefined ? customPrices[book.bookId].toFixed(2) : book.lowestPrice.toFixed(2)}
-                                            onChange={(e: InputChangeEvent) => handleCustomPriceChange(book.bookId, e.target.value)}
-                                            className="w-full min-w-[90px] max-w-[110px]"
-                                        />
-                                    </td>
+                        <thead className="bg-[var(--surface-hover)]">
+                            <tr>
+                                <th className="px-3 py-3 text-left text-[var(--text-secondary)]" style={{ width: '25%' }}>Title & ISBN</th>
+                                <th className="px-3 py-3 text-left text-[var(--text-secondary)]" style={{ width: '10%' }}>Publisher</th>
+                                <th className="px-3 py-3 text-left text-[var(--text-secondary)]" style={{ width: '9%' }}>Original Price</th>
+                                <th className="px-3 py-3 text-left text-[var(--text-secondary)]" style={{ width: '10%' }}>Custom Price</th>
+                                <th className="px-3 py-3 text-left text-[var(--text-secondary)]" style={{ width: '8%' }}>Discount (%)</th>
+                                <th className="px-3 py-3 text-left text-[var(--text-secondary)]" style={{ width: '10%' }}>Quantity</th>
+                                <th className="px-3 py-3 text-right text-[var(--text-secondary)]" style={{ width: '15%' }}>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-[var(--surface)] divide-y divide-[var(--border)]">
+                            {books.map((book) => {
+                                const customPrice = customPrices[book.bookId] !== undefined ? customPrices[book.bookId] : book.lowestPrice;
+                                const quantity = quantities[book.bookId] || 1;
+                                const discountPercent = bookDiscounts[book.bookId] || 0;
+                                const discountedPrice = customPrice * (1 - discountPercent / 100);
+                                const lineTotal = discountedPrice * quantity;
 
-                                    {/* === PER-BOOK DISCOUNT FIELD === */}
-                                    <td className="px-3 py-4">
-                                        <Input
-                                            type="number"
-                                            min="0"
-                                            max="100"
-                                            value={bookDiscounts[book.bookId] || ''}
-                                            onChange={(e: InputChangeEvent) => handleBookDiscountChange(book.bookId, e.target.value)}
-                                            className="w-full min-w-[70px] max-w-[90px]"
-                                            placeholder="0"
-                                        />
-                                    </td>
+                                return (
+                                    <tr key={book.bookId} className="hover:bg-[var(--surface-hover)]">
+                                        <td className="px-3 py-4">
+                                            <div className="break-words whitespace-normal">
+                                                <div className="font-medium text-[var(--text-primary)]">{book.title}</div>
+                                                <div className="text-xs text-[var(--text-secondary)] mt-1">ISBN: {book.isbn}</div>
+                                            </div>
+                                        </td>
+                                        <td className="px-3 py-4 truncate text-[var(--text-primary)]">{book.publisher_name}</td>
+                                        <td className="px-3 py-4 text-[var(--text-secondary)]">
+                                            <div className="flex flex-col">
+                                                <span className="text-xs">{book.currency}</span>
+                                                <span className="font-medium text-[var(--text-primary)]">${book.lowestPrice.toFixed(2)}</span>
+                                            </div>
+                                        </td>
 
-                                    {/* === QUANTITY WITH +/- BUTTONS === */}
-                                    <td className="px-3 py-4">
-                                        <div className="flex items-center gap-2 justify-start">
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => handleQuantityDecrement(book.bookId)}
-                                                className="h-8 w-8 p-0 flex-shrink-0"
-                                                disabled={quantity <= 1}
-                                            >
-                                                <Minus className="h-4 w-4" />
-                                            </Button>
+                                        {/* === NEW: CUSTOM PRICE FIELD === */}
+                                        <td className="px-3 py-4">
                                             <Input
                                                 type="number"
-                                                min="1"
-                                                value={quantity}
-                                                onChange={(e: InputChangeEvent) => handleQuantityChange(book.bookId, e.target.value)}
-                                                className="w-16 text-center"
-                                                style={{ minWidth: '64px', maxWidth: '64px' }}
+                                                min="0"
+                                                step="0.01"
+                                                value={customPrices[book.bookId] !== undefined ? customPrices[book.bookId].toFixed(2) : book.lowestPrice.toFixed(2)}
+                                                onChange={(e: InputChangeEvent) => handleCustomPriceChange(book.bookId, e.target.value)}
+                                                className="w-full min-w-[90px] max-w-[110px]"
                                             />
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => handleQuantityIncrement(book.bookId)}
-                                                className="h-8 w-8 p-0 flex-shrink-0"
-                                            >
-                                                <Plus className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    </td>
+                                        </td>
 
-                                    {/* === LINE TOTAL CALCULATION === */}
-                                    <td className="px-3 py-4 text-right font-medium whitespace-nowrap">
-                                        ${lineTotal.toFixed(2)}
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
+                                        {/* === PER-BOOK DISCOUNT FIELD === */}
+                                        <td className="px-3 py-4">
+                                            <Input
+                                                type="number"
+                                                min="0"
+                                                max="100"
+                                                value={bookDiscounts[book.bookId] || ''}
+                                                onChange={(e: InputChangeEvent) => handleBookDiscountChange(book.bookId, e.target.value)}
+                                                className="w-full min-w-[70px] max-w-[90px]"
+                                                placeholder="0"
+                                            />
+                                        </td>
+
+                                        {/* === QUANTITY WITH +/- BUTTONS === */}
+                                        <td className="px-3 py-4">
+                                            <div className="flex items-center gap-2 justify-start">
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => handleQuantityDecrement(book.bookId)}
+                                                    className="h-8 w-8 p-0 flex-shrink-0"
+                                                    disabled={quantity <= 1}
+                                                >
+                                                    <Minus className="h-4 w-4" />
+                                                </Button>
+                                                <Input
+                                                    type="number"
+                                                    min="1"
+                                                    value={quantity}
+                                                    onChange={(e: InputChangeEvent) => handleQuantityChange(book.bookId, e.target.value)}
+                                                    className="w-16 text-center"
+                                                    style={{ minWidth: '64px', maxWidth: '64px' }}
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => handleQuantityIncrement(book.bookId)}
+                                                    className="h-8 w-8 p-0 flex-shrink-0"
+                                                >
+                                                    <Plus className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </td>
+
+                                        {/* === LINE TOTAL CALCULATION === */}
+                                        <td className="px-3 py-4 text-right font-medium whitespace-nowrap">
+                                            ${lineTotal.toFixed(2)}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
                 </div>
             </div>
 

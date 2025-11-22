@@ -566,13 +566,3 @@ export default function Home() {
   );
 }
 
-
-
-
-// Full optimized multi-file structure for Books page (Server + Client components + smaller UI components)
-// Files included below. Copy each section into its corresponding file path under your app or components folder.
-
-// // /*
-// // File: app/books/page.tsx  (Server entry)
-// // */
-// export { default } from "../components/books/server-page";

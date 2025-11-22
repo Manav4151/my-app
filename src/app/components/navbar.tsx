@@ -18,12 +18,12 @@ export default function Navbar() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  // Prevent hydration mismatch
+
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Hide navbar on auth pages and admin panel
+
   const isAuthPage = pathname.startsWith('/login') ||
     pathname.startsWith('/signup') ||
     pathname.startsWith('/forget-password') ||
@@ -95,9 +95,9 @@ export default function Navbar() {
             })}
           </div>
 
-          {/* User Menu */}
+
           <div className="hidden md:flex items-center space-x-4">
-            {/* Theme Toggle Button */}
+      
             {mounted && (
               <Button
                 variant="ghost"

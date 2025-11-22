@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { authClient, type Session } from "@/lib/auth-client";
 
-// ------------------ Types ------------------
+
 
 type AuthContextType = {
   session: Session | null;
@@ -22,11 +22,8 @@ type AuthContextType = {
   fetchUser: () => Promise<void>;
 };
 
-// ------------------ Context ------------------
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// ------------------ Provider ------------------
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
@@ -113,7 +110,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// ------------------ Hook ------------------
+
 
 export const useAuth = (): AuthContextType => {
   const ctx = useContext(AuthContext);

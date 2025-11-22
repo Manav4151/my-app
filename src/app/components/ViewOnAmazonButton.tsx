@@ -18,10 +18,7 @@ const SearchBookOnlineButton = ({ book }: SearchBookOnlineButtonProps) => {
     return null; // Don't render if there's no book or title
   }
 
-  // 1. Prioritize the most accurate identifier: ISBN-13.
-  // 2. Fall back to ISBN-10.
-  // 3. If no ISBN, use a combination of title and author for a better search.
-  // 4. As a last resort, just use the title.
+
   const searchQuery = 
     book.isbn_13 || 
     book.isbn_10 || 

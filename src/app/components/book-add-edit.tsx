@@ -4,7 +4,7 @@ import React from "react";
 import { X, Book, Save, Plus } from "lucide-react";
 import { Button } from "./ui/button";
 
-// --- Self-Contained UI Components ---
+
 
 const Dialog = ({ open, onOpenChange, children }: { open: boolean; onOpenChange: (open: boolean) => void; children: React.ReactNode }) => {
     if (!open) return null;
@@ -63,7 +63,6 @@ const Select = React.forwardRef<HTMLSelectElement, React.SelectHTMLAttributes<HT
 Select.displayName = "Select";
 
 
-// --- Main Component Logic ---
 
 interface Book {
     _id?: string;
@@ -223,7 +222,6 @@ const BookModal: React.FC<BookModalProps> = ({ isOpen, onClose, onSubmit, formDa
                             </div>
                         </section>
 
-                        {/* This div is used to push the footer down in the form grid, but will not be rendered if not needed */}
                         <div className="hidden"></div>
                     </form>
                 </div>
