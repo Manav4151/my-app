@@ -27,7 +27,26 @@ export const signupSchema = z
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
     path: ["confirmPassword"],
-  });
+  })
+  .refine(
+    (data) => {
+      const password = data.password;
+      // Check for at least one uppercase letter
+      const hasUpperCase = /[A-Z]/.test(password);
+      // Check for at least one lowercase letter
+      const hasLowerCase = /[a-z]/.test(password);
+      // Check for at least one number
+      const hasNumber = /[0-9]/.test(password);
+      // Check for at least one special character
+      const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+      
+      return hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar;
+    },
+    {
+      message: "Must include uppercase, lowercase, number, and special character",
+      path: ["password"],
+    }
+  );
 export const baseProjectFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),

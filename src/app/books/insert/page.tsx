@@ -89,7 +89,7 @@ const normalizeISBN = (isbn: string): string => {
 interface BookData {
     title: string;
     author: string;
-    year: number;
+    year: number | null;
     isbn?: string;
     nonisbn?: string;
     other_code?: string;
@@ -339,6 +339,17 @@ function InsertBookPageContent() {
         }
     };
 
+    // Helper function to sanitize bookData before sending to backend
+    // Converts year: 0 to null since backend expects null for empty year
+    const sanitizeBookData = (data: BookData): BookData => {
+        const sanitized = { ...data };
+        // If year is 0 (default/not entered), set it to null for backend
+        if (sanitized.year === 0) {
+            sanitized.year = null;
+        }
+        return sanitized;
+    };
+
     // Validate form before submission
     const validateForm = (): boolean => {
         if (!isNonISBN) {
@@ -373,10 +384,13 @@ function InsertBookPageContent() {
         setLoading(true);
 
         try {
+            // Sanitize bookData before sending (convert year: 0 to null)
+            const sanitizedBookData = sanitizeBookData(bookData);
+
             if (isEditMode && editBookId) {
                 // Direct update for edit mode
                 const response = await apiFunctions.updateBook(editBookId, {
-                    bookData,
+                    bookData: sanitizedBookData,
                     pricingData,
                     
                 });
@@ -391,7 +405,7 @@ function InsertBookPageContent() {
                 console.log("Publisher data in check", publisherData);
 
                 // Check for duplicates in create mode
-                const response = await apiFunctions.checkBookDuplicate({bookData, pricingData, publisherData});
+                const response = await apiFunctions.checkBookDuplicate({bookData: sanitizedBookData, pricingData, publisherData});
 
                 const result = await response.data;
 
@@ -421,9 +435,12 @@ function InsertBookPageContent() {
 
         setLoading(true);
         try {
+            // Sanitize bookData before sending (convert year: 0 to null)
+            const sanitizedBookData = sanitizeBookData(bookData);
+
             // Simplified: The status is now always taken directly from the check response.
             const payload = {
-                bookData,
+                bookData: sanitizedBookData,
                 pricingData,
                 publisherData,
                 status: checkResponse.bookStatus,
@@ -459,11 +476,11 @@ function InsertBookPageContent() {
     const renderForm = () => {
         if (initialLoading) {
             return (
-                <div className="min-h-screen  flex items-center justify-center">
-                    <div className="bg-white shadow-lg rounded-2xl p-8">
+                <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
+                    <div className="bg-[var(--surface)] shadow-lg rounded-2xl p-8 border border-[var(--border)]">
                         <div className="flex justify-center items-center">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
-                            <span className="ml-3 text-gray-600">Loading book data...</span>
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary)]"></div>
+                            <span className="ml-3 text-[var(--text-secondary)]">Loading book data...</span>
                         </div>
                     </div>
                 </div>
@@ -471,19 +488,19 @@ function InsertBookPageContent() {
         }
 
         return (
-            <div className="min-h-screen ">
+            <div className="min-h-screen bg-[var(--background)]">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
 
 
                     {/* Form */}
-                    <div className="bg-white rounded-2xl p-8 shadow-sm border border-amber-100 ">
+                    <div className="bg-[var(--surface)] rounded-2xl p-8 shadow-sm border border-[var(--border)]">
                         {/* Header */}
                         <div className="mb-8">
                             <Button
                                 onClick={() => router.push(isEditMode && editBookId ? `/books/${editBookId}` : "/books")}
                                 variant="ghost"
-                                className="mb-6 text-gray-700 hover:bg-gray-50 border-gray-300"
+                                className="mb-6 text-[var(--text-primary)] hover:bg-[var(--surface-hover)] border-[var(--border)]"
                             >
                                 <ArrowLeft className="w-4 h-4 mr-2" />
                                 {isEditMode ? "Back to Book Details" : "Back"}
@@ -492,14 +509,14 @@ function InsertBookPageContent() {
                             <div className="text-center">
                                 <div className="flex items-center justify-center">
 
-                                    <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center mr-4 mb-4">
+                                    <div className="w-16 h-16 bg-[var(--primary)] rounded-2xl flex items-center justify-center mr-4 mb-4">
                                         <BookOpen className="w-8 h-8 text-white" />
                                     </div>
-                                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                                    <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2">
                                         {isEditMode ? "Edit Book Details" : "Insert New Book"}
                                     </h1>
                                 </div>
-                                <p className="text-gray-600 text-lg">
+                                <p className="text-[var(--text-secondary)] text-lg">
                                     {isEditMode
                                         ? "Update the book details and pricing information below"
                                         : "Fill in the book details and pricing information below"
@@ -510,13 +527,13 @@ function InsertBookPageContent() {
                         <form onSubmit={handleSubmit} className="space-y-8">
                             {/* Book Information Section */}
                             <div>
-                                <h2 className="text-xl font-semibold text-gray-900 mb-6">
+                                <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-6">
                                     Book Information
                                 </h2>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {/* title  */}
                                     <div>
-                                        <Label htmlFor="title" className="text-gray-700 font-medium">Title *</Label>
+                                        <Label htmlFor="title" className="text-[var(--text-primary)] font-medium">Title *</Label>
                                         <Input
                                             id="title"
                                             value={bookData.title}
@@ -525,38 +542,38 @@ function InsertBookPageContent() {
                                             }
                                             required
                                             placeholder="e.g., The Great Gatsby"
-                                            className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                                            className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl"
                                         />
                                     </div>
                                     {/* Title Input with Suggestions */}
                                     {/* <div className="relative">
-                                        <Label htmlFor="title" className="text-gray-700 font-medium">Title *</Label>
+                                        <Label htmlFor="title" className="text-[var(--text-primary)] font-medium">Title *</Label>
                                         <Input
                                             id="title"
                                             value={bookData.title}
                                             onChange={handleTitleChange}
                                             required
                                             placeholder="e.g., The Great Gatsby"
-                                            className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                                            className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl"
                                             autoComplete="off"
                                         />
                                         {bookSuggestions.length > 0 && (
-                                            <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
+                                            <div className="absolute z-20 w-full mt-1 bg-white border border-[var(--border)] rounded-md shadow-lg">
                                                 {bookSuggestions.map((book, index) => (
                                                     <div
                                                         key={index}
-                                                        className="px-4 py-2 cursor-pointer hover:bg-amber-50"
+                                                        className="px-4 py-2 cursor-pointer hover:bg-[var(--primary)]/10"
                                                         onClick={() => handleBookSuggestionClick(book)}
                                                     >
                                                         <p className="font-semibold">{book.title}</p>
-                                                        <p className="text-sm text-gray-500">{book.author}</p>
+                                                        <p className="text-sm text-[var(--text-secondary)]">{book.author}</p>
                                                     </div>
                                                 ))}
                                             </div>
                                         )}
                                     </div> */}
                                     <div>
-                                        <Label htmlFor="author" className="text-gray-700 font-medium">Author *</Label>
+                                        <Label htmlFor="author" className="text-[var(--text-primary)] font-medium">Author *</Label>
                                         <Input
                                             id="author"
                                             value={bookData.author}
@@ -565,11 +582,11 @@ function InsertBookPageContent() {
                                             }
                                             required
                                             placeholder="e.g., F. Scott Fitzgerald"
-                                            className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                                            className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl"
                                         />
                                     </div>
                                     <div>
-                                        <Label htmlFor="year" className="text-gray-700 font-medium">Publication Year</Label>
+                                        <Label htmlFor="year" className="text-[var(--text-primary)] font-medium">Publication Year</Label>
                                         <Input
                                             id="year"
                                             type="number"
@@ -588,27 +605,27 @@ function InsertBookPageContent() {
                                             min="1000"
                                             max={new Date().getFullYear() + 1}
                                             placeholder="e.g., 2023"
-                                            className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                                            className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl"
                                         />
                                     </div>
                                     {/* Publisher Input with Suggestions */}
                                     <div className="relative">
-                                        <Label htmlFor="publisher_name" className="text-gray-700 font-medium">Publisher *</Label>
+                                        <Label htmlFor="publisher_name" className="text-[var(--text-primary)] font-medium">Publisher *</Label>
                                         <Input
                                             id="publisher_name"
                                             value={publisherData.publisher_name}
                                             onChange={handlePublisherChange}
                                             required
                                             placeholder="e.g., Charles Scribner's Sons"
-                                            className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                                            className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl"
                                             autoComplete="off"
                                         />
                                         {publisherSuggestions.length > 0 && (
-                                            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
+                                            <div className="absolute z-10 w-full mt-1 bg-[var(--surface)] border border-[var(--border)] rounded-md shadow-lg">
                                                 {publisherSuggestions.map((pub, index) => (
                                                     <div
                                                         key={index}
-                                                        className="px-4 py-2 cursor-pointer hover:bg-amber-50"
+                                                        className="px-4 py-2 cursor-pointer hover:bg-[var(--primary)]/10 text-[var(--text-primary)]"
                                                         onClick={() => handlePublisherSuggestionClick(pub)}
                                                     >
                                                         <p>{pub.name}</p>
@@ -624,16 +641,16 @@ function InsertBookPageContent() {
                                                 id="non-isbn"
                                                 checked={isNonISBN}
                                                 onChange={(e) => handleNonISBNToggle(e.target.checked)}
-                                                className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500 focus:ring-2"
+                                                className="w-4 h-4 text-[var(--primary)] bg-[var(--surface-hover)] border-[var(--border)] rounded focus:ring-amber-500 focus:ring-2"
                                             />
-                                            <Label htmlFor="non-isbn" className="text-gray-700 font-medium">
+                                            <Label htmlFor="non-isbn" className="text-[var(--text-primary)] font-medium">
                                                 This book doesn&apos;t have an ISBN
                                             </Label>
                                         </div>
 
                                         {!isNonISBN ? (
                                             <div>
-                                                <Label htmlFor="isbn" className="text-gray-700 font-medium">
+                                                <Label htmlFor="isbn" className="text-[var(--text-primary)] font-medium">
                                                     ISBN *
                                                 </Label>
                                                 <Input
@@ -641,16 +658,16 @@ function InsertBookPageContent() {
                                                     value={bookData.isbn}
                                                     onChange={(e) => handleISBNChange(e.target.value)}
                                                     placeholder="e.g., 978-0743273565 or 0743273567"
-                                                    className={`mt-1 h-12 bg-white border-2 focus:border-amber-500 focus:ring-amber-500 rounded-xl ${isbnError ? 'border-red-300' : 'border-gray-200'
+                                                    className={`mt-1 h-12 bg-[var(--surface)] border-2 focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl ${isbnError ? 'border-[var(--error)]' : 'border-[var(--border)]'
                                                         }`}
                                                 />
                                                 {isbnError && (
-                                                    <p className="mt-1 text-sm text-red-600">{isbnError}</p>
+                                                    <p className="mt-1 text-sm text-[var(--error)]">{isbnError}</p>
                                                 )}
                                             </div>
                                         ) : (
                                             <div>
-                                                <Label htmlFor="other_code" className="text-gray-700 font-medium">
+                                                <Label htmlFor="other_code" className="text-[var(--text-primary)] font-medium">
                                                     Other Code *
                                                 </Label>
                                                 <Input
@@ -658,14 +675,14 @@ function InsertBookPageContent() {
                                                     value={bookData.other_code}
                                                     onChange={(e) => handleOtherCodeChange(e.target.value)}
                                                     placeholder="e.g., Internal code, SKU, or other identifier"
-                                                    className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                                                    className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl"
                                                 />
                                             </div>
                                         )}
                                     </div>
                                     {/* imprint */}
                                     <div>
-                                        <Label htmlFor="imprint" className="text-gray-700 font-medium">Imprint</Label>
+                                        <Label htmlFor="imprint" className="text-[var(--text-primary)] font-medium">Imprint</Label>
                                         <Input
                                             id="imprint"
                                             value={bookData.imprint}
@@ -673,13 +690,13 @@ function InsertBookPageContent() {
                                                 setBookData({ ...bookData, imprint: e.target.value })
                                             }
                                             placeholder="Imprint"
-                                            className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                                            className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl"
                                         />
                                     </div>
 
                                     {/* publisher_exclusive */}
                                     <div>
-                                        <Label htmlFor="publisher_exclusive" className="text-gray-700 font-medium">Publisher Exclusive</Label>
+                                        <Label htmlFor="publisher_exclusive" className="text-[var(--text-primary)] font-medium">Publisher Exclusive</Label>
                                         <Input
                                             id="publisher_exclusive"
                                             value={bookData.publisher_exclusive}
@@ -687,11 +704,11 @@ function InsertBookPageContent() {
                                                 setBookData({ ...bookData, publisher_exclusive: e.target.value })
                                             }
                                             placeholder="Publisher Exclusive"
-                                            className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                                            className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl"
                                         />
                                     </div>
                                     <div>
-                                        <Label htmlFor="edition" className="text-gray-700 font-medium">Edition</Label>
+                                        <Label htmlFor="edition" className="text-[var(--text-primary)] font-medium">Edition</Label>
                                         <Input
                                             id="edition"
                                             value={bookData.edition}
@@ -699,29 +716,29 @@ function InsertBookPageContent() {
                                                 setBookData({ ...bookData, edition: e.target.value })
                                             }
                                             placeholder="e.g., First Edition"
-                                            className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                                            className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl"
                                         />
                                     </div>
                                     <div>
-                                        <Label htmlFor="binding_type" className="text-gray-700 font-medium">Binding Type</Label>
+                                        <Label htmlFor="binding_type" className="text-[var(--text-primary)] font-medium">Binding Type</Label>
                                         <Select
                                             value={bookData.binding_type}
                                             onValueChange={(value) =>
                                                 setBookData({ ...bookData, binding_type: value })
                                             }
                                         >
-                                            <SelectTrigger className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl text-gray-900">
+                                            <SelectTrigger className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl text-[var(--text-primary)]">
                                                 <SelectValue placeholder="Select binding type" />
                                             </SelectTrigger>
-                                            <SelectContent className="bg-white border-2 border-gray-200 rounded-xl shadow-lg">
-                                                <SelectItem value="Hardcover" className="text-gray-900 hover:bg-amber-50">Hardcover</SelectItem>
-                                                <SelectItem value="Paperback" className="text-gray-900 hover:bg-amber-50">Paperback</SelectItem>
+                                            <SelectContent className="bg-[var(--surface)] border-2 border-[var(--border)] rounded-xl shadow-lg">
+                                                <SelectItem value="Hardcover" className="text-[var(--text-primary)] hover:bg-[var(--primary)]/10">Hardcover</SelectItem>
+                                                <SelectItem value="Paperback" className="text-[var(--text-primary)] hover:bg-[var(--primary)]/10">Paperback</SelectItem>
 
                                             </SelectContent>
                                         </Select>
                                     </div>
                                     <div>
-                                        <Label htmlFor="classification" className="text-gray-700 font-medium">Classification</Label>
+                                        <Label htmlFor="classification" className="text-[var(--text-primary)] font-medium">Classification</Label>
                                         <Input
                                             id="classification"
                                             value={bookData.classification}
@@ -729,11 +746,11 @@ function InsertBookPageContent() {
                                                 setBookData({ ...bookData, classification: e.target.value })
                                             }
                                             placeholder="e.g., Fiction, Non-Fiction, Science, etc."
-                                            className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                                            className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl"
                                         />
                                     </div>
                                     <div className="md:col-span-2">
-                                        <Label htmlFor="remarks" className="text-gray-700 font-medium">Remarks</Label>
+                                        <Label htmlFor="remarks" className="text-[var(--text-primary)] font-medium">Remarks</Label>
                                         <Textarea
                                             id="remarks"
                                             value={bookData.remarks}
@@ -742,7 +759,7 @@ function InsertBookPageContent() {
                                             }
                                             placeholder="Condition, special features, etc."
                                             rows={3}
-                                            className="mt-1 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                                            className="mt-1 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl"
                                         />
                                     </div>
                                 </div>
@@ -750,12 +767,12 @@ function InsertBookPageContent() {
 
                             {/* Pricing Information Section */}
                             <div>
-                                <h2 className="text-xl font-semibold text-gray-900 mb-6">
+                                <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-6">
                                     Pricing Information
                                 </h2>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                     <div>
-                                        <Label htmlFor="source" className="text-gray-700 font-medium">Source *</Label>
+                                        <Label htmlFor="source" className="text-[var(--text-primary)] font-medium">Source *</Label>
                                         <Input
                                             id="source"
                                             value={pricingData.source}
@@ -764,11 +781,11 @@ function InsertBookPageContent() {
                                             }
                                             required
                                             placeholder="e.g., Local Bookstore"
-                                            className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                                            className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl"
                                         />
                                     </div>
                                     <div>
-                                        <Label htmlFor="rate" className="text-gray-700 font-medium">Rate *</Label>
+                                        <Label htmlFor="rate" className="text-[var(--text-primary)] font-medium">Rate *</Label>
                                         <Input
                                             id="rate"
                                             type="number"
@@ -781,11 +798,11 @@ function InsertBookPageContent() {
                                             }}
                                             required
                                             placeholder="0.00"
-                                            className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                                            className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl"
                                         />
                                     </div>
                                     <div>
-                                        <Label htmlFor="discount" className="text-gray-700 font-medium">Discount (%)</Label>
+                                        <Label htmlFor="discount" className="text-[var(--text-primary)] font-medium">Discount (%)</Label>
                                         <Input
                                             id="discount"
                                             type="number"
@@ -798,29 +815,29 @@ function InsertBookPageContent() {
                                                 setPricingData({ ...pricingData, discount: value === '' ? 0 : parseFloat(value) || 0 })
                                             }}
                                             placeholder="0.00"
-                                            className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                                            className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl"
                                         />
                                     </div>
                                     <div>
-                                        <Label htmlFor="currency" className="text-gray-700 font-medium">Currency</Label>
+                                        <Label htmlFor="currency" className="text-[var(--text-primary)] font-medium">Currency</Label>
                                         <Select
                                             value={pricingData.currency}
                                             onValueChange={(value) =>
                                                 setPricingData({ ...pricingData, currency: value })
                                             }
                                         >
-                                            <SelectTrigger className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl text-gray-900">
+                                            <SelectTrigger className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl text-[var(--text-primary)]">
                                                 <SelectValue placeholder="Select currency" />
                                             </SelectTrigger>
-                                            <SelectContent className="bg-white border-2 border-gray-200 rounded-xl shadow-lg">
-                                                <SelectItem value="USD" className="text-gray-900 hover:bg-amber-50">USD - US Dollar</SelectItem>
-                                                <SelectItem value="EUR" className="text-gray-900 hover:bg-amber-50">EUR - Euro</SelectItem>
-                                                <SelectItem value="GBP" className="text-gray-900 hover:bg-amber-50">GBP - British Pound</SelectItem>
-                                                <SelectItem value="CAD" className="text-gray-900 hover:bg-amber-50">CAD - Canadian Dollar</SelectItem>
-                                                <SelectItem value="AUD" className="text-gray-900 hover:bg-amber-50">AUD - Australian Dollar</SelectItem>
-                                                <SelectItem value="JPY" className="text-gray-900 hover:bg-amber-50">JPY - Japanese Yen</SelectItem>
-                                                <SelectItem value="INR" className="text-gray-900 hover:bg-amber-50">INR - Indian Rupee</SelectItem>
-                                                <SelectItem value="PKR" className="text-gray-900 hover:bg-amber-50">PKR - Pakistani Rupee</SelectItem>
+                                            <SelectContent className="bg-[var(--surface)] border-2 border-[var(--border)] rounded-xl shadow-lg">
+                                                <SelectItem value="USD" className="text-[var(--text-primary)] hover:bg-[var(--primary)]/10">USD - US Dollar</SelectItem>
+                                                <SelectItem value="EUR" className="text-[var(--text-primary)] hover:bg-[var(--primary)]/10">EUR - Euro</SelectItem>
+                                                <SelectItem value="GBP" className="text-[var(--text-primary)] hover:bg-[var(--primary)]/10">GBP - British Pound</SelectItem>
+                                                <SelectItem value="CAD" className="text-[var(--text-primary)] hover:bg-[var(--primary)]/10">CAD - Canadian Dollar</SelectItem>
+                                                <SelectItem value="AUD" className="text-[var(--text-primary)] hover:bg-[var(--primary)]/10">AUD - Australian Dollar</SelectItem>
+                                                <SelectItem value="JPY" className="text-[var(--text-primary)] hover:bg-[var(--primary)]/10">JPY - Japanese Yen</SelectItem>
+                                                <SelectItem value="INR" className="text-[var(--text-primary)] hover:bg-[var(--primary)]/10">INR - Indian Rupee</SelectItem>
+                                                <SelectItem value="PKR" className="text-[var(--text-primary)] hover:bg-[var(--primary)]/10">PKR - Pakistani Rupee</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -828,19 +845,19 @@ function InsertBookPageContent() {
                             </div>
 
                             {/* Submit Button */}
-                            <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
+                            <div className="flex justify-end gap-4 pt-6 border-t border-[var(--border)]">
                                 <Button
                                     type="button"
                                     variant="outline"
                                     onClick={() => router.push(isEditMode && editBookId ? `/books/${editBookId}` : "/books")}
-                                    className="border-gray-300 text-gray-700 hover:bg-gray-50 h-10 px-4 rounded-xl hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
+                                    className="border-[var(--border)] text-[var(--text-primary)] hover:bg-[var(--surface-hover)] h-10 px-4 rounded-xl hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
                                 >
                                     Cancel
                                 </Button>
                                 <Button
                                     type="submit"
                                     disabled={loading}
-                                    className="h-10 px-8 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
+                                    className="h-10 px-8 bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-semibold text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
                                 >
                                     {loading ? (
                                         <>
@@ -869,25 +886,25 @@ function InsertBookPageContent() {
         const { bookStatus, pricingStatus, message, details } = checkResponse;
 
         return (
-            <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50">
+            <div className="min-h-screen bg-[var(--background)]">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {/* Header */}
                     <div className="mb-8">
                         <Button
                             onClick={() => setStep("form")}
                             variant="outline"
-                            className="mb-6 border-gray-300 text-gray-700 hover:bg-gray-50"
+                            className="mb-6 border-[var(--border)] text-[var(--text-primary)] hover:bg-[var(--surface-hover)]"
                         >
                             <ArrowLeft className="w-4 h-4 mr-2" />
                             Back to Form
                         </Button>
 
                         <div className="text-center">
-                            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <div className="w-16 h-16 bg-[var(--primary)] rounded-2xl flex items-center justify-center mx-auto mb-4">
                                 <Info className="w-8 h-8 text-white" />
                             </div>
-                            <h1 className="text-3xl font-bold text-gray-900 mb-2">Book Status Check</h1>
-                            <p className="text-gray-600 text-lg">
+                            <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2">Book Status Check</h1>
+                            <p className="text-[var(--text-secondary)] text-lg">
                                 Review the results and choose your action
                             </p>
                         </div>
@@ -895,42 +912,42 @@ function InsertBookPageContent() {
 
                     <div className="space-y-6">
                         {/* Status Message */}
-                        <div className={`p-6 rounded-2xl border ${bookStatus === "NEW" ? "bg-green-50 border-green-200" :
-                            bookStatus === "DUPLICATE" ? "bg-blue-50 border-blue-200" :
-                                "bg-yellow-50 border-yellow-200"
+                        <div className={`p-6 rounded-2xl border ${bookStatus === "NEW" ? "bg-[var(--success)]/10 border-[var(--success)]/20" :
+                            bookStatus === "DUPLICATE" ? "bg-[var(--primary)]/10 border-[var(--primary)]/20" :
+                                "bg-[var(--warning)]/10 border-[var(--warning)]/20"
                             }`}>
                             <div className="flex items-center gap-3 mb-2">
-                                {bookStatus === "NEW" && <CheckCircle className="w-6 h-6 text-green-600" />}
-                                {bookStatus === "DUPLICATE" && <Info className="w-6 h-6 text-blue-600" />}
-                                {bookStatus === "CONFLICT" && <AlertTriangle className="w-6 h-6 text-yellow-600" />}
-                                <h2 className="text-xl font-semibold">
+                                {bookStatus === "NEW" && <CheckCircle className="w-6 h-6 text-[var(--success)]" />}
+                                {bookStatus === "DUPLICATE" && <Info className="w-6 h-6 text-[var(--primary)]" />}
+                                {bookStatus === "CONFLICT" && <AlertTriangle className="w-6 h-6 text-[var(--warning)]" />}
+                                <h2 className="text-xl font-semibold text-[var(--text-primary)]">
                                     {bookStatus === "NEW" && "New Book Detected"}
                                     {bookStatus === "DUPLICATE" && "Duplicate Book Found"}
                                     {bookStatus === "CONFLICT" && "Conflict Detected"}
                                 </h2>
                             </div>
-                            <p className="text-gray-700">{message}</p>
+                            <p className="text-[var(--text-primary)]">{message}</p>
                         </div>
 
                         {/* Conflict Fields Display */}
                         {bookStatus === "CONFLICT" && details?.conflictFields && (
-                            <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-4">Conflict Details</h3>
+                            <div className="bg-[var(--surface)] rounded-2xl shadow-sm border border-[var(--border)] p-6">
+                                <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Conflict Details</h3>
                                 <div className="space-y-4">
                                     {Object.entries(details.conflictFields).map(([field, data]: [string, any]) => (
                                         data && (
-                                            <div key={field} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-yellow-50 rounded-xl">
+                                            <div key={field} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-[var(--warning)]/10 rounded-xl border border-[var(--warning)]/20">
                                                 <div>
-                                                    <Label className="text-sm font-medium text-gray-700">Field</Label>
-                                                    <p className="text-sm text-gray-900 capitalize">{field.replace('_', ' ')}</p>
+                                                    <Label className="text-sm font-medium text-[var(--text-primary)]">Field</Label>
+                                                    <p className="text-sm text-[var(--text-primary)] capitalize">{field.replace('_', ' ')}</p>
                                                 </div>
                                                 <div>
-                                                    <Label className="text-sm font-medium text-gray-700">Existing Value</Label>
-                                                    <p className="text-sm text-gray-900">{String(data.old) || "N/A"}</p>
+                                                    <Label className="text-sm font-medium text-[var(--text-primary)]">Existing Value</Label>
+                                                    <p className="text-sm text-[var(--text-primary)]">{String(data.old) || "N/A"}</p>
                                                 </div>
                                                 <div>
-                                                    <Label className="text-sm font-medium text-gray-700">New Value</Label>
-                                                    <p className="text-sm text-gray-900">{String(data.new) || "N/A"}</p>
+                                                    <Label className="text-sm font-medium text-[var(--text-primary)]">New Value</Label>
+                                                    <p className="text-sm text-[var(--text-primary)]">{String(data.new) || "N/A"}</p>
                                                 </div>
                                             </div>
                                         )
@@ -941,23 +958,23 @@ function InsertBookPageContent() {
 
                         {/* Pricing Differences Display */}
                         {bookStatus === "DUPLICATE" && pricingStatus === "UPDATE_PRICE" && details?.differences && (
-                            <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-4">Pricing Differences</h3>
+                            <div className="bg-[var(--surface)] rounded-2xl shadow-sm border border-[var(--border)] p-6">
+                                <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Pricing Differences</h3>
                                 <div className="space-y-4">
                                     {Object.entries(details.differences).map(([field, data]: [string, any]) => (
                                         data && (
-                                            <div key={field} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-blue-50 rounded-xl">
+                                            <div key={field} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-[var(--primary)]/10 rounded-xl border border-[var(--primary)]/20">
                                                 <div>
-                                                    <Label className="text-sm font-medium text-gray-700">Field</Label>
-                                                    <p className="text-sm text-gray-900 capitalize">{field}</p>
+                                                    <Label className="text-sm font-medium text-[var(--text-primary)]">Field</Label>
+                                                    <p className="text-sm text-[var(--text-primary)] capitalize">{field}</p>
                                                 </div>
                                                 <div>
-                                                    <Label className="text-sm font-medium text-gray-700">Existing Value</Label>
-                                                    <p className="text-sm text-gray-900">{data.old}</p>
+                                                    <Label className="text-sm font-medium text-[var(--text-primary)]">Existing Value</Label>
+                                                    <p className="text-sm text-[var(--text-primary)]">{data.old}</p>
                                                 </div>
                                                 <div>
-                                                    <Label className="text-sm font-medium text-gray-700">New Value</Label>
-                                                    <p className="text-sm text-gray-900">{data.new}</p>
+                                                    <Label className="text-sm font-medium text-[var(--text-primary)]">New Value</Label>
+                                                    <p className="text-sm text-[var(--text-primary)]">{data.new}</p>
                                                 </div>
                                             </div>
                                         )
@@ -967,8 +984,8 @@ function InsertBookPageContent() {
                         )}
 
                         {/* Action Buttons */}
-                        <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Choose Your Action</h3>
+                        <div className="bg-[var(--surface)] rounded-2xl shadow-sm border border-[var(--border)] p-6">
+                            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Choose Your Action</h3>
                             <div className="flex flex-wrap gap-4">
 
                                 {/* Case 1: NEW BOOK */}
@@ -976,7 +993,7 @@ function InsertBookPageContent() {
                                     <Button
                                         onClick={() => handleAction("INSERT")}
                                         disabled={loading}
-                                        className="h-12 px-6 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold rounded-xl"
+                                        className="h-12 px-6 bg-[var(--success)] hover:bg-[var(--success)]/90 text-white font-semibold rounded-xl"
                                     >
                                         {loading ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Inserting...</> : <><CheckCircle className="w-5 h-5 mr-2" /> Insert Book</>}
                                     </Button>
@@ -990,7 +1007,7 @@ function InsertBookPageContent() {
                                             onClick={() => setStep("form")}
                                             disabled={loading}
                                             variant="outline"
-                                            className="h-12 px-6 border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl"
+                                            className="h-12 px-6 border-[var(--border)] text-[var(--text-primary)] hover:bg-[var(--surface-hover)] rounded-xl"
                                         >
                                             Discard
                                         </Button>
@@ -1005,7 +1022,7 @@ function InsertBookPageContent() {
                                                 <Button
                                                     onClick={() => handleAction("ADD_PRICE")}
                                                     disabled={loading}
-                                                    className="h-12 px-6 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold rounded-xl"
+                                                    className="h-12 px-6 bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-semibold rounded-xl"
                                                 >
                                                     {loading ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Adding...</> : "Add Price"}
                                                 </Button>
@@ -1013,7 +1030,7 @@ function InsertBookPageContent() {
                                                     onClick={() => setStep("form")}
                                                     disabled={loading}
                                                     variant="outline"
-                                                    className="h-12 px-6 border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl"
+                                                    className="h-12 px-6 border-[var(--border)] text-[var(--text-primary)] hover:bg-[var(--surface-hover)] rounded-xl"
                                                 >
                                                     Discard
                                                 </Button>
@@ -1024,7 +1041,7 @@ function InsertBookPageContent() {
                                                 <Button
                                                     onClick={() => handleAction("UPDATE_PRICE")}
                                                     disabled={loading}
-                                                    className="h-12 px-6 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold rounded-xl"
+                                                    className="h-12 px-6 bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-semibold rounded-xl"
                                                 >
                                                     {loading ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Updating...</> : "Update Price"}
                                                 </Button>
@@ -1032,7 +1049,7 @@ function InsertBookPageContent() {
                                                     onClick={() => setStep("form")}
                                                     disabled={loading}
                                                     variant="outline"
-                                                    className="h-12 px-6 border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl"
+                                                    className="h-12 px-6 border-[var(--border)] text-[var(--text-primary)] hover:bg-[var(--surface-hover)] rounded-xl"
                                                 >
                                                     Discard Changes
                                                 </Button>
@@ -1040,10 +1057,10 @@ function InsertBookPageContent() {
                                         )}
                                         {pricingStatus === "NO_CHANGE" && (
                                             <div className="text-center py-4 w-full">
-                                                <p className="text-gray-600">Book and pricing are already up-to-date.</p>
+                                                <p className="text-[var(--text-secondary)]">Book and pricing are already up-to-date.</p>
                                                 <Button
                                                     onClick={() => router.push("/books")}
-                                                    className="mt-4 bg-amber-600 hover:bg-amber-700"
+                                                    className="mt-4 bg-[var(--primary)] hover:bg-[var(--primary-dark)]"
                                                 >
                                                     Return to Book List
                                                 </Button>
@@ -1068,10 +1085,10 @@ function InsertBookPageContent() {
 
 export default function InsertBookPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 flex items-center justify-center">
-            <div className="bg-white shadow-lg rounded-2xl p-8">
+        <Suspense fallback={<div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
+            <div className="bg-[var(--surface)] shadow-lg rounded-2xl p-8 border border-[var(--border)]">
                 <div className="flex justify-center items-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary)]"></div>
                 </div>
             </div>
         </div>}>

@@ -95,15 +95,15 @@ export default function SaveTemplateDialog({
           </div>
 
           {/* Mapping Preview */}
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h4 className="font-medium mb-2">Mapping Preview:</h4>
+          <div className="bg-[var(--surface-hover)] rounded-lg p-4">
+            <h4 className="font-medium mb-2 text-[var(--text-primary)]">Mapping Preview:</h4>
             <div className="space-y-1 text-sm max-h-32 overflow-y-auto">
               {Object.entries(mapping).map(([excelHeader, dbField]) => (
                 <div key={excelHeader} className="flex items-center gap-2">
-                  <CheckCircle className="w-3 h-3 text-green-600 flex-shrink-0" />
-                  <span className="text-gray-700 truncate">{excelHeader}</span>
-                  <span className="text-gray-400">→</span>
-                  <span className="text-blue-600 font-medium">{dbField}</span>
+                  <CheckCircle className="w-3 h-3 text-[var(--success)] flex-shrink-0" />
+                  <span className="text-[var(--text-primary)] truncate">{excelHeader}</span>
+                  <span className="text-[var(--text-secondary)]">→</span>
+                  <span className="text-[var(--primary)] font-medium">{dbField}</span>
                 </div>
               ))}
             </div>
@@ -117,7 +117,7 @@ export default function SaveTemplateDialog({
           <Button 
             onClick={handleSave} 
             disabled={!name.trim() || saving}
-            className="bg-green-600 hover:bg-green-700"
+            className="bg-[var(--success)] hover:bg-[var(--success)]/90"
           >
             {saving ? (
               <>

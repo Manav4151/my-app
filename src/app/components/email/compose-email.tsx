@@ -261,13 +261,21 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { apiFunctions } from "@/services/api.service";
+import { profile } from "console";
 
 interface ComposeEmailProps {
   onClose: () => void;
   onEmailSent?: () => void;
+  attachmentInfo?: {
+    type: "quotation";
+    quotationId: string;
+    profileId: string;
+    fileName: string;
+  };
+
 }
 
-export default function ComposeEmail({ onClose, onEmailSent }: ComposeEmailProps) {
+export default function ComposeEmail({ onClose, onEmailSent, attachmentInfo }: ComposeEmailProps) {
   const [formData, setFormData] = useState({
     to: '',
     subject: '',
@@ -277,7 +285,6 @@ export default function ComposeEmail({ onClose, onEmailSent }: ComposeEmailProps
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isMinimized, setIsMinimized] = useState(false);
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -313,11 +320,13 @@ export default function ComposeEmail({ onClose, onEmailSent }: ComposeEmailProps
       formDataToSend.append('to', formData.to);
       formDataToSend.append('subject', formData.subject);
       formDataToSend.append('text', formData.text);
+      formDataToSend.append('profileId', attachmentInfo?.profileId || '');
+      formDataToSend.append('quotationId', attachmentInfo?.quotationId || '');
       if (attachment) {
         formDataToSend.append('attachment', attachment);
       }
 
-      const response = await apiFunctions.sendEmail(formDataToSend);
+      const response = await apiFunctions.sendQuotation(formDataToSend);
 
       if (!response.success) {
         throw new Error(response.message || 'Failed to send email.');
@@ -334,18 +343,18 @@ export default function ComposeEmail({ onClose, onEmailSent }: ComposeEmailProps
 
   return (
     <div className="fixed bottom-0 right-4 z-50 w-full max-w-lg">
-      <div className="bg-white rounded-t-lg shadow-2xl border border-gray-200 flex flex-col transition-all duration-300 ease-in-out">
+      <div className="bg-[var(--surface)] rounded-t-lg shadow-2xl border border-[var(--border)] flex flex-col transition-all duration-300 ease-in-out">
         {/* Header */}
         <div
-          className="flex items-center justify-between p-3 border-b border-gray-200 cursor-pointer bg-gray-50 rounded-t-lg"
+          className="flex items-center justify-between p-3 border-b border-[var(--border)] cursor-pointer bg-[var(--surface-hover)] rounded-t-lg"
           onClick={() => setIsMinimized(!isMinimized)}
         >
-          <h2 className="text-sm font-bold text-gray-800">New Message</h2>
+          <h2 className="text-sm font-bold text-[var(--text-primary)]">New Message</h2>
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" className="w-6 h-6 rounded-full text-gray-500 hover:bg-gray-200" onClick={(e) => { e.stopPropagation(); setIsMinimized(!isMinimized); }}>
+            <Button variant="ghost" size="icon" className="w-6 h-6 rounded-full text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]" onClick={(e) => { e.stopPropagation(); setIsMinimized(!isMinimized); }}>
               <Minus className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="w-6 h-6 rounded-full text-gray-500 hover:bg-gray-200" onClick={(e) => { e.stopPropagation(); onClose(); }}>
+            <Button variant="ghost" size="icon" className="w-6 h-6 rounded-full text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]" onClick={(e) => { e.stopPropagation(); onClose(); }}>
               <X className="w-4 h-4" />
             </Button>
           </div>
@@ -356,9 +365,9 @@ export default function ComposeEmail({ onClose, onEmailSent }: ComposeEmailProps
           <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden" style={{ height: '450px' }}>
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
               {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-2 flex items-center gap-2">
-                  <Frown className="w-4 h-4 text-red-500" />
-                  <p className="text-xs font-medium text-red-600">{error}</p>
+                <div className="bg-[var(--error)]/10 border border-[var(--error)]/20 rounded-lg p-2 flex items-center gap-2">
+                  <Frown className="w-4 h-4 text-[var(--error)]" />
+                  <p className="text-xs font-medium text-[var(--error)]">{error}</p>
                 </div>
               )}
               <Input
@@ -368,7 +377,7 @@ export default function ComposeEmail({ onClose, onEmailSent }: ComposeEmailProps
                 onChange={handleInputChange}
                 placeholder="To"
                 required
-                className="h-9 border-0 border-b rounded-none focus-visible:ring-0 focus:border-amber-500 px-0 bg-transparent"
+                className="h-9 border-0 border-b rounded-none focus-visible:ring-0 focus:border-[var(--primary)] px-0 bg-transparent"
               />
               <Input
                 name="subject"
@@ -376,7 +385,7 @@ export default function ComposeEmail({ onClose, onEmailSent }: ComposeEmailProps
                 onChange={handleInputChange}
                 placeholder="Subject"
                 required
-                className="h-9 border-0 border-b rounded-none focus-visible:ring-0 focus:border-amber-500 px-0 bg-transparent"
+                className="h-9 border-0 border-b rounded-none focus-visible:ring-0 focus:border-[var(--primary)] px-0 bg-transparent"
               />
               <Textarea
                 name="text"
@@ -386,13 +395,20 @@ export default function ComposeEmail({ onClose, onEmailSent }: ComposeEmailProps
                 required
                 className="flex-1 border-none focus-visible:ring-0 resize-none p-0 text-sm bg-transparent h-50"
               />
+              {attachmentInfo && (<div className="flex items-center justify-between p-2 bg-[var(--surface-hover)] rounded-lg text-xs">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-[var(--text-secondary)]" />
+                  <span className="text-[var(--text-primary)]">{attachmentInfo?.fileName}</span>
+                </div>
+              </div>)}
+              
               {attachment && (
-                <div className="flex items-center justify-between p-2 bg-gray-100 rounded-lg text-xs">
+                <div className="flex items-center justify-between p-2 bg-[var(--surface-hover)] rounded-lg text-xs">
                   <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-gray-500" />
-                    <span>{attachment.name} ({(attachment.size / 1024).toFixed(1)} KB)</span>
+                    <FileText className="w-4 h-4 text-[var(--text-secondary)]" />
+                    <span className="text-[var(--text-primary)]">{attachment.name} ({(attachment.size / 1024).toFixed(1)} KB) ({(attachment.size / 1024).toFixed(1)} KB)</span>
                   </div>
-                  <Button type="button" variant="ghost" size="icon" onClick={removeAttachment} className="w-5 h-5 text-red-500 rounded-full hover:bg-red-100">
+                  <Button type="button" variant="ghost" size="icon" onClick={removeAttachment} className="w-5 h-5 text-[var(--error)] rounded-full hover:bg-[var(--error)]/10">
                     <X className="w-3 h-3" />
                   </Button>
                 </div>
@@ -400,10 +416,10 @@ export default function ComposeEmail({ onClose, onEmailSent }: ComposeEmailProps
             </div>
 
             {/* Footer */}
-            <div className="border-t border-gray-200 p-2">
+            <div className="border-t border-[var(--border)] p-2">
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                  <Button type="submit" disabled={loading} className="px-5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold h-8">
+                  <Button type="submit" disabled={loading} className="px-5 bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-bold h-8">
                     {loading ? (
                       <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
                     ) : (
@@ -412,7 +428,7 @@ export default function ComposeEmail({ onClose, onEmailSent }: ComposeEmailProps
                     {loading ? 'Sending' : 'Send'}
                   </Button>
                   <input type="file" id="attachment-file" onChange={handleFileChange} className="hidden" />
-                  <Button type="button" variant="ghost" onClick={() => document.getElementById('attachment-file')?.click()} className="text-gray-600 hover:bg-gray-200 h-8 px-3">
+                  <Button type="button" variant="ghost" onClick={() => document.getElementById('attachment-file')?.click()} className="text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] h-8 px-3">
                     <Paperclip className="w-4 h-4 mr-2" />
                     Attach
                   </Button>

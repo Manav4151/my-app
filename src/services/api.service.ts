@@ -221,18 +221,24 @@ export const apiFunctions = { // Renamed to avoid conflict with axios instance n
     // === Special File Download ===
     downloadEmailAttachment: async (id: string, filename: string): Promise<Blob> => {
         try {
-            const response = await api.get(`/api/emails/${id}/attachments/${filename}`, {
+            // Try Google API endpoint first (for Gmail API), fallback to IMAP endpoint
+
+            const response = await api.get(`/api/google/emails/${id}/attachments/${encodeURIComponent(filename)}`, {
                 responseType: 'blob', // Tell axios to expect binary data
             });
             return response.data; // The data is already a Blob
+
         } catch (error) { throw handleError(error); }
     },
-
-    sendEmail: async (formData: FormData) => {
+    // === Quotation Calls ===
+    /* Use for semd email for quotation pass quotation id and profile id, for normal email pass directly */
+    sendQuotation: async (formData: FormData) => {
         try {
-            const response = await api.post('/api/emails/send', formData);
+            const response = await api.post('/api/quotations/sendQuotation', formData);
             return response.data;
-        } catch (error) { throw handleError(error); }
+        } catch (error) {
+            throw handleError(error);
+        }
     },
 
     // === Management Calls ===
@@ -258,9 +264,10 @@ export const apiFunctions = { // Renamed to avoid conflict with axios instance n
         } catch (error) { throw handleError(error); }
     },
 
-    getGoogleEmail: async () => {
+    getGoogleEmail: async (search?: string) => {
         try {
-            const response = await api.get('/api/google/emails');
+            const params = search ? { search } : {};
+            const response = await api.get('/api/google/emails', { params });
             return response.data;
         } catch (error) { throw handleError(error); }
     },
@@ -299,6 +306,30 @@ export const apiFunctions = { // Renamed to avoid conflict with axios instance n
     getQuotationById: async (id: string) => {
         try {
             const response = await api.get(`/api/quotations/${id}`);
+            return response.data;
+        } catch (error) { throw handleError(error); }
+    },
+
+    downloadQuotationPDF: async (quotationId: string, selectedProfileId: string): Promise<Blob> => {
+        try {
+            const response = await api.get(`/api/quotations/${quotationId}/download?profileId=${selectedProfileId}`, {
+                responseType: 'blob', // Tell axios to expect binary data
+            });
+            return response.data; // The data is already a Blob
+        } catch (error) { throw handleError(error); }
+    },
+    previewQuotationPDF: async (quotationId: string, selectedProfileId: string) => {
+        try {
+            const response = await api.get(`/api/quotations/${quotationId}/preview?profileId=${selectedProfileId}`);
+            return response.data;
+        } catch (error) {
+            throw handleError(error);
+        }
+    },
+
+    updateQuotation: async (id: string, payload: any) => {
+        try {
+            const response = await api.put(`/api/quotations/${id}`, payload);
             return response.data;
         } catch (error) { throw handleError(error); }
     },

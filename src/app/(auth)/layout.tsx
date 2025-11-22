@@ -6,9 +6,9 @@ export default function AuthLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="min-h-screen flex flex-col lg:flex-row bg-gradient-to-br from-amber-50 via-orange-50 to-red-50">
+        <div className="min-h-screen flex flex-col lg:flex-row bg-[var(--background)]">
             {/* Left Section - Book-themed Branding */}
-            <div className="w-full lg:w-1/2 bg-gradient-to-br from-amber-600 via-orange-600 to-red-600 p-8 lg:p-12 flex flex-col justify-between text-white relative overflow-hidden">
+            <div className="w-full lg:w-1/2 bg-[var(--primary)] p-8 lg:p-12 flex flex-col justify-between text-white relative overflow-hidden">
                 {/* Background Pattern */}
                 <div className="absolute inset-0 opacity-10">
                     <div className="absolute top-10 left-10 w-32 h-32 border-2 border-white rounded-lg transform rotate-12"></div>
@@ -24,10 +24,10 @@ export default function AuthLayout({
                         </div>
                         <div>
                             <h1 className="text-3xl lg:text-4xl font-bold">BookVault</h1>
-                            <p className="text-amber-100 text-sm">Digital Library Management</p>
+                            <p className="text-white/80 text-sm">Digital Library Management</p>
                         </div>
                     </div>
-                    <p className="text-xl lg:text-2xl text-amber-100 mb-8 leading-relaxed">
+                    <p className="text-xl lg:text-2xl text-white/90 mb-8 leading-relaxed">
                         Organize, manage, and discover your digital book collection with ease
                     </p>
                 </div>
@@ -44,7 +44,7 @@ export default function AuthLayout({
                                 </div>
                                 <div>
                                     <h3 className="font-semibold text-lg">Smart Organization</h3>
-                                    <p className="text-amber-100">
+                                    <p className="text-white/80">
                                         Categorize and tag your books for easy discovery and management
                                     </p>
                                 </div>
@@ -55,7 +55,7 @@ export default function AuthLayout({
                                 </div>
                                 <div>
                                     <h3 className="font-semibold text-lg">Personal Collection</h3>
-                                    <p className="text-amber-100">
+                                    <p className="text-white/80">
                                         Build your digital library with detailed book information and notes
                                     </p>
                                 </div>
@@ -66,7 +66,7 @@ export default function AuthLayout({
                                 </div>
                                 <div>
                                     <h3 className="font-semibold text-lg">Community Features</h3>
-                                    <p className="text-amber-100">
+                                    <p className="text-white/80">
                                         Share recommendations and discover new books from fellow readers
                                     </p>
                                 </div>
@@ -74,7 +74,7 @@ export default function AuthLayout({
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2 text-amber-200 text-sm">
+                    <div className="flex items-center gap-2 text-white/70 text-sm">
                         <span>Join thousands of book lovers</span>
                         <ArrowRight className="w-4 h-4" />
                     </div>
@@ -83,22 +83,22 @@ export default function AuthLayout({
                 {/* Mobile Features */}
                 <div className="lg:hidden mt-8 space-y-4">
                     <div className="flex items-center gap-3">
-                        <Library className="w-5 h-5 text-amber-200" />
-                        <span className="text-amber-100">Smart Organization</span>
+                        <Library className="w-5 h-5 text-white/70" />
+                        <span className="text-white/80">Smart Organization</span>
                     </div>
                     <div className="flex items-center gap-3">
-                        <Star className="w-5 h-5 text-amber-200" />
-                        <span className="text-amber-100">Personal Collection</span>
+                        <Star className="w-5 h-5 text-white/70" />
+                        <span className="text-white/80">Personal Collection</span>
                     </div>
                     <div className="flex items-center gap-3">
-                        <Users className="w-5 h-5 text-amber-200" />
-                        <span className="text-amber-100">Community Features</span>
+                        <Users className="w-5 h-5 text-white/70" />
+                        <span className="text-white/80">Community Features</span>
                     </div>
                 </div>
             </div>
 
             {/* Right Section - Auth Form */}
-            <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12 bg-white">
+            <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12 bg-[var(--surface)]">
                 <div className="w-full max-w-md">
                     {children}
                 </div>

@@ -83,10 +83,10 @@ export function AddCompanyProfileForm() {
         <form onSubmit={handleSubmit}>
             <div className="space-y-10">
                 <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Company Profile Information</h3>
+                    <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Company Profile Information</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                         <div>
-                            <Label htmlFor="profileName" className="text-gray-700 font-medium">
+                            <Label htmlFor="profileName" className="text-[var(--text-primary)] font-medium">
                                 Profile Name *
                             </Label>
                             <Input
@@ -96,13 +96,13 @@ export function AddCompanyProfileForm() {
                                 value={formData.profileName}
                                 onChange={handleChange}
                                 required
-                                className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                                className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl"
                                 placeholder="Enter profile name"
                             />
                         </div>
 
                         <div>
-                            <Label htmlFor="companyName" className="text-gray-700 font-medium">
+                            <Label htmlFor="companyName" className="text-[var(--text-primary)] font-medium">
                                 Company Name *
                             </Label>
                             <Input
@@ -112,13 +112,13 @@ export function AddCompanyProfileForm() {
                                 value={formData.companyName}
                                 onChange={handleChange}
                                 required
-                                className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                                className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl"
                                 placeholder="Enter company name"
                             />
                         </div>
 
                         <div>
-                            <Label htmlFor="phone" className="text-gray-700 font-medium">
+                            <Label htmlFor="phone" className="text-[var(--text-primary)] font-medium">
                                 Phone *
                             </Label>
                             <Input
@@ -128,13 +128,13 @@ export function AddCompanyProfileForm() {
                                 value={formData.phone}
                                 onChange={handleChange}
                                 required
-                                className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                                className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl"
                                 placeholder="Enter phone number"
                             />
                         </div>
 
                         <div>
-                            <Label htmlFor="email" className="text-gray-700 font-medium">
+                            <Label htmlFor="email" className="text-[var(--text-primary)] font-medium">
                                 Email *
                             </Label>
                             <Input
@@ -144,7 +144,7 @@ export function AddCompanyProfileForm() {
                                 value={formData.email}
                                 onChange={handleChange}
                                 required
-                                className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                                className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl"
                                 placeholder="Enter email address"
                             />
                         </div>
@@ -155,10 +155,10 @@ export function AddCompanyProfileForm() {
 
                 {/* Address */}
                 <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Address</h3>
+                    <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Address</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">
                         <div className="md:col-span-3">
-                            <Label htmlFor="street" className="text-gray-700 font-medium">
+                            <Label htmlFor="street" className="text-[var(--text-primary)] font-medium">
                                 Street address *
                             </Label>
                             <Input
@@ -168,13 +168,13 @@ export function AddCompanyProfileForm() {
                                 value={formData.address.street}
                                 onChange={handleChange}
                                 required
-                                className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                                className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl"
                                 placeholder="Enter street address"
                             />
                         </div>
 
                         <div>
-                            <Label htmlFor="city" className="text-gray-700 font-medium">
+                            <Label htmlFor="city" className="text-[var(--text-primary)] font-medium">
                                 City *
                             </Label>
                             <Input
@@ -184,13 +184,13 @@ export function AddCompanyProfileForm() {
                                 value={formData.address.city}
                                 onChange={handleChange}
                                 required
-                                className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                                className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl"
                                 placeholder="Enter city"
                             />
                         </div>
 
                         <div>
-                            <Label htmlFor="state" className="text-gray-700 font-medium">
+                            <Label htmlFor="state" className="text-[var(--text-primary)] font-medium">
                                 State / Province *
                             </Label>
                             <Input
@@ -200,13 +200,13 @@ export function AddCompanyProfileForm() {
                                 value={formData.address.state}
                                 onChange={handleChange}
                                 required
-                                className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                                className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl"
                                 placeholder="Enter state"
                             />
                         </div>
 
                         <div>
-                            <Label htmlFor="zipCode" className="text-gray-700 font-medium">
+                            <Label htmlFor="zipCode" className="text-[var(--text-primary)] font-medium">
                                 ZIP / Postal code *
                             </Label>
                             <Input
@@ -216,7 +216,7 @@ export function AddCompanyProfileForm() {
                                 value={formData.address.zipCode}
                                 onChange={handleChange}
                                 required
-                                className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                                className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl"
                                 placeholder="Enter zip code"
                             />
                         </div>
@@ -235,7 +235,7 @@ export function AddCompanyProfileForm() {
                 <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="bg-gradient-to-r from-amber-500 to-orange-600 text-white"
+                    className="bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white"
                 >
                     {isSubmitting ? (
                         <>

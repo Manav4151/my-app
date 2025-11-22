@@ -128,73 +128,73 @@ export function AddPublisherForm() {
         <form onSubmit={handleSubmit}>
             <div className="space-y-10">
                 <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Publisher Information</h3>
+                    <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Publisher Information</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                         <div>
                             <Label htmlFor="name">Name *</Label>
-                            <Input id="name" name="name" value={publisherData.name} onChange={handleInputChange} required placeholder="Enter publisher name" className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl" />
+                            <Input id="name" name="name" value={publisherData.name} onChange={handleInputChange} required placeholder="Enter publisher name" className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl" />
                         </div>
                         <div>
                             <Label htmlFor="email">Email *</Label>
-                            <Input id="email" name="email" type="email" value={publisherData.email} onChange={handleInputChange} required placeholder="Enter publisher email" className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl" />
-                            {errors.email && <p className="text-sm text-red-600 mt-1">{errors.email}</p>}
+                            <Input id="email" name="email" type="email" value={publisherData.email} onChange={handleInputChange} required placeholder="Enter publisher email" className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl" />
+                            {errors.email && <p className="text-sm text-[var(--error)] mt-1">{errors.email}</p>}
                         </div>
                         <div >
                             <Label htmlFor="phone">Phone</Label>
-                            <Input id="phone" name="phone" type="tel" value={publisherData.phone} onChange={handleInputChange} placeholder="Enter publisher phone" className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl " />
-                            {errors.phone && <p className="text-sm text-red-600 mt-1">{errors.phone}</p>}
+                            <Input id="phone" name="phone" type="tel" value={publisherData.phone} onChange={handleInputChange} placeholder="Enter publisher phone" className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl " />
+                            {errors.phone && <p className="text-sm text-[var(--error)] mt-1">{errors.phone}</p>}
                         </div>
 
                     </div>
                 </div>
-                <div className="border-t border-slate-200 my-6"></div>
+                <div className="border-t border-[var(--border)] my-6"></div>
 
                 {/* Address */}
                 <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Address</h3>
+                    <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Address</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">
                         <div className="md:col-span-3">
                             <Label htmlFor="street">Street address</Label>
                             <Input id="street" name="street" value={publisherData.address.street} onChange={handleAddressChange} placeholder="123 Main St"
-                                className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl"
+                                className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl"
                             />
                         </div>
                         <div>
                             <Label htmlFor="city">City</Label>
-                            <Input id="city" name="city" value={publisherData.address.city} onChange={handleAddressChange} placeholder="Anytown" className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl" />
+                            <Input id="city" name="city" value={publisherData.address.city} onChange={handleAddressChange} placeholder="Anytown" className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl" />
                         </div>
                         <div>
                             <Label htmlFor="state">State / Province</Label>
-                            <Input id="state" name="state" value={publisherData.address.state} onChange={handleAddressChange} placeholder="CA" className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl" />
+                            <Input id="state" name="state" value={publisherData.address.state} onChange={handleAddressChange} placeholder="CA" className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl" />
                         </div>
                         <div>
                             <Label htmlFor="zipCode">ZIP / Postal code</Label>
-                            <Input id="zipCode" name="zipCode" value={publisherData.address.zipCode} onChange={handleAddressChange} placeholder="12345" className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl" />
+                            <Input id="zipCode" name="zipCode" value={publisherData.address.zipCode} onChange={handleAddressChange} placeholder="12345" className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl" />
                         </div>
                         <div >
                             <Label htmlFor="country">Country</Label>
-                            <Input id="country" name="country" value={publisherData.address.country} onChange={handleAddressChange} placeholder="United States" className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl" />
+                            <Input id="country" name="country" value={publisherData.address.country} onChange={handleAddressChange} placeholder="United States" className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl" />
                         </div>
                     </div>
                 </div>
                 {/* contect person */}
-                <div className="border-t border-slate-200 my-6"></div>
+                <div className="border-t border-[var(--border)] my-6"></div>
                 <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Contact Person</h3>
+                    <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Contact Person</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                         <div>
                             <Label htmlFor="contactPerson">Name</Label>
-                            <Input id="contactPerson" name="contactPerson" value={publisherData.contactPerson} onChange={handleInputChange} placeholder="Enter contact person name" className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl" />
+                            <Input id="contactPerson" name="contactPerson" value={publisherData.contactPerson} onChange={handleInputChange} placeholder="Enter contact person name" className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl" />
                         </div>
                         <div>
                             <Label htmlFor="contactPersonEmail">Email</Label>
-                            <Input id="contactPersonEmail" name="contactPersonEmail" type="email" value={publisherData.contactPersonEmail} onChange={handleInputChange} placeholder="Enter contact person email" className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl" />
-                            {errors.contactPersonEmail && <p className="text-sm text-red-600 mt-1">{errors.contactPersonEmail}</p>}
+                            <Input id="contactPersonEmail" name="contactPersonEmail" type="email" value={publisherData.contactPersonEmail} onChange={handleInputChange} placeholder="Enter contact person email" className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl" />
+                            {errors.contactPersonEmail && <p className="text-sm text-[var(--error)] mt-1">{errors.contactPersonEmail}</p>}
                         </div>
                         <div >
                             <Label htmlFor="contactPersonPhone">Phone</Label>
-                            <Input id="contactPersonPhone" name="contactPersonPhone" type="tel" value={publisherData.contactPersonPhone} onChange={handleInputChange} placeholder="Enter contact person phone" className="mt-1 h-12 bg-white border-2 border-gray-200 focus:border-amber-500 focus:ring-amber-500 rounded-xl" />
-                            {errors.contactPersonPhone && <p className="text-sm text-red-600 mt-1">{errors.contactPersonPhone}</p>}
+                            <Input id="contactPersonPhone" name="contactPersonPhone" type="tel" value={publisherData.contactPersonPhone} onChange={handleInputChange} placeholder="Enter contact person phone" className="mt-1 h-12 bg-[var(--surface)] border-2 border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)] rounded-xl" />
+                            {errors.contactPersonPhone && <p className="text-sm text-[var(--error)] mt-1">{errors.contactPersonPhone}</p>}
                         </div>
                     </div>
                 </div>
@@ -204,7 +204,7 @@ export function AddPublisherForm() {
                 <Button type="button" variant="outline" onClick={() => setPublisherData(initialState)}>
                     Clear
                 </Button>
-                <Button type="submit" disabled={loading} className="bg-gradient-to-r from-amber-500 to-orange-600 text-white">
+                <Button type="submit" disabled={loading} className="bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white">
                     {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : "Save Publisher"}
                 </Button>
             </div>

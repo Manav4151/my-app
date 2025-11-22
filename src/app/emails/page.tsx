@@ -45,9 +45,9 @@ export default function EmailsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[var(--background)]">
       {/* Top Navigation */}
-      <div className="border-b border-gray-200 bg-white">
+      <div className="border-b border-[var(--border)] bg-[var(--background)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Tabs */}
@@ -59,8 +59,8 @@ export default function EmailsPage() {
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
                     className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
-                      ? "border-amber-300 text-amber-700"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      ? "border-[var(--primary)] text-[var(--primary)]"
+                      : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border)]"
                       }`}
                   >
                     <Icon className="w-4 h-4" />
@@ -76,7 +76,7 @@ export default function EmailsPage() {
                 size="sm"
                 variant="outline"
                 onClick={handleGoogleAuth}
-                className="h-8 px-3 text-xs border-amber-300 text-amber-700 hover:bg-amber-50"
+                className="h-8 px-3 text-xs border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)]/10"
               >
                 <RefreshCw className="w-3 h-3 mr-1" />
                 Sync Google Mail
@@ -85,7 +85,7 @@ export default function EmailsPage() {
                 size="sm"
                 variant="outline"
                 onClick={handleRefresh}
-                className="h-8 px-3 text-xs border-amber-300 text-amber-700 hover:bg-amber-50"
+                className="h-8 px-3 text-xs border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)]/10"
               >
                 <RefreshCw className="w-3 h-3 mr-1" />
                 Refresh
@@ -93,7 +93,7 @@ export default function EmailsPage() {
               <Button
                 size="sm"
                 onClick={() => setShowCompose(true)}
-                className="h-8 px-3 text-xs bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
+                className="h-8 px-3 text-xs bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white"
               >
                 <Send className="w-3 h-3 mr-1" />
                 Compose
